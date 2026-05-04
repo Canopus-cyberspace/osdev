@@ -57,3 +57,27 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Fixed crate root config module visibility for loader init-image code.
 - External init ELF load-page scaffold remains present.
 - Sv39 + U-mode ecall smoke remains passing.
+
+## v50 - External init ELF execution path
+
+- Added generated external `user/init.elf`
+- Added loader/init-image path for loading PT_LOAD into a kernel-managed page
+- Added Sv39 U-mode execution path using external init ELF entry
+- Expected external init syscalls:
+  - write
+  - getpid
+  - getppid
+  - unsupported -> -38
+  - exit
+
+## v50b - External init ELF execution trap fix
+
+- Added robust external init ELF Sv39 U-mode execution path
+- Replaced minimal trap frame with full TrapContext save/restore
+- Restores sscratch to trap_stack_top before returning to U-mode
+- Expected external init syscalls:
+  - write
+  - getpid
+  - getppid
+  - unsupported -> -38
+  - exit

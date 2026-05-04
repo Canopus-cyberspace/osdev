@@ -1,10 +1,23 @@
-const EI_NIDENT: usize = 16;
-const ELF_HEADER_SIZE: usize = 64;
-const PROGRAM_HEADER_SIZE: usize = 56;
-const EM_RISCV: u16 = 243;
-const PT_LOAD: u32 = 1;
+#![allow(dead_code)]
 
-#[derive(Copy, Clone)]
+pub const PT_LOAD: u32 = 1;
+pub const EM_RISCV: u16 = 243;
+pub const ET_EXEC: u16 = 2;
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ElfError {
+    TooSmall,
+    BadMagic,
+    NotElf64,
+    NotLittleEndian,
+    NotExecutable,
+    NotRiscv,
+    BadProgramHeader,
+    NoLoadSegment,
+    Range,
+}
+
+#[derive(Copy, Clone, Debug)]
 pub struct ElfHeader {
     pub entry: usize,
     pub phoff: usize,
@@ -12,165 +25,163 @@ pub struct ElfHeader {
     pub phnum: usize,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct ProgramHeader {
     pub p_type: u32,
     pub flags: u32,
     pub offset: usize,
     pub vaddr: usize,
-    pub paddr: usize,
     pub filesz: usize,
     pub memsz: usize,
     pub align: usize,
 }
 
-pub fn parse_header(image: &[u8]) -> Result<ElfHeader, &'static str> {
-    if image.len() < ELF_HEADER_SIZE {
-        return Err("ELF image too small");
+impl ProgramHeader {
+    pub const fn is_load(&self) -> bool {
+        self.p_type == PT_LOAD
     }
-    if &image[0..4] != b"\x7fELF" {
-        return Err("bad ELF magic");
+
+    pub const fn readable(&self) -> bool {
+        self.flags & 4 != 0
     }
-    if image[4] != 2 {
-        return Err("ELF is not 64-bit");
+
+    pub const fn writable(&self) -> bool {
+        self.flags & 2 != 0
     }
-    if image[5] != 1 {
-        return Err("ELF is not little-endian");
+
+    pub const fn executable(&self) -> bool {
+        self.flags & 1 != 0
     }
-    if image[EI_NIDENT - 10] == 0xff {
-        return Err("reserved ident rejected");
+}
+
+#[inline]
+fn get_u16(data: &[u8], off: usize) -> Result<u16, ElfError> {
+    if off + 2 > data.len() {
+        return Err(ElfError::TooSmall);
     }
-    let machine = read_u16(image, 18)?;
-    if machine != EM_RISCV {
-        return Err("ELF is not RISC-V");
+    Ok(u16::from_le_bytes([data[off], data[off + 1]]))
+}
+
+#[inline]
+fn get_u32(data: &[u8], off: usize) -> Result<u32, ElfError> {
+    if off + 4 > data.len() {
+        return Err(ElfError::TooSmall);
     }
-    let phoff = read_u64(image, 32)? as usize;
-    let phentsize = read_u16(image, 54)? as usize;
-    let phnum = read_u16(image, 56)? as usize;
-    if phentsize != PROGRAM_HEADER_SIZE {
-        return Err("unexpected program header size");
+    Ok(u32::from_le_bytes([data[off], data[off + 1], data[off + 2], data[off + 3]]))
+}
+
+#[inline]
+fn get_u64(data: &[u8], off: usize) -> Result<u64, ElfError> {
+    if off + 8 > data.len() {
+        return Err(ElfError::TooSmall);
     }
-    if phnum == 0 {
-        return Err("ELF has no program headers");
+    Ok(u64::from_le_bytes([
+        data[off], data[off + 1], data[off + 2], data[off + 3],
+        data[off + 4], data[off + 5], data[off + 6], data[off + 7],
+    ]))
+}
+
+pub fn parse_header(data: &[u8]) -> Result<ElfHeader, ElfError> {
+    if data.len() < 64 {
+        return Err(ElfError::TooSmall);
     }
-    if phoff.checked_add(phentsize * phnum).map_or(true, |end| end > image.len()) {
-        return Err("program header table out of range");
+    if &data[0..4] != b"\x7fELF" {
+        return Err(ElfError::BadMagic);
     }
+    if data[4] != 2 {
+        return Err(ElfError::NotElf64);
+    }
+    if data[5] != 1 {
+        return Err(ElfError::NotLittleEndian);
+    }
+
+    let e_type = get_u16(data, 16)?;
+    let e_machine = get_u16(data, 18)?;
+
+    if e_type != ET_EXEC {
+        return Err(ElfError::NotExecutable);
+    }
+    if e_machine != EM_RISCV {
+        return Err(ElfError::NotRiscv);
+    }
+
     Ok(ElfHeader {
-        entry: read_u64(image, 24)? as usize,
-        phoff,
-        phentsize,
-        phnum,
+        entry: get_u64(data, 24)? as usize,
+        phoff: get_u64(data, 32)? as usize,
+        phentsize: get_u16(data, 54)? as usize,
+        phnum: get_u16(data, 56)? as usize,
     })
 }
 
-pub fn parse_program_header(image: &[u8], header: ElfHeader, index: usize) -> Result<ProgramHeader, &'static str> {
-    if index >= header.phnum {
-        return Err("program header index out of range");
+pub fn parse_program_header(data: &[u8], header: ElfHeader, index: usize) -> Result<ProgramHeader, ElfError> {
+    if index >= header.phnum || header.phentsize < 56 {
+        return Err(ElfError::BadProgramHeader);
     }
-    let base = header.phoff + index * header.phentsize;
-    let ph = ProgramHeader {
-        p_type: read_u32(image, base)?,
-        flags: read_u32(image, base + 4)?,
-        offset: read_u64(image, base + 8)? as usize,
-        vaddr: read_u64(image, base + 16)? as usize,
-        paddr: read_u64(image, base + 24)? as usize,
-        filesz: read_u64(image, base + 32)? as usize,
-        memsz: read_u64(image, base + 40)? as usize,
-        align: read_u64(image, base + 48)? as usize,
-    };
-    if ph.p_type == PT_LOAD {
-        if ph.filesz > ph.memsz {
-            return Err("PT_LOAD filesz > memsz");
-        }
-        if ph.offset.checked_add(ph.filesz).map_or(true, |end| end > image.len()) {
-            return Err("PT_LOAD file range out of image");
-        }
+
+    let off = header
+        .phoff
+        .checked_add(index.checked_mul(header.phentsize).ok_or(ElfError::Range)?)
+        .ok_or(ElfError::Range)?;
+
+    if off + 56 > data.len() {
+        return Err(ElfError::BadProgramHeader);
     }
-    Ok(ph)
+
+    let p_type = get_u32(data, off)?;
+    let flags = get_u32(data, off + 4)?;
+    let offset = get_u64(data, off + 8)? as usize;
+    let vaddr = get_u64(data, off + 16)? as usize;
+    let filesz = get_u64(data, off + 32)? as usize;
+    let memsz = get_u64(data, off + 40)? as usize;
+    let align = get_u64(data, off + 48)? as usize;
+
+    if filesz > memsz {
+        return Err(ElfError::BadProgramHeader);
+    }
+    if offset.checked_add(filesz).ok_or(ElfError::Range)? > data.len() {
+        return Err(ElfError::BadProgramHeader);
+    }
+
+    Ok(ProgramHeader {
+        p_type,
+        flags,
+        offset,
+        vaddr,
+        filesz,
+        memsz,
+        align,
+    })
 }
 
-pub fn first_load_segment(image: &[u8]) -> Result<(ElfHeader, ProgramHeader), &'static str> {
-    let header = parse_header(image)?;
+pub fn first_load_segment(data: &[u8]) -> Result<(ElfHeader, ProgramHeader), ElfError> {
+    let header = parse_header(data)?;
     let mut i = 0;
+
     while i < header.phnum {
-        let ph = parse_program_header(image, header, i)?;
-        if ph.p_type == PT_LOAD {
+        let ph = parse_program_header(data, header, i)?;
+        if ph.is_load() {
             return Ok((header, ph));
         }
         i += 1;
     }
-    Err("no PT_LOAD segment")
-}
 
-pub const fn is_load(ph: &ProgramHeader) -> bool {
-    ph.p_type == PT_LOAD
+    Err(ElfError::NoLoadSegment)
 }
 
 pub fn self_test() {
-    crate::println!("[elf-loader-v49c] self-test begin");
-    let mut image = [0u8; ELF_HEADER_SIZE + PROGRAM_HEADER_SIZE + 16];
-    image[0] = 0x7f;
-    image[1] = b'E';
-    image[2] = b'L';
-    image[3] = b'F';
-    image[4] = 2;
-    image[5] = 1;
-    image[6] = 1;
-    put_u16(&mut image, 16, 2);
-    put_u16(&mut image, 18, EM_RISCV);
-    put_u32(&mut image, 20, 1);
-    put_u64(&mut image, 24, 0x4000_0000);
-    put_u64(&mut image, 32, ELF_HEADER_SIZE as u64);
-    put_u16(&mut image, 52, ELF_HEADER_SIZE as u16);
-    put_u16(&mut image, 54, PROGRAM_HEADER_SIZE as u16);
-    put_u16(&mut image, 56, 1);
+    crate::println!("[elf-loader-v50b] parser self-test begin");
+    let (header, ph) = first_load_segment(crate::loader::init_image::INIT_ELF)
+        .expect("[elf-loader-v50b] parse external init ELF failed");
 
-    let ph = ELF_HEADER_SIZE;
-    let payload = ELF_HEADER_SIZE + PROGRAM_HEADER_SIZE;
-    put_u32(&mut image, ph, PT_LOAD);
-    put_u32(&mut image, ph + 4, 5);
-    put_u64(&mut image, ph + 8, payload as u64);
-    put_u64(&mut image, ph + 16, 0x4000_0000);
-    put_u64(&mut image, ph + 24, 0x4000_0000);
-    put_u64(&mut image, ph + 32, 16);
-    put_u64(&mut image, ph + 40, 16);
-    put_u64(&mut image, ph + 48, 0x1000);
+    crate::println!("[elf-loader-v50b] entry = {:#x}", header.entry);
+    crate::println!(
+        "[elf-loader-v50b] load  = off {:#x} va {:#x} filesz {:#x} memsz {:#x}",
+        ph.offset, ph.vaddr, ph.filesz, ph.memsz
+    );
 
-    let (hdr, load) = first_load_segment(&image).expect("[elf-loader-v49c] synthetic ELF parse failed");
-    assert_eq!(hdr.entry, 0x4000_0000);
-    assert!(is_load(&load));
-    assert_eq!(load.vaddr, 0x4000_0000);
-    assert_eq!(load.filesz, 16);
-    crate::println!("[elf-loader-v49c] entry = {:#x}", hdr.entry);
-    crate::println!("[elf-loader-v49c] first PT_LOAD vaddr = {:#x}", load.vaddr);
-    crate::println!("[elf-loader-v49c] self-test passed");
-}
+    assert!(ph.readable());
+    assert!(ph.executable());
+    assert!(!ph.writable());
 
-fn read_u16(image: &[u8], off: usize) -> Result<u16, &'static str> {
-    if off + 2 > image.len() { return Err("read_u16 out of range"); }
-    Ok(u16::from_le_bytes([image[off], image[off + 1]]))
-}
-
-fn read_u32(image: &[u8], off: usize) -> Result<u32, &'static str> {
-    if off + 4 > image.len() { return Err("read_u32 out of range"); }
-    Ok(u32::from_le_bytes([image[off], image[off + 1], image[off + 2], image[off + 3]]))
-}
-
-fn read_u64(image: &[u8], off: usize) -> Result<u64, &'static str> {
-    if off + 8 > image.len() { return Err("read_u64 out of range"); }
-    Ok(u64::from_le_bytes([
-        image[off], image[off + 1], image[off + 2], image[off + 3],
-        image[off + 4], image[off + 5], image[off + 6], image[off + 7],
-    ]))
-}
-
-fn put_u16(image: &mut [u8], off: usize, value: u16) {
-    image[off..off + 2].copy_from_slice(&value.to_le_bytes());
-}
-fn put_u32(image: &mut [u8], off: usize, value: u32) {
-    image[off..off + 4].copy_from_slice(&value.to_le_bytes());
-}
-fn put_u64(image: &mut [u8], off: usize, value: u64) {
-    image[off..off + 8].copy_from_slice(&value.to_le_bytes());
+    crate::println!("[elf-loader-v50b] parser self-test passed");
 }
