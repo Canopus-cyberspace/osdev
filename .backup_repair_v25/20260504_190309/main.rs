@@ -1,8 +1,5 @@
 #![no_std]
 #![no_main]
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(static_mut_refs)]
 
 use core::arch::global_asm;
 
