@@ -1,117 +1,42 @@
 # PROJECT_STATE
 
-## Current Branch
+## Current milestone
 
-feature/restore-umode
+v36c: Sv39 activation scaffold added.
 
-## Completed Milestones
+## Verified capabilities
 
-- v35: kernel address-space dry-run passed
-- v24: stable full mechanism skeleton passed
-- v25: warning cleanup and QEMU serial-file runner passed
-- v28: minimal U-mode syscall smoke test passed
-- v29: U-mode trap path refactor passed
-- v30c: U-mode syscall matrix passed
-- v31: user-copy abstraction added
-- v32e: user-copy bounds path verified with U-mode syscall matrix
+- QEMU OpenSBI boot works.
+- serial-file logging works.
+- U-mode ecall works.
+- syscall write/getpid/getppid/unsupported/exit matrix works.
+- user-copy abstraction works.
+- user address-space metadata scaffold works.
+- Sv39 pure dry-run works without touching real satp.
+- kernel address-space dry-run works.
+- Sv39 satp encode/decode scaffold works with real activation disabled.
 
-## Verified Capabilities
+## Current constraints
 
-- QEMU boots through OpenSBI
-- boot.S enters rust_main
-- serial-file logging works
-- frame allocator test passes
-- page table map/translate test passes
-- direct user-copy self-test passes
-- U-mode ecall works
-- syscall write uses copy_from_user
-- syscall getpid works
-- syscall getppid works
-- unsupported syscall returns -38 ENOSYS
-- syscall exit path works
+- Sv39 is not actually enabled yet.
+- ELF loader is not implemented.
+- VFS is still mostly stub.
+- Process/thread/scheduler are still mostly stub.
 
-## Current Constraints
+## Next planned step
 
-- Sv39 is not enabled
-- ELF loader is not implemented
-- VFS is stub
-- process/thread/scheduler are still minimal/stub
-- rootfs is not implemented
-- signal/futex/timer are stub
-
-## Current QEMU Method
-
-- Use tools/run-qemu.sh
-- Use serial file logging
-- Logs are stored in .repair_logs/
-
-## Next Planned Step
-
-v33:
-- Add brk syscall skeleton and process memory layout scaffolding
-- Keep Sv39 disabled
-- Keep U-mode syscall matrix passing
-
-## v33 Update
-
-- Added user address-space metadata scaffold.
-- Added `UserAddressSpace`, `UserRegion`, `MapPermission`.
-- Sv39 is still disabled.
-- U-mode syscall matrix should remain passing.
+v37: kernel-only Sv39 activation experiment behind a feature flag, still keeping stable U-mode regression path safe.
 
 
-## v34 - Sv39 Page Table Dry Run
+## v36d - Sv39 Activation Scaffold
 
-Status: PASS expected after repair package smoke test.
+- Added src/mm/sv39.rs
+- Added make_satp / satp_mode / satp_ppn helpers
+- Real satp activation remains disabled by default
+- U-mode syscall matrix must continue to pass
 
-Completed:
-- Added `src/mm/sv39_preflight.rs`.
-- Added dry-run user code and user stack page-table mappings.
-- Verified user code is R/X/U and not W.
-- Verified user stack is R/W/U and not X.
-- Kept `satp` activation disabled.
-- Kept U-mode syscall matrix path enabled.
+## v36e
 
-Next:
-- v35 kernel address-space identity-map preflight without enabling Sv39.
-
-## v34b
-
-- Sv39 dry-run page table preflight passed.
-- User code page mapped as R/X/U and not W.
-- User stack page mapped as R/W/U and not X.
-- Sv39 remains disabled; no `satp` write yet.
-
-## v34c Update
-
-- v34c: Sv39 dry-run page table preflight passed.
-- Sv39 remains disabled; this step does not write `satp`.
-- U-mode syscall matrix remains the active smoke test path.
-
-## v34d Status
-
-- Added Sv39 page-table dry-run preflight.
-- Fixed `sv39_preflight::test()` / `test_page_table_dry_run()` naming mismatch.
-- Verified user code page R/X/U and user stack page R/W/U permissions without enabling satp.
-- U-mode syscall matrix remains expected to pass.
-
-## v34e - Sv39 Dry-run Non-destructive Fix
-
+- Added safe Sv39 activation scaffold.
 - Sv39 remains disabled.
-- Dry-run uses dummy physical pages instead of allocating/zeroing user data frames.
-- Page-table map/translate/permission check remains covered.
-- U-mode syscall matrix remains the smoke-test target.
-
-- v34f: Sv39 pure dry-run preflight passes without disturbing U-mode syscall matrix
-
-## v35d
-
-- Added kernel address-space dry-run.
-- Sv39 still disabled.
-- U-mode syscall matrix remains passing.
-
-## v35e Kernel Space Dry Run
-
-- Added kernel text/rodata/data-bss permission dry-run.
-- Sv39 remains disabled.
-- U-mode syscall matrix remains the main runtime smoke test.
+- U-mode syscall matrix remains the regression target.
