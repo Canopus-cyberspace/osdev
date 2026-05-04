@@ -1,30 +1,16 @@
 #![no_std]
 #![no_main]
 #![allow(dead_code)]
-#![allow(unused_imports)]
 #![allow(static_mut_refs)]
-#![allow(unused_unsafe)]
 
 use core::arch::global_asm;
 
 global_asm!(include_str!("../arch/riscv64/boot.S"));
 
-mod config;
 mod console;
-mod drivers;
-mod fs;
-mod futex;
 mod lang_items;
-mod loader;
 mod mm;
-mod net;
 mod sbi;
-mod signal;
-mod sync;
-mod syscall;
-mod task;
-mod timer;
-mod trap;
 
 #[no_mangle]
 pub extern "C" fn rust_main() -> ! {
@@ -32,9 +18,10 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] kernel Sv39 trap smoke v43e");
+    crate::println!("[stage] Sv39 + U-mode ecall smoke v45g");
+    crate::println!("[v45g] before run_sv39_umode_smoke");
 
-    mm::sv39_smoke::run_kernel_sv39_trap_ebreak_smoke();
+    mm::sv39_umode::run_sv39_umode_smoke();
 }
 
 fn clear_bss() {

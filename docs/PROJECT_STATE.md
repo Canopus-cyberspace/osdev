@@ -1,32 +1,35 @@
 # PROJECT_STATE
 
-## Current Stage
+## Current Milestone
 
-Kernel-only Sv39 trap smoke v43.
+v45j: Sv39 + U-mode ecall smoke verified.
 
-## Verified Before v43
+## Verified Capabilities
 
-- Stable full mechanism skeleton.
-- QEMU serial-file logging.
-- U-mode syscall matrix without Sv39.
-- User-copy abstraction.
-- User/kernel address-space dry-runs.
-- Real page table build dry-run.
-- Kernel-only Sv39 activation.
+- OpenSBI enters kernel.
+- QEMU serial-file logging works.
+- Kernel Sv39 activation works.
+- Kernel trap under Sv39 works.
+- U-mode under Sv39 works.
+- U-mode syscall matrix under Sv39 works:
+  - write
+  - getpid
+  - getppid
+  - unsupported syscall returns -38
+  - exit
 
-## v43 Goal
+## Current Branch Recommendation
 
-Enable Sv39 in kernel-only mode, trigger a supervisor ecall, handle the trap, return, and continue printing.
+Use a dedicated branch such as:
 
-## Important Constraint
+- `feature/kernel-sv39-activation`
 
-v43 does not enter U-mode. U-mode under Sv39 will be a later step.
+## Next Recommended Step
 
+v46: consolidate Sv39 U-mode smoke into a clean test-mode selector, then restore normal module initialization around the working Sv39 U-mode path.
 
-## v44 - Sv39 U-mode preparation scaffold
+## v45j Verification Log
 
-- Added `src/mm/user_sv39.rs`.
-- Added user text / guard / stack mapping plan metadata.
-- Default runtime remains kernel Sv39 trap smoke.
-- Sv39 + U-mode is still not enabled.
-- Next planned step: v45 controlled Sv39 + U-mode ecall experiment.
+- Repair log: /home/lenovo/projects/uestc-kernel/.repair_logs/fix_sv39_umode_v45j_20260505_004034.log
+- Serial log: /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v45j_20260505_004034.serial.log
+- Stderr log: /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v45j_20260505_004034.stderr.log

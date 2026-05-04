@@ -23,18 +23,29 @@ SECTIONS
     etext = .;
   } :text
 
+  . = ALIGN(4096);
+  .user : {
+    suser = .;
+    *(.user.text .user.text.*)
+    . = ALIGN(4096);
+    euser = .;
+  } :text
+
+  . = ALIGN(4096);
   .rodata : {
     srodata = .;
     *(.rodata .rodata.*)
     erodata = .;
   } :rodata
 
+  . = ALIGN(4096);
   .data : {
     sdata = .;
     *(.data .data.*)
     edata = .;
   } :data
 
+  . = ALIGN(4096);
   .bss : {
     sbss = .;
     *(.bss .bss.*)

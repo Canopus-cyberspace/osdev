@@ -1,25 +1,24 @@
 # LAST_APPLIED_FIX
 
-## v44 - Sv39 U-mode preparation scaffold
+## v45j - Formalize Sv39 + U-mode ecall smoke success
 
-Status: PASS expected after package smoke test.
+Status: PASS
 
-### What changed
+This fix package does not rewrite the working v45 implementation. It formalizes the pass condition using the actual runtime markers currently emitted by the kernel:
 
-- Added `src/mm/user_sv39.rs`.
-- Added user text / guard / stack mapping plan metadata.
-- Added permission checks for future Sv39 U-mode mapping.
-- Kept the default runtime path on the already-passing kernel Sv39 trap smoke.
-- Did not restore Sv39 + U-mode yet.
+- `[stage] Sv39 + U-mode ecall smoke v45g`
+- `[sv39-umode-v45d] begin`
+- `[sv39-umode-v45d] after satp`
+- `hello from sv39 umode v45 syscall write`
+- `umode getpid returned 1`
+- `umode getppid returned 0`
+- `unsupported syscall returned -38`
+- `[sv39-umode-v45d] exit code = 0`
+- `[sv39-umode-v45d] smoke passed`
 
-### Verified markers
+Notes:
 
-- `[sv39-trap-v43e] after satp`
-- `[sv39-trap-v43e] kernel trap smoke passed`
-
-### Next planned step
-
-v45:
-- Create a controlled Sv39 + U-mode experiment branch.
-- Map user text and user stack with real page tables.
-- Enter U-mode only after kernel trap path is stable.
+- Sv39 is actually enabled via `satp`.
+- User text is mapped at a virtual address away from UART MMIO.
+- U-mode ecall path reaches kernel trap handling.
+- `sys_write`, `getpid`, `getppid`, unsupported syscall -> `-38`, and `exit` are verified under Sv39.
