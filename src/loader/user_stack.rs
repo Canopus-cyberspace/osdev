@@ -62,7 +62,6 @@ fn build_stack_for_process(info: &ProcessInitInfo) -> InitialUserStackLayout {
 
         offset = align_down(offset, 16);
 
-        // auxv is built backward because the stack grows down.
         offset = push_usize(buf, offset, 0);
         offset = push_usize(buf, offset, AT_NULL);
 
@@ -140,19 +139,19 @@ const fn align_down(value: usize, align: usize) -> usize {
 }
 
 pub fn self_test() {
-    crate::println!("[user-stack-v52] dry-run begin");
+    crate::println!("[user-stack-v53] dry-run begin");
 
     let layout = build_initial_user_stack_dry_run()
-        .expect("[user-stack-v52] build initial user stack dry-run failed");
+        .expect("[user-stack-v53] build initial user stack dry-run failed");
 
-    crate::println!("[user-stack-v52] stack = {:#x}..{:#x}", layout.stack_bottom, layout.stack_top);
-    crate::println!("[user-stack-v52] initial sp = {:#x}", layout.initial_sp);
-    crate::println!("[user-stack-v52] argc = {}", layout.argc);
-    crate::println!("[user-stack-v52] argv0 ptr = {:#x}", layout.argv0_ptr);
-    crate::println!("[user-stack-v52] argv null slot = {:#x}", layout.argv_null_slot);
-    crate::println!("[user-stack-v52] envp null slot = {:#x}", layout.envp_null_slot);
-    crate::println!("[user-stack-v52] auxv start = {:#x}", layout.auxv_start);
-    crate::println!("[user-stack-v52] auxv count = {}", layout.auxv_count);
+    crate::println!("[user-stack-v53] stack = {:#x}..{:#x}", layout.stack_bottom, layout.stack_top);
+    crate::println!("[user-stack-v53] initial sp = {:#x}", layout.initial_sp);
+    crate::println!("[user-stack-v53] argc = {}", layout.argc);
+    crate::println!("[user-stack-v53] argv0 ptr = {:#x}", layout.argv0_ptr);
+    crate::println!("[user-stack-v53] argv null slot = {:#x}", layout.argv_null_slot);
+    crate::println!("[user-stack-v53] envp null slot = {:#x}", layout.envp_null_slot);
+    crate::println!("[user-stack-v53] auxv start = {:#x}", layout.auxv_start);
+    crate::println!("[user-stack-v53] auxv count = {}", layout.auxv_count);
 
     assert_eq!(layout.argc, 1);
     assert!(layout.is_aligned());
@@ -163,5 +162,5 @@ pub fn self_test() {
     assert!(layout.envp_null_slot < layout.auxv_start);
     assert_eq!(layout.auxv_count, 6);
 
-    crate::println!("[user-stack-v52] dry-run passed");
+    crate::println!("[user-stack-v53] dry-run passed");
 }

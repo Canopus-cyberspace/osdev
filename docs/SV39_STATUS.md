@@ -28,3 +28,9 @@
 - Repair log: /home/lenovo/projects/uestc-kernel/.repair_logs/fix_sv39_umode_v45j_20260505_004034.log
 - Serial log: /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v45j_20260505_004034.serial.log
 - Stderr log: /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v45j_20260505_004034.stderr.log
+
+## v53f
+
+Trap entry alignment fix:
+- `__sv39_init_v50b_alltraps` is explicitly 4-byte aligned.
+- `stvec` is written with low two bits cleared for direct mode.

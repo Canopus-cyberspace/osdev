@@ -9,10 +9,13 @@ global_asm!(include_str!("../arch/riscv64/boot.S"));
 
 mod config;
 mod console;
+mod fd;
 mod lang_items;
 mod loader;
 mod mm;
+mod process;
 mod sbi;
+mod syscall;
 
 #[no_mangle]
 pub extern "C" fn rust_main() -> ! {
@@ -20,9 +23,11 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] execve process init scaffold v52");
+    crate::println!("[stage] v53d scaffold isolated; external init ELF regression");
 
-    loader::self_test();
+    crate::println!("[stage] v53d scaffold modules compile-only");
+    crate::println!("[stage] v53d entering external init ELF regression");
+
     mm::sv39_init_exec::run_external_init_elf_smoke();
 }
 

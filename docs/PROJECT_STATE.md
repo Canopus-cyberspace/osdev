@@ -106,3 +106,50 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added `UserProgram`
 - Added initial user stack dry-run with argc/argv/envp/auxv placeholders
 - Kept external init ELF Sv39 U-mode execution smoke passing
+
+## v53 - Larger batch: process/fd/syscall scaffold
+
+- Added process metadata scaffold
+- Added Process / ProcessState
+- Added PID allocator scaffold
+- Added fd table scaffold
+- Added syscall dispatch scaffold
+- Added execve scaffold that validates the embedded `/init` program metadata
+- External init ELF Sv39 U-mode smoke remains the runtime regression path
+
+## v53 - Larger batch: process/fd/syscall scaffold
+
+- Added process metadata scaffold
+- Added Process / ProcessState
+- Added PID allocator scaffold
+- Added fd table scaffold
+- Added syscall dispatch scaffold
+- Added execve scaffold that validates the embedded `/init` program metadata
+- External init ELF Sv39 U-mode smoke remains the runtime regression path
+
+## v53b - Syscall module conflict fix
+
+- Fixed E0761 by deleting `src/syscall.rs`
+- Kept `src/syscall/mod.rs` as the canonical syscall module
+- Preserved process/fd/syscall scaffold self-tests
+- External init ELF Sv39 U-mode smoke remains the runtime regression path
+
+## v53c - Safe process/fd/syscall scaffold regression fix
+
+- Fixed syscall module conflict by keeping `src/syscall/mod.rs`
+- Converted process/fd/syscall scaffold tests to non-panicking runtime checks
+- Kept external init ELF Sv39 U-mode smoke as the primary regression path
+
+## v53d - Isolate scaffold from runtime smoke
+
+- Fixed syscall module conflict by keeping only `src/syscall/mod.rs`
+- Kept process/fd/syscall scaffold compiled
+- Isolated v53 scaffold self-tests from runtime
+- Restored external init ELF Sv39 U-mode smoke as the only QEMU regression path
+
+## v53f - Trap entry alignment fix
+
+- Diagnosed v53d regression: external init reached `enter user`, then rebooted before first user ecall handler output.
+- Root cause: `stvec` trap entry could become 2-byte aligned after code layout changes.
+- RISC-V `stvec` direct mode needs low two bits clear, so the trap entry is now explicitly `.balign 4`.
+- The external init ELF Sv39 U-mode smoke remains the primary regression path.

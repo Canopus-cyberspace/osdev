@@ -54,6 +54,7 @@ extern "C" {
 
 global_asm!(r#"
     .section .text
+    .balign 4
     .globl __sv39_init_v50b_alltraps
     .globl __sv39_init_v50b_restore
 
@@ -225,7 +226,16 @@ unsafe fn map_user_4k(va: usize, pa: usize, flags: usize) {
 }
 
 unsafe fn install_trap_entry() {
-    let entry = __sv39_init_v50b_alltraps as *const () as usize;
+    let entry_raw = __sv39_init_v50b_alltraps as *const () as usize;
+    let entry = entry_raw & !0x3usize;
+
+    crate::println!("[external-init-v53f] trap entry raw = {:#x}", entry_raw);
+    crate::println!("[external-init-v53f] trap entry aligned = {:#x}", entry);
+
+    if entry_raw != entry {
+        crate::println!("[external-init-v53f] corrected stvec low bits");
+    }
+
     asm!("csrw stvec, {}", in(reg) entry);
     crate::println!("[external-init-v50b] stvec = {:#x}", entry);
 }

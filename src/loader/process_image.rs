@@ -90,20 +90,20 @@ pub fn build_init_process_info() -> Result<ProcessInitInfo, ElfError> {
 }
 
 pub fn self_test() {
-    crate::println!("[process-init-v52] self-test begin");
+    crate::println!("[process-init-v53] self-test begin");
 
     let info = build_init_process_info()
-        .expect("[process-init-v52] build init process info failed");
+        .expect("[process-init-v53] build init process info failed");
 
-    crate::println!("[process-init-v52] pid   = {}", info.pid);
-    crate::println!("[process-init-v52] ppid  = {}", info.ppid);
-    crate::println!("[process-init-v52] argv0 = {}", info.argv0);
-    crate::println!("[process-init-v52] entry = {:#x}", info.entry());
-    crate::println!("[process-init-v52] load va = {:#x}", info.program.load_vaddr());
-    crate::println!("[process-init-v52] load pa = {:#x}", info.program.load_pa());
-    crate::println!("[process-init-v52] pages = {}", info.program.page_count());
+    crate::println!("[process-init-v53] pid   = {}", info.pid);
+    crate::println!("[process-init-v53] ppid  = {}", info.ppid);
+    crate::println!("[process-init-v53] argv0 = {}", info.argv0);
+    crate::println!("[process-init-v53] entry = {:#x}", info.entry());
+    crate::println!("[process-init-v53] load va = {:#x}", info.program.load_vaddr());
+    crate::println!("[process-init-v53] load pa = {:#x}", info.program.load_pa());
+    crate::println!("[process-init-v53] pages = {}", info.program.page_count());
     crate::println!(
-        "[process-init-v52] stack = {:#x}..{:#x}",
+        "[process-init-v53] stack = {:#x}..{:#x}",
         info.user_stack_bottom,
         info.user_stack_top
     );
@@ -118,5 +118,5 @@ pub fn self_test() {
     assert!(info.entry() >= info.program.load_vaddr());
     assert!(info.program.page_count() >= 1);
 
-    crate::println!("[process-init-v52] self-test passed");
+    crate::println!("[process-init-v53] self-test passed");
 }
