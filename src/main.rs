@@ -49,6 +49,10 @@ pub extern "C" fn rust_main() -> ! {
 
     trap::init();
 
+    if mm::sv39_smoke::ENABLE_KERNEL_SV39_SMOKE {
+        mm::sv39_smoke::run_kernel_sv39_activation_smoke();
+    }
+
     task::run_first_user_task();
 }
 

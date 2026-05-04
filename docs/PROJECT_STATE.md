@@ -70,3 +70,22 @@ v41:
 ## v40d
 
 Sv39 smoke scaffold compile fix applied. Sv39 is still disabled; U-mode syscall matrix remains the regression test.
+
+
+## v41 Kernel Sv39 Activation Smoke
+
+- Kernel-only Sv39 activation test package applied.
+- This path maps UART and RAM identity and writes satp.
+- It intentionally does not enter U-mode during the v41 smoke test.
+
+## v41b
+
+- Added isolated kernel Sv39 activation smoke test.
+- Fixed missing sv39::init() and sv39_smoke::init().
+- U-mode is disabled only for this isolated smoke path.
+
+## v41d
+
+- Fixed Sv39 smoke scaffold function naming.
+- Real Sv39 activation remains disabled.
+- U-mode syscall matrix remains the regression path.

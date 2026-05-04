@@ -1,27 +1,22 @@
 # MM_STATUS
 
-## Passed
+## Completed
 
-- Frame allocator smoke test
-- Page table map/translate test
-- User copy abstraction and bounds path
-- User address-space metadata scaffold
-- Sv39 pure dry-run
-- Kernel address-space dry-run
-- Kernel/user mapping builder dry-run
-- Real page table build dry-run
-- Sv39 activation scaffold v40c
+- Frame allocator test passes.
+- Page-table map/translate test passes.
+- User-copy abstraction passes.
+- User address-space metadata scaffold passes.
+- Sv39 pure dry-run passes.
+- Kernel/user mapping builder dry-runs pass.
+- Real page-table build dry-run passes.
+- Sv39 activation scaffold exists but real satp activation remains disabled.
 
-## Not Enabled Yet
+## Current Version
 
-- Writing `satp`
-- Running with Sv39 enabled
-- Page fault handling
-- Real user address space switching
+- v41d: Sv39 smoke compile/runtime scaffold fixed.
 
-## v40d - Sv39 smoke compile fix
+## Not Yet Enabled
 
-- `sv39::test_scaffold()` exists.
-- `sv39_smoke::test()` exists.
-- Sv39 activation remains disabled.
-- U-mode syscall matrix must continue passing.
+- Real Sv39 activation.
+- Sv39 U-mode execution.
+- Page fault handling.
