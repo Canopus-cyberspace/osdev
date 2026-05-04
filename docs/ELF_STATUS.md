@@ -21,3 +21,31 @@ Expected runtime markers:
 - `external init getppid returned 0`
 - `external init unsupported returned -38`
 - `[external-init-v50b] smoke passed`
+
+## v51
+
+Status: process initialization scaffold added
+
+Implemented:
+- `UserProgram` metadata wrapper around loaded external `init.elf`
+- `ProcessInitInfo` placeholder for future `execve`
+- Runtime self-test marker: `[process-init-v51] self-test passed`
+
+Still TODO:
+- copy argv/envp/auxv to the user stack
+- expose this path as `execve`
+- load binaries from VFS/rootfs instead of `include_bytes!`
+
+## v51
+
+Status: process initialization scaffold added
+
+Implemented:
+- `UserProgram` metadata wrapper around loaded external `init.elf`
+- `ProcessInitInfo` placeholder for future `execve`
+- Runtime self-test marker: `[process-init-v51] self-test passed`
+
+Still TODO:
+- copy argv/envp/auxv to the user stack
+- expose this path as `execve`
+- load binaries from VFS/rootfs instead of `include_bytes!`

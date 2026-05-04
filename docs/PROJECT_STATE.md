@@ -81,3 +81,19 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
   - getppid
   - unsupported -> -38
   - exit
+
+## v51 - Process initialization scaffold for execve
+
+- Added `loader::process_image`
+- Added `UserProgram`
+- Added `ProcessInitInfo`
+- Wrapped external `init.elf` load result in process initialization metadata
+- Kept external init ELF Sv39 U-mode execution smoke passing
+
+## v51 - Process initialization scaffold for execve
+
+- Added `loader::process_image`
+- Added `UserProgram`
+- Added `ProcessInitInfo`
+- Wrapped external `init.elf` load result in process initialization metadata
+- Kept external init ELF Sv39 U-mode execution smoke passing
