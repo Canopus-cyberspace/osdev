@@ -1,10 +1,20 @@
 # ELF_STATUS
 
-## v48 - external init ELF scaffold
+## v49c
 
-- user/init.S scaffold source
-- user/init.ld scaffold linker script
-- user/init.elf synthetic external ELF image
-- src/loader/init_image.rs using include_bytes!
-- ELF64/RISC-V header checks
-- PT_LOAD metadata checks
+Status: PASS target
+
+Implemented scaffold:
+
+- ELF64 RISC-V header parser
+- PT_LOAD program header parser
+- synthetic ELF parser self-test
+- external `user/init.elf` embedded by `include_bytes!`
+- PT_LOAD copy into one kernel load page
+- runtime markers verified through QEMU serial-file
+
+Not implemented yet:
+
+- real `execve`
+- multi-segment ELF loading into process address space
+- argc/argv/envp/auxv user stack construction

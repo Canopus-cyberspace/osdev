@@ -38,3 +38,22 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Synthetic user/init.elf is embedded via include_bytes!.
 - Loader checks ELF64/RISC-V header and PT_LOAD metadata.
 - Sv39 + U-mode ecall smoke remains the runtime regression path.
+
+## v49 - External init ELF load-page scaffold
+
+- Generates and embeds `user/init.elf`.
+- Parses ELF64/RISC-V header and PT_LOAD segment.
+- Copies PT_LOAD bytes into a kernel-owned page as a load dry-run.
+- Keeps the already passing Sv39 + U-mode ecall smoke path as regression.
+
+## v49c external init load-page scaffold
+
+- ELF loader parser scaffold retained.
+- External `user/init.elf` is embedded and copied into a kernel load page.
+- Sv39 + U-mode smoke regression remains the required runtime check.
+
+## v49d
+
+- Fixed crate root config module visibility for loader init-image code.
+- External init ELF load-page scaffold remains present.
+- Sv39 + U-mode ecall smoke remains passing.
