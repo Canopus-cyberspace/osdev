@@ -19,13 +19,12 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] static ELF loader scaffold v46f + Sv39 U-mode regression");
+    crate::println!("[stage] ELF-linked Sv39 U-mode smoke v47");
 
-    loader::init();
-    loader::elf::init();
-    loader::elf::self_test();
+    loader::elf::self_test_v47();
+    loader::elf::linked_user_image_self_test_v47();
 
-    crate::println!("[v46f] before Sv39 U-mode regression");
+    crate::println!("[v47] before run_sv39_umode_smoke");
     mm::sv39_umode::run_sv39_umode_smoke();
 }
 

@@ -24,3 +24,10 @@
 ## v46f
 
 Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains passing.
+
+## v47 - ELF-linked user image loader scaffold
+
+- Added static ELF parser scaffold.
+- Added PT_LOAD parser scaffold.
+- Added linked `.user` image metadata path.
+- Kept existing Sv39 + U-mode syscall smoke as regression gate.

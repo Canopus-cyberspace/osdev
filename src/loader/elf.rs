@@ -1,31 +1,17 @@
-#![allow(dead_code)]
+//! v47: static ELF parser scaffold plus linked user-image metadata path.
+//!
+//! This stage intentionally does not load an external file yet. It introduces
+//! the same metadata shape that a future `execve` loader will return, then
+//! validates it against the currently linked `.user` image used by the Sv39
+//! U-mode smoke test.
 
 const EI_NIDENT: usize = 16;
 const ELF_MAGIC: &[u8; 4] = b"\x7fELF";
 const ELFCLASS64: u8 = 2;
 const ELFDATA2LSB: u8 = 1;
-const EV_CURRENT: u8 = 1;
 const ET_EXEC: u16 = 2;
 const EM_RISCV: u16 = 243;
 const PT_LOAD: u32 = 1;
-const ELF64_EHDR_SIZE: usize = 64;
-const ELF64_PHDR_SIZE: usize = 56;
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum ElfError {
-    TooSmall,
-    BadMagic,
-    UnsupportedClass,
-    UnsupportedEndian,
-    UnsupportedVersion,
-    UnsupportedType,
-    UnsupportedMachine,
-    BadHeaderSize,
-    BadProgramHeaderSize,
-    ProgramHeaderOutOfRange,
-    NoLoadSegment,
-    LoadSegmentOutOfRange,
-}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct ElfHeader {
@@ -36,241 +22,227 @@ pub struct ElfHeader {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct ProgramHeader {
-    pub p_type: u32,
-    pub flags: u32,
+pub struct LoadSegment {
     pub offset: usize,
     pub vaddr: usize,
-    pub paddr: usize,
     pub filesz: usize,
     pub memsz: usize,
-    pub align: usize,
+    pub flags: u32,
 }
 
-impl ProgramHeader {
-    pub const fn is_load(&self) -> bool {
-        self.p_type == PT_LOAD
-    }
-
-    pub const fn readable(&self) -> bool {
-        self.flags & 4 != 0
-    }
-
-    pub const fn writable(&self) -> bool {
-        self.flags & 2 != 0
-    }
-
-    pub const fn executable(&self) -> bool {
-        self.flags & 1 != 0
-    }
-
-    pub const fn end_vaddr(&self) -> usize {
-        self.vaddr + self.memsz
-    }
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct LinkedUserImage {
+    pub image_start_pa: usize,
+    pub image_end_pa: usize,
+    pub entry_pa: usize,
+    pub entry_offset: usize,
+    pub len: usize,
 }
 
 pub fn init() {
-    crate::println!("[loader::elf] init v46f");
+    crate::println!("[loader::elf] init v47");
 }
 
-pub fn parse_header(image: &[u8]) -> Result<ElfHeader, ElfError> {
-    if image.len() < ELF64_EHDR_SIZE {
-        return Err(ElfError::TooSmall);
+pub fn self_test() {
+    self_test_v47();
+}
+
+pub fn self_test_v47() {
+    crate::println!("[elf-loader-v47] synthetic ELF self-test begin");
+
+    let mut image = [0u8; 256];
+    write_synthetic_elf64(&mut image);
+
+    let header = parse_header(&image).expect("[elf-loader-v47] parse header failed");
+    assert_eq!(header.entry, 0x4000_0000);
+    assert_eq!(header.phoff, 64);
+    assert_eq!(header.phnum, 1);
+
+    let segment = first_load_segment(&image, header)
+        .expect("[elf-loader-v47] missing PT_LOAD segment");
+    assert_eq!(segment.offset, 0x1000);
+    assert_eq!(segment.vaddr, 0x4000_0000);
+    assert_eq!(segment.filesz, 0x80);
+    assert_eq!(segment.memsz, 0x100);
+    assert_eq!(segment.flags, 5);
+
+    crate::println!("[elf-loader-v47] entry = {:#x}", header.entry);
+    crate::println!("[elf-loader-v47] load vaddr = {:#x}", segment.vaddr);
+    crate::println!("[elf-loader-v47] synthetic ELF self-test passed");
+}
+
+pub fn linked_user_image_v47() -> LinkedUserImage {
+    extern "C" {
+        fn suser();
+        fn euser();
+        fn __user_v45_start();
+    }
+
+    let image_start_pa = suser as *const () as usize;
+    let image_end_pa = euser as *const () as usize;
+    let entry_pa = __user_v45_start as *const () as usize;
+
+    assert!(image_start_pa < image_end_pa);
+    assert!(entry_pa >= image_start_pa);
+    assert!(entry_pa < image_end_pa);
+
+    LinkedUserImage {
+        image_start_pa,
+        image_end_pa,
+        entry_pa,
+        entry_offset: entry_pa - image_start_pa,
+        len: image_end_pa - image_start_pa,
+    }
+}
+
+pub fn linked_user_image_self_test_v47() {
+    crate::println!("[elf-loader-v47] linked user image metadata begin");
+
+    let image = linked_user_image_v47();
+
+    crate::println!("[elf-loader-v47] linked user pa = {:#x}..{:#x}", image.image_start_pa, image.image_end_pa);
+    crate::println!("[elf-loader-v47] linked user entry pa = {:#x}", image.entry_pa);
+    crate::println!("[elf-loader-v47] linked user entry offset = {:#x}", image.entry_offset);
+    crate::println!("[elf-loader-v47] linked user len = {}", image.len);
+
+    assert!(image.len > 0);
+    assert!(image.len <= 0x4000);
+    assert_eq!(image.image_start_pa & 0xfff, 0);
+
+    crate::println!("[elf-loader-v47] linked user image metadata passed");
+}
+
+pub fn parse_header(image: &[u8]) -> Result<ElfHeader, &'static str> {
+    if image.len() < 64 {
+        return Err("ELF image too small");
     }
 
     if &image[0..4] != ELF_MAGIC {
-        return Err(ElfError::BadMagic);
+        return Err("bad ELF magic");
     }
     if image[4] != ELFCLASS64 {
-        return Err(ElfError::UnsupportedClass);
+        return Err("not ELF64");
     }
     if image[5] != ELFDATA2LSB {
-        return Err(ElfError::UnsupportedEndian);
-    }
-    if image[6] != EV_CURRENT {
-        return Err(ElfError::UnsupportedVersion);
+        return Err("not little endian");
     }
 
-    let e_type = read_u16(image, 16);
-    let e_machine = read_u16(image, 18);
-    let e_version = read_u32(image, 20);
-    let entry = read_u64(image, 24) as usize;
-    let phoff = read_u64(image, 32) as usize;
-    let ehsize = read_u16(image, 52) as usize;
-    let phentsize = read_u16(image, 54) as usize;
-    let phnum = read_u16(image, 56) as usize;
-
-    if e_type != ET_EXEC {
-        return Err(ElfError::UnsupportedType);
+    let ident_size = EI_NIDENT;
+    let ty = read_u16(image, ident_size)?;
+    let machine = read_u16(image, ident_size + 2)?;
+    if ty != ET_EXEC {
+        return Err("not ET_EXEC");
     }
-    if e_machine != EM_RISCV {
-        return Err(ElfError::UnsupportedMachine);
-    }
-    if e_version != 1 {
-        return Err(ElfError::UnsupportedVersion);
-    }
-    if ehsize != ELF64_EHDR_SIZE {
-        return Err(ElfError::BadHeaderSize);
-    }
-    if phentsize != ELF64_PHDR_SIZE {
-        return Err(ElfError::BadProgramHeaderSize);
+    if machine != EM_RISCV {
+        return Err("not RISC-V");
     }
 
-    let ph_table_end = phoff.checked_add(phentsize.saturating_mul(phnum)).ok_or(ElfError::ProgramHeaderOutOfRange)?;
-    if ph_table_end > image.len() {
-        return Err(ElfError::ProgramHeaderOutOfRange);
+    let entry = read_u64(image, 24)? as usize;
+    let phoff = read_u64(image, 32)? as usize;
+    let phentsize = read_u16(image, 54)? as usize;
+    let phnum = read_u16(image, 56)? as usize;
+
+    if phentsize < 56 {
+        return Err("program header too small");
+    }
+    if phnum == 0 {
+        return Err("no program headers");
     }
 
     Ok(ElfHeader { entry, phoff, phentsize, phnum })
 }
 
-pub fn program_header(image: &[u8], header: &ElfHeader, index: usize) -> Result<ProgramHeader, ElfError> {
-    if index >= header.phnum {
-        return Err(ElfError::ProgramHeaderOutOfRange);
-    }
-
-    let offset = header.phoff + index * header.phentsize;
-    let end = offset + ELF64_PHDR_SIZE;
-    if end > image.len() {
-        return Err(ElfError::ProgramHeaderOutOfRange);
-    }
-
-    let p_type = read_u32(image, offset);
-    let flags = read_u32(image, offset + 4);
-    let p_offset = read_u64(image, offset + 8) as usize;
-    let vaddr = read_u64(image, offset + 16) as usize;
-    let paddr = read_u64(image, offset + 24) as usize;
-    let filesz = read_u64(image, offset + 32) as usize;
-    let memsz = read_u64(image, offset + 40) as usize;
-    let align = read_u64(image, offset + 48) as usize;
-
-    if p_type == PT_LOAD {
-        let data_end = p_offset.checked_add(filesz).ok_or(ElfError::LoadSegmentOutOfRange)?;
-        if filesz > memsz || data_end > image.len() {
-            return Err(ElfError::LoadSegmentOutOfRange);
+pub fn first_load_segment(image: &[u8], header: ElfHeader) -> Result<LoadSegment, &'static str> {
+    for i in 0..header.phnum {
+        let off = header.phoff + i * header.phentsize;
+        if off + 56 > image.len() {
+            return Err("program header out of range");
         }
-    }
 
-    Ok(ProgramHeader {
-        p_type,
-        flags,
-        offset: p_offset,
-        vaddr,
-        paddr,
-        filesz,
-        memsz,
-        align,
-    })
-}
-
-pub fn first_load_segment(image: &[u8]) -> Result<(ElfHeader, ProgramHeader), ElfError> {
-    let header = parse_header(image)?;
-
-    for index in 0..header.phnum {
-        let ph = program_header(image, &header, index)?;
-        if ph.is_load() {
-            return Ok((header, ph));
+        let p_type = read_u32(image, off)?;
+        if p_type != PT_LOAD {
+            continue;
         }
+
+        let flags = read_u32(image, off + 4)?;
+        let offset = read_u64(image, off + 8)? as usize;
+        let vaddr = read_u64(image, off + 16)? as usize;
+        let filesz = read_u64(image, off + 32)? as usize;
+        let memsz = read_u64(image, off + 40)? as usize;
+
+        if filesz > memsz {
+            return Err("filesz > memsz");
+        }
+
+        return Ok(LoadSegment { offset, vaddr, filesz, memsz, flags });
     }
 
-    Err(ElfError::NoLoadSegment)
+    Err("no PT_LOAD segment")
 }
 
-pub fn self_test() {
-    crate::println!("[elf-loader-v46f] self-test begin");
-
-    let image = synthetic_static_elf();
-    let (header, load) = first_load_segment(&image).expect("[elf-loader-v46f] parse synthetic ELF failed");
-
-    crate::println!("[elf-loader-v46f] entry = {:#x}", header.entry);
-    crate::println!("[elf-loader-v46f] phnum = {}", header.phnum);
-    crate::println!("[elf-loader-v46f] load offset = {:#x}", load.offset);
-    crate::println!("[elf-loader-v46f] load vaddr = {:#x}", load.vaddr);
-    crate::println!("[elf-loader-v46f] load filesz = {:#x}", load.filesz);
-    crate::println!("[elf-loader-v46f] load memsz = {:#x}", load.memsz);
-
-    assert_eq!(header.entry, 0x4000_0000);
-    assert_eq!(header.phnum, 1);
-    assert!(load.is_load());
-    assert!(load.readable());
-    assert!(!load.writable());
-    assert!(load.executable());
-    assert_eq!(load.offset, 0x80);
-    assert_eq!(load.vaddr, 0x4000_0000);
-    assert_eq!(load.filesz, 4);
-    assert_eq!(load.memsz, 4);
-
-    crate::println!("[elf-loader-v46f] PT_LOAD parse ok");
-    crate::println!("[elf-loader-v46f] self-test passed");
+fn read_u16(image: &[u8], off: usize) -> Result<u16, &'static str> {
+    if off + 2 > image.len() {
+        return Err("u16 out of range");
+    }
+    Ok(u16::from_le_bytes([image[off], image[off + 1]]))
 }
 
-fn synthetic_static_elf() -> [u8; 256] {
-    let mut image = [0u8; 256];
+fn read_u32(image: &[u8], off: usize) -> Result<u32, &'static str> {
+    if off + 4 > image.len() {
+        return Err("u32 out of range");
+    }
+    Ok(u32::from_le_bytes([image[off], image[off + 1], image[off + 2], image[off + 3]]))
+}
 
+fn read_u64(image: &[u8], off: usize) -> Result<u64, &'static str> {
+    if off + 8 > image.len() {
+        return Err("u64 out of range");
+    }
+    Ok(u64::from_le_bytes([
+        image[off], image[off + 1], image[off + 2], image[off + 3],
+        image[off + 4], image[off + 5], image[off + 6], image[off + 7],
+    ]))
+}
+
+fn write_synthetic_elf64(image: &mut [u8; 256]) {
     image[0..4].copy_from_slice(ELF_MAGIC);
     image[4] = ELFCLASS64;
     image[5] = ELFDATA2LSB;
-    image[6] = EV_CURRENT;
-    image[EI_NIDENT - 1] = 0;
+    image[6] = 1;
 
-    write_u16(&mut image, 16, ET_EXEC);
-    write_u16(&mut image, 18, EM_RISCV);
-    write_u32(&mut image, 20, 1);
-    write_u64(&mut image, 24, 0x4000_0000);
-    write_u64(&mut image, 32, ELF64_EHDR_SIZE as u64);
-    write_u64(&mut image, 40, 0);
-    write_u32(&mut image, 48, 0);
-    write_u16(&mut image, 52, ELF64_EHDR_SIZE as u16);
-    write_u16(&mut image, 54, ELF64_PHDR_SIZE as u16);
-    write_u16(&mut image, 56, 1);
-    write_u16(&mut image, 58, 0);
-    write_u16(&mut image, 60, 0);
-    write_u16(&mut image, 62, 0);
+    write_u16(image, 16, ET_EXEC);
+    write_u16(image, 18, EM_RISCV);
+    write_u32(image, 20, 1);
+    write_u64(image, 24, 0x4000_0000);
+    write_u64(image, 32, 64);
+    write_u64(image, 40, 0);
+    write_u32(image, 48, 0);
+    write_u16(image, 52, 64);
+    write_u16(image, 54, 56);
+    write_u16(image, 56, 1);
+    write_u16(image, 58, 0);
+    write_u16(image, 60, 0);
+    write_u16(image, 62, 0);
 
-    let ph = ELF64_EHDR_SIZE;
-    write_u32(&mut image, ph, PT_LOAD);
-    write_u32(&mut image, ph + 4, 5); // PF_R | PF_X
-    write_u64(&mut image, ph + 8, 0x80);
-    write_u64(&mut image, ph + 16, 0x4000_0000);
-    write_u64(&mut image, ph + 24, 0x4000_0000);
-    write_u64(&mut image, ph + 32, 4);
-    write_u64(&mut image, ph + 40, 4);
-    write_u64(&mut image, ph + 48, 0x1000);
-
-    image[0x80..0x84].copy_from_slice(&[0x13, 0x00, 0x00, 0x00]); // nop-like addi x0,x0,0
-
-    image
+    let ph = 64;
+    write_u32(image, ph, PT_LOAD);
+    write_u32(image, ph + 4, 5);
+    write_u64(image, ph + 8, 0x1000);
+    write_u64(image, ph + 16, 0x4000_0000);
+    write_u64(image, ph + 24, 0x4000_0000);
+    write_u64(image, ph + 32, 0x80);
+    write_u64(image, ph + 40, 0x100);
+    write_u64(image, ph + 48, 0x1000);
 }
 
-fn read_u16(image: &[u8], offset: usize) -> u16 {
-    u16::from_le_bytes([image[offset], image[offset + 1]])
+fn write_u16(image: &mut [u8], off: usize, value: u16) {
+    image[off..off + 2].copy_from_slice(&value.to_le_bytes());
 }
 
-fn read_u32(image: &[u8], offset: usize) -> u32 {
-    u32::from_le_bytes([image[offset], image[offset + 1], image[offset + 2], image[offset + 3]])
+fn write_u32(image: &mut [u8], off: usize, value: u32) {
+    image[off..off + 4].copy_from_slice(&value.to_le_bytes());
 }
 
-fn read_u64(image: &[u8], offset: usize) -> u64 {
-    u64::from_le_bytes([
-        image[offset],
-        image[offset + 1],
-        image[offset + 2],
-        image[offset + 3],
-        image[offset + 4],
-        image[offset + 5],
-        image[offset + 6],
-        image[offset + 7],
-    ])
-}
-
-fn write_u16(image: &mut [u8], offset: usize, value: u16) {
-    image[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-}
-
-fn write_u32(image: &mut [u8], offset: usize, value: u32) {
-    image[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
-}
-
-fn write_u64(image: &mut [u8], offset: usize, value: u64) {
-    image[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+fn write_u64(image: &mut [u8], off: usize, value: u64) {
+    image[off..off + 8].copy_from_slice(&value.to_le_bytes());
 }

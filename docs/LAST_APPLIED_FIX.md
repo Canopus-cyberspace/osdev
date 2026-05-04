@@ -1,17 +1,15 @@
 # LAST_APPLIED_FIX
 
-Version: v46f
+Version: v47
 
 Goal:
 
-- Add static ELF loader parser scaffold.
-- Preserve the previously passing Sv39 + U-mode ecall smoke path.
+- Add ELF-like linked user image loader metadata path.
+- Keep Sv39 + U-mode ecall smoke passing.
 
 Expected runtime markers:
 
-- [elf-loader-v46f] self-test passed
-- hello from sv39 umode v45 syscall write
-- umode getpid returned 1
-- umode getppid returned 0
-- unsupported syscall returned -38
-- [sv39-umode-v45d] smoke passed
+- `[elf-loader-v47] synthetic ELF self-test passed`
+- `[elf-loader-v47] linked user image metadata passed`
+- `hello from sv39 umode v45 syscall write`
+- `[sv39-umode-v45d] smoke passed`
