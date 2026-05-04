@@ -2,6 +2,7 @@ pub mod address_space;
 pub mod cow;
 pub mod frame_allocator;
 pub mod page_table;
+pub mod user_buffer;
 pub mod vm_area;
 
 pub use frame_allocator::{frame_alloc, frame_dealloc};
@@ -18,4 +19,5 @@ pub fn init() {
 pub fn test() {
     frame_allocator::test();
     page_table::test();
+    user_buffer::test_direct_user_copy();
 }
