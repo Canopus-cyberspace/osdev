@@ -2,9 +2,9 @@
 set -euo pipefail
 
 KERNEL_ELF="${1:-target/riscv64gc-unknown-none-elf/debug/uestc-kernel}"
-LOG_DIR="${QEMU_LOG_DIR:-.repair_logs}"
+LOG_DIR=".repair_logs"
 mkdir -p "$LOG_DIR"
-SERIAL_LOG="${QEMU_SERIAL_LOG:-$LOG_DIR/qemu-serial.log}"
+SERIAL_LOG="$LOG_DIR/qemu_serial_$(date +%Y%m%d_%H%M%S).log"
 
 echo "[INFO] QEMU serial log: $SERIAL_LOG"
 
@@ -19,11 +19,13 @@ qemu-system-riscv64 \
   -monitor none \
   -no-reboot &
 
-QEMU_PID=$!
-sleep "${QEMU_TIMEOUT_SEC:-8}"
+QEMU_PID="$!"
+trap 'kill "$QEMU_PID" 2>/dev/null || true' INT TERM EXIT
+
+sleep 3
 kill "$QEMU_PID" 2>/dev/null || true
 wait "$QEMU_PID" 2>/dev/null || true
+trap - INT TERM EXIT
 
-echo "[INFO] QEMU stopped"
-echo "[INFO] serial log tail:"
-tail -80 "$SERIAL_LOG" || true
+echo "[INFO] QEMU serial log tail:"
+tail -120 "$SERIAL_LOG" || true

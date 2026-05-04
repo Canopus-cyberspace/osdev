@@ -1,56 +1,64 @@
 use core::arch::asm;
 
-const USER_STACK_SIZE: usize = 4096 * 4;
+const USER_STACK_SIZE: usize = crate::config::USER_STACK_SIZE;
 
 #[repr(align(16))]
 struct UserStack([u8; USER_STACK_SIZE]);
 
 static mut USER_STACK: UserStack = UserStack([0; USER_STACK_SIZE]);
 
-#[no_mangle]
 #[used]
-pub static UMODE_V30B_WRITE_MARKER: &[u8] = b"hello from umode v30b syscall write
-";
+pub static UMODE_V32_WRITE_MARKER: &[u8] = b"hello from umode v32 syscall write\n";
 
-#[no_mangle]
 #[used]
-pub static UMODE_V30B_ENOSYS_MARKER: &[u8] = b"unsupported syscall returned -38
-";
+pub static UMODE_V32_ZERO_WRITE_MARKER: &[u8] = b"zero length write returned 0\n";
 
-#[no_mangle]
 #[used]
-pub static UMODE_V30B_PID_MARKER: &[u8] = b"umode getpid returned 1
-";
+pub static UMODE_V32_PID_MARKER: &[u8] = b"umode getpid returned 1\n";
+
+#[used]
+pub static UMODE_V32_PPID_MARKER: &[u8] = b"umode getppid returned 0\n";
+
+#[used]
+pub static UMODE_V32_ENOSYS_MARKER: &[u8] = b"unsupported syscall returned -38\n";
 
 pub fn run_umode_test() -> ! {
-    let entry = user_entry as *const () as usize;
-    let stack_bottom = core::ptr::addr_of_mut!(USER_STACK) as usize;
-    let stack_top = stack_bottom + USER_STACK_SIZE;
+    let user_entry_addr = user_entry as *const () as usize;
+    let user_stack_bottom = core::ptr::addr_of_mut!(USER_STACK) as usize;
+    let user_stack_top = user_stack_bottom + USER_STACK_SIZE;
 
-    crate::println!("[umode] v30b preflight begin");
-    crate::println!("[umode] entry = {:#x}", entry);
-    crate::println!("[umode] stack = {:#x}..{:#x}", stack_bottom, stack_top);
-    crate::println!("[umode] enter user mode now");
-
-    crate::trap::enter_user(entry, stack_top);
+    crate::println!("[umode] enter v32 user-copy bounds test");
+    crate::trap::enter_user(user_entry_addr, user_stack_top);
 }
 
 #[no_mangle]
 extern "C" fn user_entry() -> ! {
-    user_write(&UMODE_V30B_WRITE_MARKER);
+    let msg = b"hello from umode v32 syscall write\n";
+    user_syscall3(64, 1, msg.as_ptr() as usize, msg.len());
+
+    let zero = b"this should not be printed by zero length write\n";
+    let zero_ret = user_syscall3(64, 1, zero.as_ptr() as usize, 0);
+    if zero_ret == 0 {
+        let ok = b"zero length write returned 0\n";
+        user_syscall3(64, 1, ok.as_ptr() as usize, ok.len());
+    }
 
     let pid = user_syscall0(172);
     if pid == 1 {
-        user_write(&UMODE_V30B_PID_MARKER);
-    } else {
-        user_write(b"umode getpid unexpected value\n");
+        let ok = b"umode getpid returned 1\n";
+        user_syscall3(64, 1, ok.as_ptr() as usize, ok.len());
     }
 
-    let ret = user_syscall0(9999);
-    if ret == -38 {
-        user_write(&UMODE_V30B_ENOSYS_MARKER);
-    } else {
-        user_write(b"unsupported syscall returned unexpected value\n");
+    let ppid = user_syscall0(173);
+    if ppid == 0 {
+        let ok = b"umode getppid returned 0\n";
+        user_syscall3(64, 1, ok.as_ptr() as usize, ok.len());
+    }
+
+    let unsupported = user_syscall0(9999);
+    if unsupported == -38 {
+        let ok = b"unsupported syscall returned -38\n";
+        user_syscall3(64, 1, ok.as_ptr() as usize, ok.len());
     }
 
     user_syscall1(93, 0);
@@ -60,10 +68,6 @@ extern "C" fn user_entry() -> ! {
             asm!("wfi");
         }
     }
-}
-
-fn user_write(buf: &[u8]) {
-    let _ = user_syscall3(64, 1, buf.as_ptr() as usize, buf.len());
 }
 
 fn user_syscall0(id: usize) -> isize {

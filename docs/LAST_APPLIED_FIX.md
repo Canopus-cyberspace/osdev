@@ -1,22 +1,16 @@
 # LAST_APPLIED_FIX
 
-Version: v31
+Version: v34f
+Status: PASS
 
-Status: PASS expected after script smoke test
+Verified:
 
-Applied at: 20260504_193806
+- cargo +nightly build
+- QEMU serial-file smoke test
+- Sv39 pure dry-run marker found
+- U-mode syscall matrix marker found
 
-## Summary
+Log:
 
-- Added .
-- Added , , and .
-- Refactored  to copy user bytes through the user-copy layer.
-- Kept Sv39 disabled.
-- Kept U-mode syscall matrix smoke test active.
-
-## Verified Markers
-
-- 
-- U-mode write output
-- 
-- 
+- /home/lenovo/projects/uestc-kernel/.repair_logs/fix_sv39_dryrun_v34f_20260504_201053.log
+- /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v34f_20260504_201053.serial.log

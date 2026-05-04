@@ -2,11 +2,11 @@
 
 | Syscall | Status | Verified In |
 |---|---|---|
-| write | PASS via copy_from_user | v31 |
-| getpid | PASS | v30c |
-| exit | PASS | v30c |
-| unsupported -> ENOSYS | PASS | v30c |
-| getppid | STUB | - |
+| write | PASS | v32e |
+| getpid | PASS | v32e |
+| getppid | PASS | v32e |
+| exit | PASS | v32e |
+| unsupported -> ENOSYS | PASS | v32e |
 | read | TODO | - |
 | openat | TODO | - |
 | close | TODO | - |

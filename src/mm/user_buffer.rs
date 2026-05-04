@@ -1,28 +1,23 @@
-//! User memory copy helpers.
-//!
-//! v31 keeps Sv39 disabled, so user virtual addresses are currently direct
-//! addresses in the kernel address space.  The important design point is that
-//! syscalls no longer dereference user pointers directly; they go through this
-//! module.  When Sv39 is enabled later, only this layer should need to change.
+pub const USER_COPY_CHUNK_SIZE: usize = 64;
 
-use core::fmt;
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum UserCopyError {
     NullPointer,
-    LengthOverflow,
+    InvalidRange,
+    BufferTooSmall,
 }
 
-impl fmt::Display for UserCopyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl UserCopyError {
+    pub fn as_errno(self) -> isize {
         match self {
-            Self::NullPointer => write!(f, "null user pointer"),
-            Self::LengthOverflow => write!(f, "user buffer length overflow"),
+            Self::NullPointer => -14,
+            Self::InvalidRange => -14,
+            Self::BufferTooSmall => -22,
         }
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct UserBuffer {
     ptr: usize,
     len: usize,
@@ -30,82 +25,101 @@ pub struct UserBuffer {
 
 impl UserBuffer {
     pub fn new(ptr: usize, len: usize) -> Result<Self, UserCopyError> {
-        if len > 0 && ptr == 0 {
+        if len == 0 {
+            return Ok(Self { ptr, len });
+        }
+
+        if ptr == 0 {
             return Err(UserCopyError::NullPointer);
         }
 
-        ptr.checked_add(len).ok_or(UserCopyError::LengthOverflow)?;
-
-        Ok(Self { ptr, len })
+        let buffer = Self { ptr, len };
+        buffer.checked_range()?;
+        Ok(buffer)
     }
 
-    pub const fn ptr(&self) -> usize {
+    pub fn ptr(&self) -> usize {
         self.ptr
     }
 
-    pub const fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.len
     }
 
-    pub const fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
-    pub fn copy_to_kernel(&self, dst: &mut [u8]) -> Result<usize, UserCopyError> {
-        let copy_len = core::cmp::min(self.len, dst.len());
-        copy_from_user(self.ptr, &mut dst[..copy_len])?;
-        Ok(copy_len)
+    pub fn checked_range(&self) -> Result<(), UserCopyError> {
+        if self.len == 0 {
+            return Ok(());
+        }
+
+        self.ptr
+            .checked_add(self.len - 1)
+            .map(|_| ())
+            .ok_or(UserCopyError::InvalidRange)
     }
 }
 
-pub fn copy_from_user(src_user: usize, dst_kernel: &mut [u8]) -> Result<(), UserCopyError> {
-    if dst_kernel.is_empty() {
-        return Ok(());
+pub fn copy_from_user(src: usize, len: usize, dst: &mut [u8]) -> Result<usize, UserCopyError> {
+    let ubuf = UserBuffer::new(src, len)?;
+
+    if len > dst.len() {
+        return Err(UserCopyError::BufferTooSmall);
     }
 
-    if src_user == 0 {
-        return Err(UserCopyError::NullPointer);
+    if ubuf.is_empty() {
+        return Ok(0);
     }
-
-    src_user
-        .checked_add(dst_kernel.len())
-        .ok_or(UserCopyError::LengthOverflow)?;
 
     unsafe {
-        let src = core::slice::from_raw_parts(src_user as *const u8, dst_kernel.len());
-        dst_kernel.copy_from_slice(src);
+        core::ptr::copy_nonoverlapping(ubuf.ptr() as *const u8, dst.as_mut_ptr(), ubuf.len());
     }
 
-    Ok(())
+    Ok(ubuf.len())
 }
 
-pub fn copy_to_user(src_kernel: &[u8], dst_user: usize) -> Result<(), UserCopyError> {
-    if src_kernel.is_empty() {
-        return Ok(());
-    }
+pub fn copy_to_user(dst: usize, src: &[u8]) -> Result<usize, UserCopyError> {
+    let ubuf = UserBuffer::new(dst, src.len())?;
 
-    if dst_user == 0 {
-        return Err(UserCopyError::NullPointer);
+    if ubuf.is_empty() {
+        return Ok(0);
     }
-
-    dst_user
-        .checked_add(src_kernel.len())
-        .ok_or(UserCopyError::LengthOverflow)?;
 
     unsafe {
-        let dst = core::slice::from_raw_parts_mut(dst_user as *mut u8, src_kernel.len());
-        dst.copy_from_slice(src_kernel);
+        core::ptr::copy_nonoverlapping(src.as_ptr(), ubuf.ptr() as *mut u8, ubuf.len());
     }
 
-    Ok(())
+    Ok(ubuf.len())
 }
 
 pub fn test_direct_user_copy() {
-    let src = b"usercopy-v31";
-    let mut dst = [0u8; 12];
+    crate::println!("[mm::user_buffer] user-copy-v32e direct test begin");
 
-    copy_from_user(src.as_ptr() as usize, &mut dst).expect("copy_from_user failed");
+    let src = b"user-copy-v32e";
+    let mut dst = [0u8; 64];
 
-    assert_eq!(&dst, src);
-    crate::println!("[mm::user_buffer] direct user copy test passed");
+    let copied = copy_from_user(src.as_ptr() as usize, src.len(), &mut dst).unwrap();
+    assert_eq!(copied, src.len());
+    assert_eq!(&src[..], &dst[..src.len()]);
+
+    let mut out = [0u8; 64];
+    let copied_back = copy_to_user(out.as_mut_ptr() as usize, &src[..]).unwrap();
+    assert_eq!(copied_back, src.len());
+    assert_eq!(&src[..], &out[..src.len()]);
+
+    let ubuf = UserBuffer::new(src.as_ptr() as usize, src.len()).unwrap();
+    let mut via_ubuf = [0u8; 64];
+    let copied_via_ubuf = copy_from_user(ubuf.ptr(), ubuf.len(), &mut via_ubuf).unwrap();
+    assert_eq!(copied_via_ubuf, src.len());
+    assert_eq!(&src[..], &via_ubuf[..src.len()]);
+
+    let empty = UserBuffer::new(0, 0).unwrap();
+    assert!(empty.is_empty());
+    assert_eq!(copy_from_user(0, 0, &mut dst).unwrap(), 0);
+    assert_eq!(copy_to_user(0, &[]).unwrap(), 0);
+    assert_eq!(UserBuffer::new(0, 1).err(), Some(UserCopyError::NullPointer));
+
+    crate::println!("[mm::user_buffer] user-copy-v32e direct test passed");
 }

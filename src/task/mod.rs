@@ -14,7 +14,5 @@ pub fn init() {
 
 pub fn run_first_user_task() -> ! {
     crate::println!("[task] run first user task");
-    crate::println!("[task] U-mode syscall matrix v30b enabled");
-
     umode::run_umode_test();
 }

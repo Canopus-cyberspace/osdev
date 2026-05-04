@@ -1,6 +1,4 @@
-use crate::mm::user_buffer::{copy_from_user, UserBuffer};
-
-const WRITE_CHUNK_SIZE: usize = 256;
+use crate::mm::user_buffer::{copy_from_user, UserBuffer, USER_COPY_CHUNK_SIZE};
 
 pub fn sys_write(fd: usize, buf: usize, len: usize) -> isize {
     if fd != 1 && fd != 2 {
@@ -9,38 +7,36 @@ pub fn sys_write(fd: usize, buf: usize, len: usize) -> isize {
 
     let user_buffer = match UserBuffer::new(buf, len) {
         Ok(buffer) => buffer,
-        Err(err) => {
-            crate::println!("[sys_write] invalid user buffer: {}", err);
-            return -1;
-        }
+        Err(err) => return err.as_errno(),
     };
 
     if user_buffer.is_empty() {
         return 0;
     }
 
-    let mut copied = 0usize;
-    let mut scratch = [0u8; WRITE_CHUNK_SIZE];
+    let mut written = 0usize;
+    let mut current_ptr = user_buffer.ptr();
+    let mut remaining = user_buffer.len();
+    let mut chunk = [0u8; USER_COPY_CHUNK_SIZE];
 
-    while copied < user_buffer.len() {
-        let remain = user_buffer.len() - copied;
-        let chunk_len = core::cmp::min(remain, scratch.len());
-        let src = user_buffer.ptr() + copied;
-        let dst = &mut scratch[..chunk_len];
+    while remaining > 0 {
+        let current_len = core::cmp::min(remaining, USER_COPY_CHUNK_SIZE);
 
-        if let Err(err) = copy_from_user(src, dst) {
-            crate::println!("[sys_write] copy_from_user failed: {}", err);
-            return -1;
-        }
+        let copied = match copy_from_user(current_ptr, current_len, &mut chunk[..current_len]) {
+            Ok(size) => size,
+            Err(err) => return err.as_errno(),
+        };
 
-        for &ch in dst.iter() {
+        for &ch in &chunk[..copied] {
             crate::sbi::console_putchar(ch as usize);
         }
 
-        copied += chunk_len;
+        written += copied;
+        current_ptr += copied;
+        remaining -= copied;
     }
 
-    len as isize
+    written as isize
 }
 
 pub fn sys_openat() -> isize {

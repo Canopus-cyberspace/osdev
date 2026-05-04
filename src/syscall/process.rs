@@ -1,6 +1,5 @@
 pub fn sys_exit(code: i32) -> ! {
     crate::println!("[syscall] exit code = {}", code);
-    crate::println!("[umode] v30b syscall matrix done");
 
     loop {
         unsafe {
