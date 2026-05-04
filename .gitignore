@@ -26,3 +26,10 @@ __pycache__/
 .venv/
 .env
 .conda/
+
+# Repair / backup logs
+.repair_logs/
+.backup_repair*/
+.backup_before_full_skeleton/
+.backup_before_*/
+*.log
