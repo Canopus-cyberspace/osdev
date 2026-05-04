@@ -55,3 +55,9 @@ v37: kernel-only Sv39 activation experiment behind a feature flag, still keeping
 - User text / guard / stack region metadata is validated.
 - Sv39 remains disabled.
 - U-mode syscall matrix remains the regression test.
+
+## v39 Update
+
+- v39: real AddressSpace page-table build dry-run passed
+- Sv39 still disabled; no `satp` activation in normal path.
+- U-mode syscall matrix should remain passing.

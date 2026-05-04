@@ -1,24 +1,21 @@
 # MM_STATUS
 
-## Completed
+## Passed
 
-- Frame allocator basic test passed.
-- Page table map/translate test passed.
-- User-copy abstraction passed through v32e.
-- UserAddressSpace metadata scaffold passed through v33.
-- Sv39 pure dry-run passed through v34f.
-- Kernel address-space dry-run passed through v35e/v35f.
-- Safe Sv39 activation scaffold passed through v36e.
-- Kernel address-space builder dry-run added in v37.
+- Frame allocator smoke test
+- Basic page table map / translate test
+- User copy abstraction and bounds checks
+- User address-space metadata scaffold
+- Sv39 pure dry-run preflight
+- Kernel address-space dry-run
+- Sv39 activation scaffold without writing `satp`
+- Kernel mapping builder dry-run
+- User mapping builder dry-run
+- v39 real `AddressSpace` page-table build dry-run without activating `satp`
 
-## Current Constraint
+## Current constraints
 
-- Sv39 is still not enabled.
-- `satp` is not written by the v37 path.
-- Current U-mode still runs in no-Sv39 physical-address mode.
-
-## v38 user mapping builder
-
-- PASS expected: `[user-mapping-builder-v38] dry-run passed`.
-- Validates text RXU, guard unmapped, stack RWU.
-- No `satp` write.
+- Sv39 is not enabled yet.
+- `satp` is not written in the normal path.
+- ELF loader is still stub.
+- Real user address-space switch is not implemented yet.
