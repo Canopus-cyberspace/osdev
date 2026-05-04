@@ -1,18 +1,18 @@
 # LAST_APPLIED_FIX
 
-Version: v36e
-Status: PASS
+## v37 - Kernel address-space builder dry-run
 
-Verified:
-- `cargo +nightly build`
-- QEMU serial-file smoke test with 45s timeout
-- Sv39 activation scaffold prints runtime markers
-- Sv39 activation remains disabled
-- U-mode syscall matrix still passes
+Status: APPLIED BY SCRIPT
+
+Changes:
+- Added `src/mm/kernel_builder.rs`.
+- Added `KernelAddressSpaceBuilder` metadata plan for kernel text/rodata/data+bss/stacks.
+- No `satp` write.
+- No Sv39 activation.
+- U-mode syscall matrix must remain passing.
 
 Expected runtime markers:
-- `[mm::sv39] activation scaffold init v36e`
-- `[mm::sv39] activation scaffold test passed v36e`
+- `[kernel-builder-v37] dry-run passed`
 - `hello from umode`
 - `umode getpid returned 1`
 - `unsupported syscall returned -38`

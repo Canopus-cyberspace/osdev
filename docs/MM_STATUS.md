@@ -2,28 +2,17 @@
 
 ## Completed
 
-- frame allocator smoke test
-- page table map / translate smoke test
-- user-copy abstraction
-- user-copy bounds test
-- user address-space metadata scaffold
-- Sv39 pure dry-run preflight
-- kernel address-space dry-run
-- Sv39 activation scaffold v36d
+- Frame allocator basic test passed.
+- Page table map/translate test passed.
+- User-copy abstraction passed through v32e.
+- UserAddressSpace metadata scaffold passed through v33.
+- Sv39 pure dry-run passed through v34f.
+- Kernel address-space dry-run passed through v35e/v35f.
+- Safe Sv39 activation scaffold passed through v36e.
+- Kernel address-space builder dry-run added in v37.
 
-## Current Sv39 Status
+## Current Constraint
 
-- make_satp / satp_mode / satp_ppn helpers exist
-- real satp activation is disabled by default
-- no Sv39 address-space switch is performed in the normal smoke path
-
-## Next
-
-- build a real kernel address space using existing dry-run metadata
-- activate Sv39 only after a dedicated kernel-only smoke test
-
-## v36e
-
-- Added safe `mm::sv39` activation scaffold.
-- `make_satp`, `satp_mode`, `satp_ppn`, `read_satp`, `sfence_vma`, and `activate_satp_unchecked` exist.
-- `ENABLE_SV39_ACTIVATION_TEST = false`; v36e never writes `satp` during smoke tests.
+- Sv39 is still not enabled.
+- `satp` is not written by the v37 path.
+- Current U-mode still runs in no-Sv39 physical-address mode.

@@ -40,3 +40,11 @@ v37: kernel-only Sv39 activation experiment behind a feature flag, still keeping
 - Added safe Sv39 activation scaffold.
 - Sv39 remains disabled.
 - U-mode syscall matrix remains the regression target.
+
+
+## v37 Kernel Address-Space Builder
+
+- Added `KernelAddressSpaceBuilder` dry-run scaffold.
+- Describes kernel text / rodata / data+bss / stacks as mapping regions.
+- Checks permissions without enabling Sv39.
+- U-mode syscall matrix remains the regression test.
