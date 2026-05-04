@@ -1,16 +1,10 @@
 # LAST_APPLIED_FIX
 
-Version: v34f
+Version: v35f
+
 Status: PASS
 
-Verified:
-
-- cargo +nightly build
-- QEMU serial-file smoke test
-- Sv39 pure dry-run marker found
-- U-mode syscall matrix marker found
-
-Log:
-
-- /home/lenovo/projects/uestc-kernel/.repair_logs/fix_sv39_dryrun_v34f_20260504_201053.log
-- /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v34f_20260504_201053.serial.log
+Summary:
+- Removed unnecessary unsafe blocks in kernel_space symbol address helpers.
+- Verified crate build with warnings treated as errors.
+- Kept kernel-space dry-run and U-mode syscall matrix smoke path intact.

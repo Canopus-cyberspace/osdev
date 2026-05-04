@@ -6,6 +6,7 @@ feature/restore-umode
 
 ## Completed Milestones
 
+- v35: kernel address-space dry-run passed
 - v24: stable full mechanism skeleton passed
 - v25: warning cleanup and QEMU serial-file runner passed
 - v28: minimal U-mode syscall smoke test passed
@@ -102,3 +103,15 @@ Next:
 - U-mode syscall matrix remains the smoke-test target.
 
 - v34f: Sv39 pure dry-run preflight passes without disturbing U-mode syscall matrix
+
+## v35d
+
+- Added kernel address-space dry-run.
+- Sv39 still disabled.
+- U-mode syscall matrix remains passing.
+
+## v35e Kernel Space Dry Run
+
+- Added kernel text/rodata/data-bss permission dry-run.
+- Sv39 remains disabled.
+- U-mode syscall matrix remains the main runtime smoke test.
