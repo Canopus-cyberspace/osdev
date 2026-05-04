@@ -1,19 +1,10 @@
 # ELF_STATUS
 
-## v47
+## v48 - external init ELF scaffold
 
-Status: PASS expected after smoke test.
-
-Implemented:
-
-- ELF64 RISC-V header validation scaffold
-- PT_LOAD program header parser scaffold
-- Synthetic static ELF self-test
-- Linked `.user` image metadata path
-- Sv39 + U-mode ecall smoke regression remains the runtime gate
-
-Not implemented yet:
-
-- Loading external user ELF from filesystem
-- Full auxv / argc / argv / envp user stack construction
-- execve process replacement
+- user/init.S scaffold source
+- user/init.ld scaffold linker script
+- user/init.elf synthetic external ELF image
+- src/loader/init_image.rs using include_bytes!
+- ELF64/RISC-V header checks
+- PT_LOAD metadata checks

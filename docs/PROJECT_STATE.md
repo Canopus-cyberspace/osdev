@@ -31,3 +31,10 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added PT_LOAD parser scaffold.
 - Added linked `.user` image metadata path.
 - Kept existing Sv39 + U-mode syscall smoke as regression gate.
+
+## v48
+
+- v48: external user/init ELF scaffold.
+- Synthetic user/init.elf is embedded via include_bytes!.
+- Loader checks ELF64/RISC-V header and PT_LOAD metadata.
+- Sv39 + U-mode ecall smoke remains the runtime regression path.
