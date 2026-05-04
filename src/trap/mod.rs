@@ -7,11 +7,7 @@ pub mod handler;
 
 pub use context::TrapContext;
 
-static mut INIT_TRAP_CONTEXT: TrapContext = TrapContext {
-    regs: [0; 32],
-    sstatus: 0,
-    sepc: 0,
-};
+static mut INIT_TRAP_CONTEXT: TrapContext = TrapContext::zero();
 
 extern "C" {
     fn __alltraps();
@@ -29,16 +25,10 @@ pub fn init() {
 
 pub fn enter_user(entry: usize, user_sp: usize) -> ! {
     unsafe {
+        INIT_TRAP_CONTEXT = TrapContext::init_user_context(entry, user_sp);
         let cx = core::ptr::addr_of_mut!(INIT_TRAP_CONTEXT);
 
-        (*cx).regs = [0; 32];
-        (*cx).regs[2] = user_sp;
-        (*cx).sstatus = user_sstatus();
-        (*cx).sepc = entry;
-
-        crate::println!("[trap] enter user mode");
-        crate::println!("[trap] user entry = {:#x}", entry);
-        crate::println!("[trap] user sp    = {:#x}", user_sp);
+        crate::println!("[trap] enter user mode via __restore");
         __restore(cx as usize);
     }
 }
@@ -46,24 +36,4 @@ pub fn enter_user(entry: usize, user_sp: usize) -> ! {
 #[no_mangle]
 pub extern "C" fn rust_trap_handler(cx: &mut TrapContext) {
     handler::handle(cx);
-}
-
-fn user_sstatus() -> usize {
-    let mut sstatus = read_sstatus();
-
-    const SSTATUS_SPP: usize = 1 << 8;
-    const SSTATUS_SPIE: usize = 1 << 5;
-
-    sstatus &= !SSTATUS_SPP;
-    sstatus |= SSTATUS_SPIE;
-
-    sstatus
-}
-
-fn read_sstatus() -> usize {
-    let value: usize;
-    unsafe {
-        core::arch::asm!("csrr {}, sstatus", out(reg) value);
-    }
-    value
 }

@@ -23,14 +23,12 @@ SECTIONS
     etext = .;
   } :text
 
-  . = ALIGN(4096);
   .rodata : {
     srodata = .;
     *(.rodata .rodata.*)
     erodata = .;
   } :rodata
 
-  . = ALIGN(4096);
   .data : {
     sdata = .;
     *(.data .data.*)

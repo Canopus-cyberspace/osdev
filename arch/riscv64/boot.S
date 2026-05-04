@@ -2,15 +2,9 @@
     .globl _start
 
 _start:
-    li t0, 0x10000000
-    la t1, boot_msg
-1:
-    lb t2, 0(t1)
-    beqz t2, 2f
-    sb t2, 0(t0)
-    addi t1, t1, 1
-    j 1b
-2:
+    la t0, boot_message
+    call early_uart_puts
+
     la sp, boot_stack_top
     call rust_main
 
@@ -18,8 +12,20 @@ park:
     wfi
     j park
 
-boot_msg:
-    .asciz "[boot.S] entered v24 serial-file\n"
+early_uart_puts:
+    li t1, 0x10000000
+1:
+    lbu t2, 0(t0)
+    beqz t2, 2f
+    sb t2, 0(t1)
+    addi t0, t0, 1
+    j 1b
+2:
+    ret
+
+    .section .rodata
+boot_message:
+    .asciz "[boot.S] entered v29 umode-trap\n"
 
     .section .boot_stack, "aw", @nobits
     .align 12

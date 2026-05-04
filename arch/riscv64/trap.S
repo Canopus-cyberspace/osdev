@@ -1,12 +1,17 @@
     .section .text
     .globl __alltraps
     .globl __restore
+    .globl trap_stack_top
 
 __alltraps:
+    csrrw sp, sscratch, sp
     addi sp, sp, -272
 
     sd x1,   8(sp)
-    sd x2,  16(sp)
+
+    csrr t0, sscratch
+    sd t0, 16(sp)
+
     sd x3,  24(sp)
     sd x4,  32(sp)
     sd x5,  40(sp)
@@ -52,6 +57,9 @@ __alltraps:
 __restore:
     mv sp, a0
 
+    la t0, trap_stack_top
+    csrw sscratch, t0
+
     ld t0, 256(sp)
     csrw sstatus, t0
 
@@ -91,3 +99,9 @@ __restore:
 
     ld x2, 16(sp)
     sret
+
+    .section .trap_stack, "aw", @nobits
+    .align 12
+trap_stack:
+    .space 4096 * 16
+trap_stack_top:
