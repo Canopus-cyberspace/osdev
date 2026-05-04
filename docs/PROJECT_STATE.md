@@ -1,35 +1,26 @@
 # PROJECT_STATE
 
-## Current Milestone
+## Current verified milestone
 
-v45j: Sv39 + U-mode ecall smoke verified.
+- v45: Sv39 + U-mode ecall smoke passed.
+- v46f: static ELF loader parser scaffold added while preserving Sv39 + U-mode smoke.
 
-## Verified Capabilities
+## Verified capabilities
 
 - OpenSBI enters kernel.
 - QEMU serial-file logging works.
 - Kernel Sv39 activation works.
-- Kernel trap under Sv39 works.
-- U-mode under Sv39 works.
-- U-mode syscall matrix under Sv39 works:
-  - write
-  - getpid
-  - getppid
-  - unsupported syscall returns -38
-  - exit
+- Kernel Sv39 trap smoke works.
+- Sv39 + U-mode ecall works.
+- sys_write / getpid / getppid / ENOSYS / exit work in the Sv39 U-mode smoke path.
+- Static ELF64 header and PT_LOAD parser scaffold exists.
 
-## Current Branch Recommendation
+## Current constraints
 
-Use a dedicated branch such as:
+- ELF loader does not yet load segments into real user address space.
+- execve is not implemented.
+- VFS/rootfs are still scaffold/stub level.
 
-- `feature/kernel-sv39-activation`
+## v46f
 
-## Next Recommended Step
-
-v46: consolidate Sv39 U-mode smoke into a clean test-mode selector, then restore normal module initialization around the working Sv39 U-mode path.
-
-## v45j Verification Log
-
-- Repair log: /home/lenovo/projects/uestc-kernel/.repair_logs/fix_sv39_umode_v45j_20260505_004034.log
-- Serial log: /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v45j_20260505_004034.serial.log
-- Stderr log: /home/lenovo/projects/uestc-kernel/.repair_logs/qemu_smoke_v45j_20260505_004034.stderr.log
+Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains passing.

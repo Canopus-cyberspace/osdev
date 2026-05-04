@@ -9,6 +9,7 @@ global_asm!(include_str!("../arch/riscv64/boot.S"));
 
 mod console;
 mod lang_items;
+mod loader;
 mod mm;
 mod sbi;
 
@@ -18,9 +19,13 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] Sv39 + U-mode ecall smoke v45g");
-    crate::println!("[v45g] before run_sv39_umode_smoke");
+    crate::println!("[stage] static ELF loader scaffold v46f + Sv39 U-mode regression");
 
+    loader::init();
+    loader::elf::init();
+    loader::elf::self_test();
+
+    crate::println!("[v46f] before Sv39 U-mode regression");
     mm::sv39_umode::run_sv39_umode_smoke();
 }
 
