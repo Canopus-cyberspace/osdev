@@ -1,63 +1,72 @@
 # PROJECT_STATE
 
-## Current milestone
+## Current Branch
 
-v36c: Sv39 activation scaffold added.
+feature/restore-umode
 
-## Verified capabilities
+## Completed Milestones
 
-- QEMU OpenSBI boot works.
-- serial-file logging works.
-- U-mode ecall works.
-- syscall write/getpid/getppid/unsupported/exit matrix works.
-- user-copy abstraction works.
-- user address-space metadata scaffold works.
-- Sv39 pure dry-run works without touching real satp.
-- kernel address-space dry-run works.
-- Sv39 satp encode/decode scaffold works with real activation disabled.
+- v24: stable full mechanism skeleton passed
+- v25: warning cleanup and QEMU serial-file runner passed
+- v28: minimal U-mode syscall smoke test passed
+- v29: U-mode trap path refactor passed
+- v30c: U-mode syscall matrix passed
+- v31: user-copy abstraction passed
+- v32e: user-copy bounds and getppid U-mode test passed
+- v33: user address-space metadata scaffold passed
+- v34f: Sv39 pure dry-run passed
+- v35: kernel address-space dry-run passed
+- v36e: safe Sv39 activation scaffold passed
+- v37: kernel mapping builder dry-run passed
+- v38: user mapping builder dry-run passed
+- v39: real page-table build dry-run passed
+- v40: kernel Sv39 activation scaffold added, disabled by default
 
-## Current constraints
+## Verified Capabilities
 
-- Sv39 is not actually enabled yet.
-- ELF loader is not implemented.
-- VFS is still mostly stub.
-- Process/thread/scheduler are still mostly stub.
+- QEMU boots through OpenSBI
+- boot.S enters rust_main
+- serial-file logging works
+- frame allocator test passes
+- page-table map/translate test passes
+- U-mode ecall works
+- syscall write works through user-copy path
+- syscall getpid works
+- syscall getppid works
+- unsupported syscall returns -38 ENOSYS
+- syscall exit path works
 
-## Next planned step
+## Current Constraints
 
-v37: kernel-only Sv39 activation experiment behind a feature flag, still keeping stable U-mode regression path safe.
+- Sv39 real activation is not enabled yet
+- ELF loader is not implemented
+- VFS is still stub
+- process/thread/scheduler are still scaffold/stub
+- rootfs is not implemented
+- signal/futex/timer are stub
 
+## Current QEMU Method
 
-## v36d - Sv39 Activation Scaffold
+- Use `tools/run-qemu.sh`
+- Use QEMU `-serial file:<log>`
+- Logs are stored in `.repair_logs/`
 
-- Added src/mm/sv39.rs
-- Added make_satp / satp_mode / satp_ppn helpers
-- Real satp activation remains disabled by default
-- U-mode syscall matrix must continue to pass
+## Next Planned Step
 
-## v36e
+v41:
+- isolated kernel-only Sv39 activation test
+- do not enter U-mode while first testing actual `satp` switch
+
+## v40b
 
 - Added safe Sv39 activation scaffold.
-- Sv39 remains disabled.
-- U-mode syscall matrix remains the regression target.
+- `ENABLE_KERNEL_SV39_SMOKE = false`.
+- `satp` is not written.
+- U-mode syscall matrix remains the regression baseline.
 
+## Latest
+- v40c: Sv39 activation scaffold compile fix passed; Sv39 remains disabled.
 
-## v37 Kernel Address-Space Builder
+## v40d
 
-- Added `KernelAddressSpaceBuilder` dry-run scaffold.
-- Describes kernel text / rodata / data+bss / stacks as mapping regions.
-- Checks permissions without enabling Sv39.
-- U-mode syscall matrix remains the regression test.
-
-## v38 user mapping builder
-
-- Added non-destructive user mapping builder dry-run.
-- User text / guard / stack region metadata is validated.
-- Sv39 remains disabled.
-- U-mode syscall matrix remains the regression test.
-
-## v39 Update
-
-- v39: real AddressSpace page-table build dry-run passed
-- Sv39 still disabled; no `satp` activation in normal path.
-- U-mode syscall matrix should remain passing.
+Sv39 smoke scaffold compile fix applied. Sv39 is still disabled; U-mode syscall matrix remains the regression test.

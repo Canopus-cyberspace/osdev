@@ -3,19 +3,25 @@
 ## Passed
 
 - Frame allocator smoke test
-- Basic page table map / translate test
-- User copy abstraction and bounds checks
+- Page table map/translate test
+- User copy abstraction and bounds path
 - User address-space metadata scaffold
-- Sv39 pure dry-run preflight
+- Sv39 pure dry-run
 - Kernel address-space dry-run
-- Sv39 activation scaffold without writing `satp`
-- Kernel mapping builder dry-run
-- User mapping builder dry-run
-- v39 real `AddressSpace` page-table build dry-run without activating `satp`
+- Kernel/user mapping builder dry-run
+- Real page table build dry-run
+- Sv39 activation scaffold v40c
 
-## Current constraints
+## Not Enabled Yet
 
-- Sv39 is not enabled yet.
-- `satp` is not written in the normal path.
-- ELF loader is still stub.
-- Real user address-space switch is not implemented yet.
+- Writing `satp`
+- Running with Sv39 enabled
+- Page fault handling
+- Real user address space switching
+
+## v40d - Sv39 smoke compile fix
+
+- `sv39::test_scaffold()` exists.
+- `sv39_smoke::test()` exists.
+- Sv39 activation remains disabled.
+- U-mode syscall matrix must continue passing.

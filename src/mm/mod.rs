@@ -6,6 +6,7 @@ pub mod kernel_builder;
 pub mod page_table;
 pub mod page_table_build;
 pub mod sv39;
+pub mod sv39_smoke;
 pub mod sv39_preflight;
 pub mod user_buffer;
 pub mod user_space;
@@ -27,6 +28,8 @@ pub fn init() {
     kernel_space::init();
     kernel_builder::init();
 
+    sv39_smoke::init();
+
     crate::println!("[mm] init");
 }
 
@@ -34,7 +37,9 @@ pub fn test() {
     frame_allocator::test();
     page_table::test();
     page_table_build::test();
+    sv39_smoke::test();
     sv39::test_scaffold();
+    sv39_smoke::test_scaffold();
     sv39_preflight::test();
     user_buffer::test_direct_user_copy();
     user_space::test();
