@@ -48,3 +48,10 @@ v37: kernel-only Sv39 activation experiment behind a feature flag, still keeping
 - Describes kernel text / rodata / data+bss / stacks as mapping regions.
 - Checks permissions without enabling Sv39.
 - U-mode syscall matrix remains the regression test.
+
+## v38 user mapping builder
+
+- Added non-destructive user mapping builder dry-run.
+- User text / guard / stack region metadata is validated.
+- Sv39 remains disabled.
+- U-mode syscall matrix remains the regression test.

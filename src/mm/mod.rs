@@ -9,6 +9,7 @@ pub mod sv39_preflight;
 pub mod user_buffer;
 pub mod user_space;
 pub mod vm_area;
+pub mod user_builder;
 
 pub use frame_allocator::{frame_alloc, frame_dealloc};
 
@@ -20,6 +21,7 @@ pub fn init() {
     sv39::init();
     sv39_preflight::init();
     user_space::init();
+    user_builder::init();
     kernel_space::init();
     kernel_builder::init();
 
@@ -33,6 +35,7 @@ pub fn test() {
     sv39_preflight::test();
     user_buffer::test_direct_user_copy();
     user_space::test();
+    user_builder::test();
     kernel_space::test();
     kernel_builder::test();
 }

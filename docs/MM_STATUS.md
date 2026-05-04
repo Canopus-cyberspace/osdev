@@ -16,3 +16,9 @@
 - Sv39 is still not enabled.
 - `satp` is not written by the v37 path.
 - Current U-mode still runs in no-Sv39 physical-address mode.
+
+## v38 user mapping builder
+
+- PASS expected: `[user-mapping-builder-v38] dry-run passed`.
+- Validates text RXU, guard unmapped, stack RWU.
+- No `satp` write.
