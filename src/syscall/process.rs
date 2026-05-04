@@ -1,6 +1,12 @@
 pub fn sys_exit(code: i32) -> ! {
     crate::println!("[syscall] exit code = {}", code);
-    crate::task::idle_loop();
+    crate::println!("[umode] v30b syscall matrix done");
+
+    loop {
+        unsafe {
+            core::arch::asm!("wfi");
+        }
+    }
 }
 
 pub fn sys_getpid() -> isize {

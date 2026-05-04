@@ -31,7 +31,7 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] umode trap refactor smoke v29");
+    crate::println!("[stage] U-mode syscall matrix v30b");
 
     mm::init();
     mm::test();
