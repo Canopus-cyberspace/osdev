@@ -1,0 +1,18 @@
+[package]
+name = "uestc-kernel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[profile.dev]
+panic = "abort"
+opt-level = 1
+debug = false
+lto = false
+
+[profile.release]
+panic = "abort"
+opt-level = 3
+debug = false
+lto = true

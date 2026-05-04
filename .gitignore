@@ -1,0 +1,43 @@
+# Rust build outputs
+/target/
+
+# User build outputs
+/user/*.elf
+/user/*.bin
+/user/*.o
+/user/*.map
+
+# QEMU / disk images
+*.img
+*.qcow2
+*.raw
+*.iso
+
+# Logs
+*.log
+*.out
+
+# Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+
+# Conda
+.conda/
