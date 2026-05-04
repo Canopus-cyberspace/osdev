@@ -20,7 +20,7 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] external init.elf Sv39 U-mode smoke v50b");
+    crate::println!("[stage] execve process init scaffold v52");
 
     loader::self_test();
     mm::sv39_init_exec::run_external_init_elf_smoke();

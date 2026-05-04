@@ -1,13 +1,13 @@
 # LAST_APPLIED_FIX
 
-Version: v51
+Version: v52
 
 Goal:
-- Introduce an `execve`-oriented process initialization scaffold without breaking external `init.elf` execution.
+- Implement a larger execve preparation batch.
 
-Verified:
-- loader self-test
-- ELF parser self-test
-- external init image load self-test
-- ProcessInitInfo self-test
-- external init ELF execution under Sv39 U-mode
+Included:
+- ProcessInitInfo scaffold
+- UserProgram scaffold
+- Initial user stack dry-run
+- argc/argv/envp/auxv placeholder layout
+- external init ELF Sv39 U-mode regression

@@ -1,6 +1,6 @@
 # PROCESS_STATUS
 
-## v51 - execve-oriented ProcessInitInfo scaffold
+## v52 - execve-oriented process initialization batch
 
 Status: scaffold implemented
 
@@ -13,12 +13,18 @@ Implemented:
 - auxv placeholder
 - user stack bottom/top metadata
 - page table root placeholder
-- self-test that validates external init ELF load metadata
+- `loader::user_stack::InitialUserStackLayout`
+- initial user stack dry-run with:
+  - argc
+  - argv[0]
+  - argv NULL
+  - envp NULL
+  - auxv placeholders: AT_PHDR, AT_PHENT, AT_PHNUM, AT_PAGESZ, AT_ENTRY, AT_NULL
 
 Not implemented yet:
 - real process table
 - real thread object
 - scheduler integration
 - real `execve` syscall
-- argv/envp/auxv writing onto user stack
-- file-backed executable loading from VFS
+- writing the dry-run stack into the actual runtime user stack
+- loading binaries from VFS/rootfs instead of `include_bytes!`

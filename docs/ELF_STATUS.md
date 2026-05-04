@@ -49,3 +49,17 @@ Still TODO:
 - copy argv/envp/auxv to the user stack
 - expose this path as `execve`
 - load binaries from VFS/rootfs instead of `include_bytes!`
+
+## v52
+
+Status: execve/user-stack scaffold added
+
+Implemented:
+- `ProcessInitInfo` metadata validation
+- initial user stack dry-run
+- argv/envp/auxv placeholder layout
+
+Runtime self-test markers:
+- `[process-init-v52] self-test passed`
+- `[user-stack-v52] dry-run passed`
+- `[loader-v52] self-test passed`

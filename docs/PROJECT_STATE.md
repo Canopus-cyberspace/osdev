@@ -97,3 +97,12 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added `ProcessInitInfo`
 - Wrapped external `init.elf` load result in process initialization metadata
 - Kept external init ELF Sv39 U-mode execution smoke passing
+
+## v52 - Larger batch: ProcessInitInfo + initial user stack dry-run
+
+- Added/updated `loader::process_image`
+- Added `loader::user_stack`
+- Added `ProcessInitInfo`
+- Added `UserProgram`
+- Added initial user stack dry-run with argc/argv/envp/auxv placeholders
+- Kept external init ELF Sv39 U-mode execution smoke passing
