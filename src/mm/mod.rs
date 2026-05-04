@@ -8,6 +8,7 @@ pub mod page_table_build;
 pub mod sv39;
 pub mod sv39_preflight;
 pub mod sv39_smoke;
+pub mod sv39_trap_smoke;
 pub mod user_buffer;
 pub mod user_builder;
 pub mod user_space;
@@ -20,11 +21,13 @@ pub fn init() {
     address_space::init();
     vm_area::init();
     cow::init();
+    sv39::init();
     sv39_preflight::init();
+    sv39_smoke::init();
     user_space::init();
     kernel_space::init();
-    sv39::init();
-    sv39_smoke::init();
+
+    sv39_trap_smoke::init();
 
     crate::println!("[mm] init");
 }
@@ -35,6 +38,7 @@ pub fn test() {
     sv39_preflight::test();
     user_buffer::test_direct_user_copy();
     user_space::test();
+    sv39_trap_smoke::test();
     kernel_space::test();
     kernel_builder::test();
     user_builder::test();

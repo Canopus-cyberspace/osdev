@@ -1,14 +1,57 @@
-use crate::config::{MEMORY_END, PAGE_SIZE};
-use crate::mm::page_table::{AddressSpace, PTE_R, PTE_W, PTE_X};
+use core::arch::{asm, global_asm};
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-const RAM_BASE: usize = 0x8000_0000;
-const UART0: usize = 0x1000_0000;
-const UART0_END: usize = UART0 + PAGE_SIZE;
+use crate::mm::sv39;
 
-static mut SV39_V42_DATA_PROBE: usize = 0x1122_3344_5566_7788;
+const PTE_V: usize = 1 << 0;
+const PTE_R: usize = 1 << 1;
+const PTE_W: usize = 1 << 2;
+const PTE_X: usize = 1 << 3;
+const PTE_A: usize = 1 << 6;
+const PTE_D: usize = 1 << 7;
+
+const LEAF_RWX: usize = PTE_V | PTE_R | PTE_W | PTE_X | PTE_A | PTE_D;
+
+static TRAP_SEEN: AtomicBool = AtomicBool::new(false);
+static TRAP_SCAUSE: AtomicUsize = AtomicUsize::new(usize::MAX);
+static TRAP_SEPC: AtomicUsize = AtomicUsize::new(0);
+static TRAP_STVAL: AtomicUsize = AtomicUsize::new(0);
+static DATA_PROBE: AtomicUsize = AtomicUsize::new(0x3257_45aa_98f9_ab4);
+
+#[repr(C, align(4096))]
+struct PageTable512([usize; 512]);
+
+static mut ROOT_TABLE: PageTable512 = PageTable512([0; 512]);
+
+extern "C" {
+    fn __sv39_v43e_trap_entry();
+}
+
+global_asm!(r#"
+    .section .text
+    .globl __sv39_v43e_trap_entry
+__sv39_v43e_trap_entry:
+    addi sp, sp, -64
+    sd ra, 0(sp)
+    sd a0, 8(sp)
+    sd a1, 16(sp)
+    sd a2, 24(sp)
+
+    csrr a0, scause
+    csrr a1, sepc
+    csrr a2, stval
+    call rust_sv39_v43e_trap_handler
+
+    ld ra, 0(sp)
+    ld a0, 8(sp)
+    ld a1, 16(sp)
+    ld a2, 24(sp)
+    addi sp, sp, 64
+    sret
+"#);
 
 pub fn init() {
-    crate::println!("[mm::sv39_smoke] init v42");
+    crate::println!("[mm::sv39_smoke] init v43e");
 }
 
 pub fn test() {
@@ -16,83 +59,120 @@ pub fn test() {
 }
 
 pub fn test_scaffold() {
-    crate::mm::sv39::test_scaffold();
-    crate::println!("[mm::sv39_smoke] scaffold test passed v42");
+    crate::println!("[mm::sv39_smoke] scaffold test v43e");
 }
 
 pub fn run_kernel_sv39_smoke() -> ! {
-    run_kernel_sv39_activation_smoke();
+    run_kernel_sv39_trap_ebreak_smoke()
 }
 
 pub fn run_kernel_sv39_activation_smoke() -> ! {
-    crate::println!("[sv39-v42] isolated kernel Sv39 activation begin");
+    run_kernel_sv39_trap_ebreak_smoke()
+}
 
-    if !crate::mm::sv39::ENABLE_SV39_ACTIVATION_TEST {
-        crate::println!("[sv39-v42] activation disabled");
-        idle_loop();
-    }
+pub fn run_kernel_sv39_trap_ebreak_smoke() -> ! {
+    crate::println!("[sv39-trap-v43e] begin");
+    crate::println!("[sv39-trap-v43e] building stable 1GiB identity map");
 
-    let mut kernel_space = AddressSpace::new();
+    build_static_identity_page_table();
 
-    crate::println!("[sv39-v42] map UART identity {:#x}..{:#x}", UART0, UART0_END);
-    map_identity_range(&mut kernel_space, UART0, UART0_END, PTE_R | PTE_W);
+    let root_pa = root_table_pa();
+    let root_ppn = root_pa / sv39::PAGE_SIZE;
+    let satp = sv39::make_satp(root_ppn);
 
-    crate::println!(
-        "[sv39-v42] map RAM identity {:#x}..{:#x}",
-        RAM_BASE,
-        MEMORY_END
-    );
-    map_identity_range(&mut kernel_space, RAM_BASE, MEMORY_END, PTE_R | PTE_W | PTE_X);
+    crate::println!("[sv39-trap-v43e] root pa = {:#x}", root_pa);
+    crate::println!("[sv39-trap-v43e] root ppn = {:#x}", root_ppn);
+    crate::println!("[sv39-trap-v43e] satp = {:#x}", satp);
 
-    let root_ppn = kernel_space.root_ppn();
-    let satp = crate::mm::sv39::make_satp(root_ppn);
-
-    crate::println!("[sv39-v42] root ppn = {:#x}", root_ppn);
-    crate::println!("[sv39-v42] satp before = {:#x}", crate::mm::sv39::read_satp());
-    crate::println!("[sv39-v42] satp target = {:#x}", satp);
+    install_trap_entry();
 
     unsafe {
-        crate::mm::sv39::activate_satp_unchecked(satp);
+        sv39::activate_satp_unchecked(satp);
     }
 
-    crate::println!("[sv39-v42] after satp write");
-    crate::println!("[sv39-v42] satp after = {:#x}", crate::mm::sv39::read_satp());
+    crate::println!("[sv39-trap-v43e] after satp");
+    crate::println!("[sv39-trap-v43e] read satp = {:#x}", sv39::read_satp());
+
+    let old = DATA_PROBE.load(Ordering::SeqCst);
+    DATA_PROBE.store(old ^ 0x55aa_55aa_55aa_55aa, Ordering::SeqCst);
+    crate::println!("[sv39-trap-v43e] data probe = {:#x}", DATA_PROBE.load(Ordering::SeqCst));
+
+    TRAP_SEEN.store(false, Ordering::SeqCst);
+    TRAP_SCAUSE.store(usize::MAX, Ordering::SeqCst);
+    TRAP_SEPC.store(0, Ordering::SeqCst);
+    TRAP_STVAL.store(0, Ordering::SeqCst);
+
+    crate::println!("[sv39-trap-v43e] trigger 32-bit ebreak");
 
     unsafe {
-        core::ptr::write_volatile(core::ptr::addr_of_mut!(SV39_V42_DATA_PROBE), 0x8877_6655_4433_2211);
-        let value = core::ptr::read_volatile(core::ptr::addr_of!(SV39_V42_DATA_PROBE));
-        assert_eq!(value, 0x8877_6655_4433_2211);
+        asm!(".4byte 0x00100073");
     }
 
-    crate::println!("[sv39-v42] data probe passed");
-    crate::println!("[sv39-v42] kernel Sv39 activation passed");
-    crate::println!("[sv39-v42] isolated kernel idle loop");
+    crate::println!("[sv39-trap-v43e] trap returned after ebreak");
+    crate::println!("[sv39-trap-v43e] trap seen = {}", TRAP_SEEN.load(Ordering::SeqCst) as usize);
+    crate::println!("[sv39-trap-v43e] seen scause = {:#x}", TRAP_SCAUSE.load(Ordering::SeqCst));
+    crate::println!("[sv39-trap-v43e] seen sepc = {:#x}", TRAP_SEPC.load(Ordering::SeqCst));
+    crate::println!("[sv39-trap-v43e] seen stval = {:#x}", TRAP_STVAL.load(Ordering::SeqCst));
 
-    idle_loop();
-}
-
-fn map_identity_range(space: &mut AddressSpace, start: usize, end: usize, flags: usize) {
-    let mut va = align_down(start, PAGE_SIZE);
-    let end = align_up(end, PAGE_SIZE);
-
-    while va < end {
-        space.map(va, va, flags);
-        va += PAGE_SIZE;
+    if TRAP_SEEN.load(Ordering::SeqCst) && TRAP_SCAUSE.load(Ordering::SeqCst) == 0x3 {
+        crate::println!("[sv39-trap-v43e] kernel trap smoke passed");
+    } else {
+        crate::println!("[sv39-trap-v43e] kernel trap smoke failed");
     }
-}
 
-fn align_down(value: usize, align: usize) -> usize {
-    value & !(align - 1)
-}
+    crate::println!("[sv39-trap-v43e] kernel idle after isolated Sv39 trap smoke");
 
-fn align_up(value: usize, align: usize) -> usize {
-    (value + align - 1) & !(align - 1)
-}
-
-fn idle_loop() -> ! {
     loop {
         unsafe {
-            core::arch::asm!("wfi");
+            asm!("wfi");
         }
+    }
+}
+
+fn build_static_identity_page_table() {
+    unsafe {
+        ROOT_TABLE.0 = [0; 512];
+
+        // VA 0x0000_0000..0x3fff_ffff -> PA 0x0000_0000..0x3fff_ffff
+        // Covers UART MMIO at 0x1000_0000.
+        ROOT_TABLE.0[0] = leaf_1g_pte(0x0000_0000, LEAF_RWX);
+
+        // VA 0x8000_0000..0xbfff_ffff -> PA 0x8000_0000..0xbfff_ffff
+        // Covers OpenSBI/kernel/QEMU RAM area used by this project.
+        ROOT_TABLE.0[2] = leaf_1g_pte(0x8000_0000, LEAF_RWX);
+    }
+}
+
+const fn leaf_1g_pte(pa: usize, flags: usize) -> usize {
+    ((pa >> 12) << 10) | flags
+}
+
+fn root_table_pa() -> usize {
+    core::ptr::addr_of!(ROOT_TABLE) as usize
+}
+
+fn install_trap_entry() {
+    let entry = __sv39_v43e_trap_entry as usize;
+    unsafe {
+        asm!("csrw stvec, {}", in(reg) entry);
+    }
+
+    crate::println!("[sv39-trap-v43e] stvec = {:#x}", entry);
+}
+
+#[no_mangle]
+pub extern "C" fn rust_sv39_v43e_trap_handler(scause: usize, sepc: usize, stval: usize) {
+    crate::println!("[sv39-trap-v43e] kernel trap handler scause = {:#x}", scause);
+    crate::println!("[sv39-trap-v43e] kernel trap handler sepc   = {:#x}", sepc);
+    crate::println!("[sv39-trap-v43e] kernel trap handler stval  = {:#x}", stval);
+
+    TRAP_SEEN.store(true, Ordering::SeqCst);
+    TRAP_SCAUSE.store(scause, Ordering::SeqCst);
+    TRAP_SEPC.store(sepc, Ordering::SeqCst);
+    TRAP_STVAL.store(stval, Ordering::SeqCst);
+
+    let next_sepc = sepc + 4;
+    unsafe {
+        asm!("csrw sepc, {}", in(reg) next_sepc);
     }
 }

@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(static_mut_refs)]
+#![allow(unused_unsafe)]
 
 use core::arch::global_asm;
 
@@ -31,26 +32,9 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] isolated kernel Sv39 activation v42");
+    crate::println!("[stage] kernel Sv39 trap smoke v43e");
 
-    mm::init();
-    mm::test();
-
-    fs::init();
-    loader::init();
-    sync::init();
-    signal::init();
-    futex::init();
-    timer::init();
-    drivers::init();
-    net::init();
-    syscall::init();
-    task::init();
-
-    trap::init();
-
-    crate::println!("[stage] U-mode disabled for isolated kernel Sv39 v42");
-    mm::sv39_smoke::run_kernel_sv39_activation_smoke();
+    mm::sv39_smoke::run_kernel_sv39_trap_ebreak_smoke();
 }
 
 fn clear_bss() {
