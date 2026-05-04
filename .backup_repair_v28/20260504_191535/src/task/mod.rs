@@ -8,7 +8,6 @@ pub fn init() {
     process::init();
     thread::init();
     scheduler::init();
-    umode::init();
 
     crate::println!("[task] init");
 }
@@ -16,9 +15,11 @@ pub fn init() {
 pub fn run_first_user_task() -> ! {
     crate::println!("[task] run first user task");
 
+    umode::preflight();
+
     if umode::ENABLE_UMODE_TEST {
-        crate::println!("[task] U-mode path enabled in v28");
-        umode::run_umode_smoke_test();
+        crate::println!("[task] U-mode test enabled");
+        umode::run();
     }
 
     crate::println!("[task] U-mode path disabled in stable skeleton");

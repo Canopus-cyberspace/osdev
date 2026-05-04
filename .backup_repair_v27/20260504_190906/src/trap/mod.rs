@@ -37,8 +37,6 @@ pub fn enter_user(entry: usize, user_sp: usize) -> ! {
         (*cx).sepc = entry;
 
         crate::println!("[trap] enter user mode");
-        crate::println!("[trap] user entry = {:#x}", entry);
-        crate::println!("[trap] user sp    = {:#x}", user_sp);
         __restore(cx as usize);
     }
 }

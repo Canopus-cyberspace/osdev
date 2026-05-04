@@ -8,7 +8,6 @@ pub fn init() {
     process::init();
     thread::init();
     scheduler::init();
-    umode::init();
 
     crate::println!("[task] init");
 }
@@ -17,10 +16,10 @@ pub fn run_first_user_task() -> ! {
     crate::println!("[task] run first user task");
 
     if umode::ENABLE_UMODE_TEST {
-        crate::println!("[task] U-mode path enabled in v28");
-        umode::run_umode_smoke_test();
+        umode::run_raw_user_task();
     }
 
+    crate::println!("[task] U-mode restore scaffold present but disabled");
     crate::println!("[task] U-mode path disabled in stable skeleton");
     crate::println!("[task] running kernel syscall self-test instead");
 

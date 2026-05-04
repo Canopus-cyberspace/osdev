@@ -1,12 +1,6 @@
-pub fn sys_exit(code: i32) -> ! {
+pub fn sys_exit(code: i32) -> isize {
     crate::println!("[syscall] exit code = {}", code);
-    crate::println!("[syscall] enter idle after user exit");
-
-    loop {
-        unsafe {
-            core::arch::asm!("wfi");
-        }
-    }
+    0
 }
 
 pub fn sys_getpid() -> isize {

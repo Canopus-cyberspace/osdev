@@ -37,10 +37,30 @@ pub fn enter_user(entry: usize, user_sp: usize) -> ! {
         (*cx).sepc = entry;
 
         crate::println!("[trap] enter user mode");
-        crate::println!("[trap] user entry = {:#x}", entry);
-        crate::println!("[trap] user sp    = {:#x}", user_sp);
         __restore(cx as usize);
     }
+}
+
+pub fn make_user_context_for_debug(entry: usize, user_sp: usize) -> TrapContext {
+    let mut cx = TrapContext {
+        regs: [0; 32],
+        sstatus: user_sstatus(),
+        sepc: entry,
+    };
+
+    cx.regs[2] = user_sp;
+    cx
+}
+
+pub fn debug_user_sstatus_bits() -> (usize, bool, bool) {
+    const SSTATUS_SPP: usize = 1 << 8;
+    const SSTATUS_SPIE: usize = 1 << 5;
+
+    let sstatus = user_sstatus();
+    let spp_is_user = sstatus & SSTATUS_SPP == 0;
+    let spie_is_enabled = sstatus & SSTATUS_SPIE != 0;
+
+    (sstatus, spp_is_user, spie_is_enabled)
 }
 
 #[no_mangle]

@@ -31,7 +31,7 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] full mechanism skeleton stable v28 umode v27");
+    crate::println!("[stage] full mechanism skeleton stable v27");
 
     mm::init();
     mm::test();

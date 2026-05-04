@@ -1,43 +1,36 @@
 use core::arch::asm;
 
-pub const ENABLE_UMODE_TEST: bool = true;
-
-const USER_STACK_SIZE: usize = 4096 * 4;
+/// U-mode 恢复开关。
+/// 当前阶段先保持 false，确保完整机制骨架稳定。
+/// 下一阶段再单独把它改成 true，并修 trap / sret / 用户栈路径。
+pub const ENABLE_UMODE_TEST: bool = false;
 
 #[repr(align(16))]
-struct UserStack([u8; USER_STACK_SIZE]);
+struct UserStack([u8; crate::config::USER_STACK_SIZE]);
 
-static mut USER_STACK: UserStack = UserStack([0; USER_STACK_SIZE]);
+static mut USER_STACK: UserStack = UserStack([0; crate::config::USER_STACK_SIZE]);
 
-pub fn init() {
-    crate::println!("[task::umode] init");
-    crate::println!("[task::umode] ENABLE_UMODE_TEST = {}", ENABLE_UMODE_TEST);
-}
+pub fn run_raw_user_task() -> ! {
+    let user_entry_addr = user_entry as *const () as usize;
+    let user_stack_bottom = core::ptr::addr_of_mut!(USER_STACK) as usize;
+    let user_stack_top = user_stack_bottom + crate::config::USER_STACK_SIZE;
 
-pub fn run_umode_smoke_test() -> ! {
-    let entry = user_entry as *const () as usize;
-    let stack_bottom = core::ptr::addr_of_mut!(USER_STACK) as usize;
-    let stack_top = stack_bottom + USER_STACK_SIZE;
-
-    crate::println!("[task::umode] run smoke test");
-    crate::println!("[task::umode] entry = {:#x}", entry);
-    crate::println!("[task::umode] stack = {:#x}..{:#x}", stack_bottom, stack_top);
-
-    crate::trap::enter_user(entry, stack_top)
+    crate::println!("[umode] enter raw U-mode test");
+    crate::trap::enter_user(user_entry_addr, user_stack_top);
 }
 
 #[no_mangle]
 extern "C" fn user_entry() -> ! {
-    let msg = b"hello from U-mode v28 syscall write\n";
+    let msg = b"hello from raw U-mode syscall write\n";
     user_syscall3(64, 1, msg.as_ptr() as usize, msg.len());
 
     let pid = user_syscall0(172);
 
     if pid == 1 {
-        let ok = b"getpid returned 1 from U-mode\n";
+        let ok = b"raw U-mode getpid returned 1\n";
         user_syscall3(64, 1, ok.as_ptr() as usize, ok.len());
     } else {
-        let bad = b"getpid returned unexpected value from U-mode\n";
+        let bad = b"raw U-mode getpid returned unexpected value\n";
         user_syscall3(64, 1, bad.as_ptr() as usize, bad.len());
     }
 
