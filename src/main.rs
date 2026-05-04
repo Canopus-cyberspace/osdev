@@ -5,33 +5,48 @@ use core::arch::global_asm;
 
 global_asm!(include_str!("../arch/riscv64/boot.S"));
 
+mod config;
 mod console;
+mod drivers;
+mod fs;
+mod futex;
 mod lang_items;
+mod loader;
 mod mm;
-mod pagetable;
+mod net;
 mod sbi;
+mod signal;
+mod sync;
 mod syscall;
+mod task;
+mod timer;
 mod trap;
-
-static USER_IMAGE: &[u8] = include_bytes!("../user/user.bin");
 
 #[no_mangle]
 pub extern "C" fn rust_main() -> ! {
     clear_bss();
 
     crate::println!("UESTC-Kernel booting...");
-    crate::println!("arch = riscv64");
-    crate::println!("stage = user image with Sv39 test");
+    crate::println!("[arch] riscv64");
+    crate::println!("[stage] full mechanism skeleton stable v24");
 
     mm::init();
     mm::test();
-    pagetable::test();
+
+    fs::init();
+    loader::init();
+    sync::init();
+    signal::init();
+    futex::init();
+    timer::init();
+    drivers::init();
+    net::init();
+    syscall::init();
+    task::init();
 
     trap::init();
 
-    let (user_entry, user_sp) = pagetable::init_kernel_space(USER_IMAGE);
-
-    trap::enter_user(user_entry, user_sp);
+    task::run_first_user_task();
 }
 
 fn clear_bss() {

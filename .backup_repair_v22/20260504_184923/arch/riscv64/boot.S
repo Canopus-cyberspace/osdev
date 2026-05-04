@@ -9,7 +9,7 @@ park:
     wfi
     j park
 
-    .section .bss.stack
+    .section .boot_stack, "aw", @nobits
     .align 12
 boot_stack:
     .space 4096 * 16

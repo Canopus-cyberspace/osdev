@@ -1,5 +1,4 @@
-const PAGE_SIZE: usize = 4096;
-const MEMORY_END: usize = 0x8800_0000;
+use crate::config::{MEMORY_END, PAGE_SIZE};
 
 static mut FRAME_ALLOCATOR: FrameAllocator = FrameAllocator {
     current: 0,
@@ -20,43 +19,39 @@ pub fn init() {
         FRAME_ALLOCATOR.init(start, end);
     }
 
-    crate::println!("[mm] frame allocator initialized");
-    crate::println!("[mm] start = {:#x}", start);
-    crate::println!("[mm] end   = {:#x}", end);
-}
-
-pub fn test() {
-    crate::println!("[mm] frame allocator test begin");
-
-    let a = frame_alloc().unwrap();
-    let b = frame_alloc().unwrap();
-    let c = frame_alloc().unwrap();
-
-    crate::println!("[mm] alloc a = {:#x}", a);
-    crate::println!("[mm] alloc b = {:#x}", b);
-    crate::println!("[mm] alloc c = {:#x}", c);
-
-    frame_dealloc(b);
-    crate::println!("[mm] dealloc b = {:#x}", b);
-
-    let d = frame_alloc().unwrap();
-    crate::println!("[mm] alloc d = {:#x}", d);
-
-    assert_eq!(b, d);
-
-    crate::println!("[mm] frame allocator test passed");
+    crate::println!("[mm::frame] start = {:#x}", start);
+    crate::println!("[mm::frame] end   = {:#x}", end);
 }
 
 pub fn frame_alloc() -> Option<usize> {
-    unsafe {
-        FRAME_ALLOCATOR.alloc()
-    }
+    unsafe { FRAME_ALLOCATOR.alloc() }
 }
 
 pub fn frame_dealloc(ppn: usize) {
     unsafe {
         FRAME_ALLOCATOR.dealloc(ppn);
     }
+}
+
+pub fn test() {
+    crate::println!("[mm::frame] test begin");
+
+    let a = frame_alloc().unwrap();
+    let b = frame_alloc().unwrap();
+    let c = frame_alloc().unwrap();
+
+    crate::println!("[mm::frame] alloc a = {:#x}", a);
+    crate::println!("[mm::frame] alloc b = {:#x}", b);
+    crate::println!("[mm::frame] alloc c = {:#x}", c);
+
+    frame_dealloc(b);
+
+    let d = frame_alloc().unwrap();
+
+    crate::println!("[mm::frame] realloc d = {:#x}", d);
+    assert_eq!(b, d);
+
+    crate::println!("[mm::frame] test passed");
 }
 
 struct FrameAllocator {
@@ -90,7 +85,7 @@ impl FrameAllocator {
 
     fn dealloc(&mut self, ppn: usize) {
         if self.recycled_len >= self.recycled.len() {
-            panic!("[mm] recycled frame stack overflow");
+            panic!("[mm::frame] recycled stack overflow");
         }
 
         self.recycled[self.recycled_len] = ppn;

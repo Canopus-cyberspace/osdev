@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-set -e
-
+set -euo pipefail
 KERNEL_ELF="$1"
-
 qemu-system-riscv64 \
   -machine virt \
-  -nographic \
+  -m 128M \
+  -smp 1 \
   -bios default \
-  -kernel "${KERNEL_ELF}"
+  -kernel "$KERNEL_ELF" \
+  -display none \
+  -serial stdio \
+  -monitor none \
+  -no-reboot
