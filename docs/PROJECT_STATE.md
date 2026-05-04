@@ -89,3 +89,9 @@ Sv39 smoke scaffold compile fix applied. Sv39 is still disabled; U-mode syscall 
 - Fixed Sv39 smoke scaffold function naming.
 - Real Sv39 activation remains disabled.
 - U-mode syscall matrix remains the regression path.
+
+## v42 Update
+
+- Isolated kernel-only Sv39 activation path added.
+- UART MMIO and RAM identity mapping are established before satp write.
+- U-mode is intentionally disabled for this smoke test.

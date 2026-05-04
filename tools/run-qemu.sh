@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-KERNEL_ELF="$1"
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-LOG_DIR="$PROJECT_ROOT/.repair_logs"
+KERNEL_ELF="${1:-target/riscv64gc-unknown-none-elf/debug/uestc-kernel}"
+LOG_DIR="${QEMU_LOG_DIR:-.repair_logs}"
 mkdir -p "$LOG_DIR"
-SERIAL_LOG="$LOG_DIR/make_run.serial.log"
-STDERR_LOG="$LOG_DIR/make_run.stderr.log"
-rm -f "$SERIAL_LOG" "$STDERR_LOG"
+SERIAL_LOG="${QEMU_SERIAL_LOG:-$LOG_DIR/qemu-serial.log}"
 
-echo "[run-qemu] serial log: $SERIAL_LOG"
+echo "[run-qemu] kernel = $KERNEL_ELF"
+echo "[run-qemu] serial = $SERIAL_LOG"
 
 qemu-system-riscv64 \
   -machine virt \
@@ -18,7 +16,6 @@ qemu-system-riscv64 \
   -bios default \
   -kernel "$KERNEL_ELF" \
   -display none \
-  -serial file:"$SERIAL_LOG" \
+  -serial "file:$SERIAL_LOG" \
   -monitor none \
-  -no-reboot \
-  2>"$STDERR_LOG"
+  -no-reboot

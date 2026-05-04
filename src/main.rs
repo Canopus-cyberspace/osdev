@@ -31,7 +31,7 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] U-mode syscall matrix v30b");
+    crate::println!("[stage] isolated kernel Sv39 activation v42");
 
     mm::init();
     mm::test();
@@ -49,11 +49,8 @@ pub extern "C" fn rust_main() -> ! {
 
     trap::init();
 
-    if mm::sv39_smoke::ENABLE_KERNEL_SV39_SMOKE {
-        mm::sv39_smoke::run_kernel_sv39_activation_smoke();
-    }
-
-    task::run_first_user_task();
+    crate::println!("[stage] U-mode disabled for isolated kernel Sv39 v42");
+    mm::sv39_smoke::run_kernel_sv39_activation_smoke();
 }
 
 fn clear_bss() {

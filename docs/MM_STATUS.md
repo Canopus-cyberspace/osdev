@@ -2,21 +2,20 @@
 
 ## Completed
 
-- Frame allocator test passes.
-- Page-table map/translate test passes.
-- User-copy abstraction passes.
-- User address-space metadata scaffold passes.
-- Sv39 pure dry-run passes.
-- Kernel/user mapping builder dry-runs pass.
-- Real page-table build dry-run passes.
-- Sv39 activation scaffold exists but real satp activation remains disabled.
+- v31 user-copy abstraction
+- v32e user-copy bounds and getppid test
+- v33 user address-space metadata scaffold
+- v34f pure Sv39 dry-run
+- v35 kernel address-space dry-run
+- v36e safe Sv39 activation scaffold
+- v37 kernel mapping builder dry-run
+- v38 user mapping builder dry-run
+- v39 real page table build dry-run
+- v40d Sv39 smoke scaffold
+- v42 isolated kernel-only Sv39 activation smoke
 
-## Current Version
+## Current Notes
 
-- v41d: Sv39 smoke compile/runtime scaffold fixed.
-
-## Not Yet Enabled
-
-- Real Sv39 activation.
-- Sv39 U-mode execution.
-- Page fault handling.
+- v42 writes satp in a kernel-only isolated path.
+- v42 does not enter U-mode.
+- The next step should restore trap/U-mode under Sv39 only after kernel Sv39 is stable.

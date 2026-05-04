@@ -1,19 +1,11 @@
 # LAST_APPLIED_FIX
 
-Version: v41d
+Version: v42
 
-## Summary
+Status: applied by repair package
 
-- Fixed missing Sv39 smoke function names.
-- Fixed `task::run_first_user_task() -> !` by ensuring all branches diverge.
-- Kept real Sv39 activation disabled.
-- Preserved U-mode syscall matrix regression.
-
-## Expected Runtime Markers
-
-- `[sv39-v41d] scaffold test passed`
-- `[sv39-smoke-v41d] scaffold passed`
-- `hello from umode v41d syscall write`
-- `umode getpid returned 1`
-- `umode getppid returned 0`
-- `unsupported syscall returned -38`
+Summary:
+- Enabled isolated kernel-only Sv39 activation smoke path.
+- Mapped UART MMIO and RAM identity before writing satp.
+- Verified println and kernel data read/write after satp.
+- U-mode is intentionally disabled in this isolated test.
