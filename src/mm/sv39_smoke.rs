@@ -152,7 +152,7 @@ fn root_table_pa() -> usize {
 }
 
 fn install_trap_entry() {
-    let entry = __sv39_v43e_trap_entry as usize;
+    let entry = __sv39_v43e_trap_entry as *const () as usize;
     unsafe {
         asm!("csrw stvec, {}", in(reg) entry);
     }

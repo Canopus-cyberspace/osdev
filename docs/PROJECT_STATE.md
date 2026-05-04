@@ -21,3 +21,12 @@ Enable Sv39 in kernel-only mode, trigger a supervisor ecall, handle the trap, re
 ## Important Constraint
 
 v43 does not enter U-mode. U-mode under Sv39 will be a later step.
+
+
+## v44 - Sv39 U-mode preparation scaffold
+
+- Added `src/mm/user_sv39.rs`.
+- Added user text / guard / stack mapping plan metadata.
+- Default runtime remains kernel Sv39 trap smoke.
+- Sv39 + U-mode is still not enabled.
+- Next planned step: v45 controlled Sv39 + U-mode ecall experiment.

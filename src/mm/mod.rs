@@ -12,6 +12,7 @@ pub mod sv39_trap_smoke;
 pub mod user_buffer;
 pub mod user_builder;
 pub mod user_space;
+pub mod user_sv39;
 pub mod vm_area;
 
 pub use frame_allocator::{frame_alloc, frame_dealloc};
