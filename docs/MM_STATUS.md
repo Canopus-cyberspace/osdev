@@ -16,3 +16,18 @@ Still TODO:
 - page fault based allocation
 - mmap/munmap
 - per-process address space ownership
+
+## v61 - mmap/munmap scaffold
+
+Implemented:
+- fixed mmap window at `0x40040000..0x40044000`
+- mapped mmap pages as R/W/U
+- `mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)` returns `0x40040000`
+- `munmap(0x40040000, 4096)` clears scaffold active state and returns 0
+
+Still TODO:
+- real VMA list
+- MAP_FIXED handling
+- file-backed mmap
+- page fault based lazy mapping
+- real PTE unmap and TLB invalidation per VMA

@@ -15,6 +15,10 @@ const USER_HEAP_START: usize = 0x4003_0000;
 const USER_HEAP_PAGES: usize = 4;
 const USER_HEAP_SIZE: usize = USER_HEAP_PAGES * PAGE_SIZE;
 const USER_HEAP_END: usize = USER_HEAP_START + USER_HEAP_SIZE;
+const USER_MMAP_START: usize = 0x4004_0000;
+const USER_MMAP_PAGES: usize = 4;
+const USER_MMAP_SIZE: usize = USER_MMAP_PAGES * PAGE_SIZE;
+const USER_MMAP_END: usize = USER_MMAP_START + USER_MMAP_SIZE;
 
 const PTE_V: usize = 1 << 0;
 const PTE_R: usize = 1 << 1;
@@ -42,6 +46,9 @@ struct UserStack([u8; USER_STACK_SIZE]);
 #[repr(C, align(4096))]
 struct UserHeap([u8; USER_HEAP_SIZE]);
 
+#[repr(C, align(4096))]
+struct UserMmapArea([u8; USER_MMAP_SIZE]);
+
 #[repr(C)]
 pub struct TrapContext {
     pub regs: [usize; 32],
@@ -54,7 +61,9 @@ static mut USER_L1_TABLE: PageTable512 = PageTable512([0; 512]);
 static mut USER_L0_TABLE: PageTable512 = PageTable512([0; 512]);
 static mut USER_STACK: UserStack = UserStack([0; USER_STACK_SIZE]);
 static mut USER_HEAP: UserHeap = UserHeap([0; USER_HEAP_SIZE]);
+static mut USER_MMAP_AREA: UserMmapArea = UserMmapArea([0; USER_MMAP_SIZE]);
 static mut USER_BRK: usize = USER_HEAP_START;
+static mut USER_MMAP_ACTIVE: bool = false;
 static mut INIT_CONTEXT: TrapContext = TrapContext { regs: [0; 32], sstatus: 0, sepc: 0 };
 static EXIT_SEEN: AtomicBool = AtomicBool::new(false);
 
@@ -170,10 +179,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v60] brk heap path enabled");
+    crate::println!("[external-init-v61] mmap/munmap path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v60] load external init.elf failed");
+        .expect("[external-init-v61] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -198,7 +207,9 @@ unsafe fn build_page_table(loaded: LoadedInitImage) {
     USER_L0_TABLE.0 = [0; 512];
     USER_STACK.0.fill(0);
     USER_HEAP.0.fill(0);
+    USER_MMAP_AREA.0.fill(0);
     USER_BRK = USER_HEAP_START;
+    USER_MMAP_ACTIVE = false;
 
     ROOT_TABLE.0[0] = leaf_1g_pte(0x0000_0000, KERNEL_LEAF);
     ROOT_TABLE.0[2] = leaf_1g_pte(0x8000_0000, KERNEL_LEAF);
@@ -235,6 +246,17 @@ unsafe fn build_page_table(loaded: LoadedInitImage) {
     }
 
     crate::println!("[brk-v60] user heap mapped {:#x}..{:#x}", USER_HEAP_START, USER_HEAP_END);
+
+    let mmap_pa = core::ptr::addr_of!(USER_MMAP_AREA) as usize;
+    let mut mp = 0;
+    while mp < USER_MMAP_PAGES {
+        let va = USER_MMAP_START + mp * PAGE_SIZE;
+        let pa = mmap_pa + mp * PAGE_SIZE;
+        map_user_4k(va, pa, USER_STACK_FLAGS);
+        mp += 1;
+    }
+
+    crate::println!("[mmap-v61] user mmap area mapped {:#x}..{:#x}", USER_MMAP_START, USER_MMAP_END);
     
     crate::println!("[external-init-v50b] user stack mapped {:#x}..{:#x}", stack_base_va, USER_STACK_TOP);
     crate::println!("[external-init-v50b] root pa = {:#x}", root_pa());
@@ -290,7 +312,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v60] unexpected trap");
+        crate::println!("[external-init-v61] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -345,6 +367,14 @@ fn handle_syscall(cx: &mut TrapContext) {
             let ret = sys_brk(addr);
             cx.regs[10] = ret as usize;
         }
+        RuntimeSyscallAction::Mmap { addr, len, prot, flags, fd, offset } => {
+            let ret = sys_mmap(addr, len, prot, flags, fd, offset);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Munmap { addr, len } => {
+            let ret = sys_munmap(addr, len);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
@@ -355,6 +385,43 @@ fn handle_syscall(cx: &mut TrapContext) {
     }
 }
 
+
+
+fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: isize, offset: usize) -> isize {
+    unsafe {
+        crate::println!("[mmap-v61] request addr = {:#x}", addr);
+        crate::println!("[mmap-v61] len = {}", len);
+        crate::println!("[mmap-v61] prot = {:#x}", prot);
+        crate::println!("[mmap-v61] flags = {:#x}", flags);
+        crate::println!("[mmap-v61] fd = {}", fd);
+        crate::println!("[mmap-v61] offset = {:#x}", offset);
+
+        if len == 0 || len > USER_MMAP_SIZE {
+            crate::println!("[mmap-v61] rejected invalid len");
+            return crate::syscall::EINVAL;
+        }
+
+        USER_MMAP_ACTIVE = true;
+        crate::println!("[mmap-v61] ret = {:#x}", USER_MMAP_START);
+        USER_MMAP_START as isize
+    }
+}
+
+fn sys_munmap(addr: usize, len: usize) -> isize {
+    unsafe {
+        crate::println!("[munmap-v61] addr = {:#x}", addr);
+        crate::println!("[munmap-v61] len = {}", len);
+
+        if addr == USER_MMAP_START && len <= USER_MMAP_SIZE && USER_MMAP_ACTIVE {
+            USER_MMAP_ACTIVE = false;
+            crate::println!("[munmap-v61] ret = 0");
+            0
+        } else {
+            crate::println!("[munmap-v61] ret = -22");
+            crate::syscall::EINVAL
+        }
+    }
+}
 
 fn sys_brk(addr: usize) -> isize {
     unsafe {

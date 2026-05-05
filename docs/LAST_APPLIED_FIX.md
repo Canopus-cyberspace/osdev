@@ -1,13 +1,14 @@
 # LAST_APPLIED_FIX
 
-Version: v60
+Version: v61
 
 Goal:
-- Add `brk` scaffold and map a small fixed user heap.
+- Add mmap/munmap scaffold after brk.
 
 Verified:
-- brk(0)
-- brk(0x40031000)
+- mmap anonymous private page returns fixed user mapping
+- munmap succeeds on that fixed mapping
+- brk
 - fstat/lseek
 - getdents64 `/dev`
 - open/read/write/close device scaffolds

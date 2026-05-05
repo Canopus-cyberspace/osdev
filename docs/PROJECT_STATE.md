@@ -214,3 +214,13 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Implemented `brk(0)` query and in-range update
 - Extended external init ELF to exercise brk
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v61 - mmap/munmap scaffold
+
+- Added `SYS_MMAP = 222`
+- Added `SYS_MUNMAP = 215`
+- Added central `RuntimeSyscallAction::Mmap`
+- Added central `RuntimeSyscallAction::Munmap`
+- Added fixed mmap window at `0x40040000..0x40044000`
+- Extended external init ELF to exercise mmap and munmap
+- Kept external init ELF Sv39 U-mode smoke passing
