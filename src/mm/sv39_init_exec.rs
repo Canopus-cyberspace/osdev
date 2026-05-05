@@ -4,7 +4,7 @@ use core::arch::{asm, global_asm};
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use crate::config::PAGE_SIZE;
-use crate::fd::{RuntimeReadTarget, RuntimeWriteTarget};
+use crate::fd::{RuntimeFdKind, RuntimeReadTarget, RuntimeWriteTarget};
 use crate::loader::init_image::{load_init_image_to_page, LoadedInitImage};
 use crate::syscall::{RuntimeSyscallAction, RuntimeSyscallArgs};
 
@@ -161,10 +161,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v57] read /dev/zero path enabled");
+    crate::println!("[external-init-v58] fstat/lseek path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v57] load external init.elf failed");
+        .expect("[external-init-v58] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -268,7 +268,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v57] unexpected trap");
+        crate::println!("[external-init-v58] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -305,6 +305,14 @@ fn handle_syscall(cx: &mut TrapContext) {
         }
         RuntimeSyscallAction::Close { fd } => {
             let ret = sys_close_fd(fd);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::FStat { fd, user_stat } => {
+            let ret = sys_fstat_user(fd, user_stat);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::LSeek { fd, offset, whence } => {
+            let ret = sys_lseek(fd, offset, whence);
             cx.regs[10] = ret as usize;
         }
         RuntimeSyscallAction::Exit { code } => {
@@ -352,6 +360,48 @@ fn sys_close_fd(fd: usize) -> isize {
     let ret = crate::fd::runtime_close_fd(fd);
     crate::println!("[close-v56] fd = {}", fd);
     crate::println!("[close-v56] ret = {}", ret);
+    ret
+}
+
+fn sys_fstat_user(fd: usize, user_stat: usize) -> isize {
+    crate::println!("[fstat-v58] fd = {}", fd);
+    crate::println!("[fstat-v58] user stat = {:#x}", user_stat);
+
+    let kind = match crate::fd::runtime_fstat_result(fd) {
+        Ok(kind) => kind,
+        Err(err) => return err,
+    };
+
+    with_sum_enabled(|| {
+        for i in 0..128usize {
+            unsafe { core::ptr::write_volatile((user_stat + i) as *mut u8, 0); }
+        }
+
+        // Minimal Linux-like stat fields. Exact layout is not complete yet; this
+        // is enough to prove user-copy-out and fd validation.
+        let mode: u32 = match kind {
+            RuntimeFdKind::Stdin | RuntimeFdKind::Stdout | RuntimeFdKind::Stderr => 0o020000 | 0o666, // S_IFCHR
+            RuntimeFdKind::DevNull | RuntimeFdKind::DevZero => 0o020000 | 0o666,
+        };
+
+        unsafe {
+            core::ptr::write_volatile((user_stat + 0) as *mut u64, fd as u64);
+            core::ptr::write_volatile((user_stat + 16) as *mut u32, mode);
+            core::ptr::write_volatile((user_stat + 48) as *mut u64, 0);
+        }
+    });
+
+    crate::println!("[fstat-v58] wrote minimal stat");
+    0
+}
+
+fn sys_lseek(fd: usize, offset: isize, whence: usize) -> isize {
+    crate::println!("[lseek-v58] fd = {}", fd);
+    crate::println!("[lseek-v58] offset = {}", offset);
+    crate::println!("[lseek-v58] whence = {}", whence);
+
+    let ret = crate::fd::runtime_lseek_result(fd);
+    crate::println!("[lseek-v58] ret = {}", ret);
     ret
 }
 

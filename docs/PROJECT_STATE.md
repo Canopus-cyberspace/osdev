@@ -191,3 +191,10 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added `/dev/zero` open/read/close runtime scaffold
 - Added central syscall action for read
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v58 - fstat/lseek scaffold
+
+- Extended external init ELF to call fstat and lseek
+- Added minimal stat copy-out to user buffer
+- Added lseek scaffold returning -ESPIPE for character devices
+- Kept external init ELF Sv39 U-mode smoke passing

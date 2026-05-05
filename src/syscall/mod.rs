@@ -7,8 +7,10 @@ use crate::process::{make_init_process, make_zombie};
 
 pub const SYS_OPENAT: usize = 56;
 pub const SYS_CLOSE: usize = 57;
+pub const SYS_LSEEK: usize = 62;
 pub const SYS_READ: usize = 63;
 pub const SYS_WRITE: usize = 64;
+pub const SYS_FSTAT: usize = 80;
 pub const SYS_EXIT: usize = 93;
 pub const SYS_GETPID: usize = 172;
 pub const SYS_GETPPID: usize = 173;
@@ -20,6 +22,7 @@ pub const ENOSYS: isize = -38;
 pub const EBADF: isize = -9;
 pub const ENOENT: isize = -2;
 pub const EINVAL: isize = -22;
+pub const ESPIPE: isize = -29;
 
 #[derive(Copy, Clone, Debug)]
 pub struct SyscallFrame {
@@ -76,6 +79,8 @@ pub enum RuntimeSyscallAction {
     Read { fd: usize, user_ptr: usize, len: usize, target: RuntimeReadTarget },
     OpenAt { dirfd: isize, user_path: usize, flags: usize, mode: usize },
     Close { fd: usize },
+    FStat { fd: usize, user_stat: usize },
+    LSeek { fd: usize, offset: isize, whence: usize },
     Exit { code: isize },
 }
 
@@ -88,6 +93,11 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
             mode: args.a3,
         },
         SYS_CLOSE => RuntimeSyscallAction::Close { fd: args.a0 },
+        SYS_LSEEK => RuntimeSyscallAction::LSeek {
+            fd: args.a0,
+            offset: args.a1 as isize,
+            whence: args.a2,
+        },
         SYS_READ => match crate::fd::runtime_read_target(args.a0) {
             Ok(target) => RuntimeSyscallAction::Read { fd: args.a0, user_ptr: args.a1, len: args.a2, target },
             Err(err) => RuntimeSyscallAction::Return(err),
@@ -96,6 +106,7 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
             Ok(target) => RuntimeSyscallAction::Write { fd: args.a0, user_ptr: args.a1, len: args.a2, target },
             Err(err) => RuntimeSyscallAction::Return(err),
         },
+        SYS_FSTAT => RuntimeSyscallAction::FStat { fd: args.a0, user_stat: args.a1 },
         SYS_EXIT => RuntimeSyscallAction::Exit { code: args.a0 as isize },
         SYS_GETPID => RuntimeSyscallAction::Return(1),
         SYS_GETPPID => RuntimeSyscallAction::Return(0),
@@ -104,20 +115,29 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
 }
 
 pub fn self_test() {
-    crate::println!("[syscall-dispatch-v57] self-test begin");
+    crate::println!("[syscall-dispatch-v58] self-test begin");
 
-    let open = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_OPENAT, (-100isize) as usize, 0x4000_0000, 0, 0, 0, 0));
-    match open {
-        RuntimeSyscallAction::OpenAt { dirfd, user_path, flags, mode } => {
-            crate::println!("[syscall-dispatch-v57] openat dirfd = {}", dirfd);
-            crate::println!("[syscall-dispatch-v57] openat path = {:#x}", user_path);
-            crate::println!("[syscall-dispatch-v57] openat flags = {:#x}", flags);
-            crate::println!("[syscall-dispatch-v57] openat mode = {:#x}", mode);
+    assert_eq!(
+        dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_CLOSE, 4, 0, 0, 0, 0, 0)),
+        RuntimeSyscallAction::Close { fd: 4 }
+    );
+
+    match dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_FSTAT, 1, 0x4001_ff00, 0, 0, 0, 0)) {
+        RuntimeSyscallAction::FStat { fd, user_stat } => {
+            crate::println!("[syscall-dispatch-v58] fstat fd = {}", fd);
+            crate::println!("[syscall-dispatch-v58] fstat stat = {:#x}", user_stat);
         }
-        _ => panic!("[syscall-dispatch-v57] openat dispatch failed"),
+        _ => panic!("[syscall-dispatch-v58] fstat dispatch failed"),
     }
 
-    assert_eq!(dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_CLOSE, 4, 0, 0, 0, 0, 0)), RuntimeSyscallAction::Close { fd: 4 });
+    match dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_LSEEK, 1, 0, 0, 0, 0, 0)) {
+        RuntimeSyscallAction::LSeek { fd, offset, whence } => {
+            crate::println!("[syscall-dispatch-v58] lseek fd = {}", fd);
+            crate::println!("[syscall-dispatch-v58] lseek offset = {}", offset);
+            crate::println!("[syscall-dispatch-v58] lseek whence = {}", whence);
+        }
+        _ => panic!("[syscall-dispatch-v58] lseek dispatch failed"),
+    }
 
     let getpid = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_GETPID, 0, 0, 0, 0, 0, 0));
     let getppid = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_GETPPID, 0, 0, 0, 0, 0, 0));
@@ -130,22 +150,22 @@ pub fn self_test() {
     assert_eq!(exit, RuntimeSyscallAction::Exit { code: 0 });
 
     let exec_ret = dispatch_scaffold(SyscallFrame::new(SYS_EXECVE, [0; 6]));
-    crate::println!("[syscall-dispatch-v57] execve scaffold ret = {}", exec_ret);
+    crate::println!("[syscall-dispatch-v58] execve scaffold ret = {}", exec_ret);
 
     if let Ok(info) = build_init_process_info() {
         let init = make_init_process(info);
         let zombie = make_zombie(init, 0);
-        crate::println!("[syscall-dispatch-v57] zombie exit = {}", zombie.exit_code);
+        crate::println!("[syscall-dispatch-v58] zombie exit = {}", zombie.exit_code);
     }
 
     let mut fd_table = FdTable::with_stdio();
     let stdout_writable = fd_table.get(1).map(|fd| fd.writable).unwrap_or(false);
-    crate::println!("[syscall-dispatch-v57] stdout writable = {}", stdout_writable as usize);
+    crate::println!("[syscall-dispatch-v58] stdout writable = {}", stdout_writable as usize);
 
     if let Some(dev_zero_fd) = fd_table.alloc(FileKind::DevZero, true, false) {
         let closed = fd_table.close(dev_zero_fd);
-        crate::println!("[syscall-dispatch-v57] devzero fd closed = {}", closed as usize);
+        crate::println!("[syscall-dispatch-v58] devzero fd closed = {}", closed as usize);
     }
 
-    crate::println!("[syscall-dispatch-v57] self-test passed");
+    crate::println!("[syscall-dispatch-v58] self-test passed");
 }

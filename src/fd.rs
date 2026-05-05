@@ -7,6 +7,7 @@ pub const MAX_FD: usize = 16;
 pub const EBADF: isize = -9;
 pub const ENOENT: isize = -2;
 pub const EINVAL: isize = -22;
+pub const ESPIPE: isize = -29;
 
 static DEVNULL_OPEN: AtomicBool = AtomicBool::new(false);
 static DEVZERO_OPEN: AtomicBool = AtomicBool::new(false);
@@ -87,6 +88,15 @@ pub enum RuntimeReadTarget {
     DevZero,
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum RuntimeFdKind {
+    Stdin,
+    Stdout,
+    Stderr,
+    DevNull,
+    DevZero,
+}
+
 pub fn runtime_open_devnull() -> isize {
     DEVNULL_OPEN.store(true, Ordering::SeqCst);
     3
@@ -110,6 +120,21 @@ pub fn runtime_close_fd(fd: usize) -> isize {
     }
 }
 
+pub fn runtime_fd_kind(fd: usize) -> Result<RuntimeFdKind, isize> {
+    match fd {
+        0 => Ok(RuntimeFdKind::Stdin),
+        1 => Ok(RuntimeFdKind::Stdout),
+        2 => Ok(RuntimeFdKind::Stderr),
+        3 => {
+            if DEVNULL_OPEN.load(Ordering::SeqCst) { Ok(RuntimeFdKind::DevNull) } else { Err(EBADF) }
+        }
+        4 => {
+            if DEVZERO_OPEN.load(Ordering::SeqCst) { Ok(RuntimeFdKind::DevZero) } else { Err(EBADF) }
+        }
+        _ => Err(EBADF),
+    }
+}
+
 pub fn runtime_write_target(fd: usize) -> Result<RuntimeWriteTarget, isize> {
     match fd {
         1 | 2 => Ok(RuntimeWriteTarget::Console),
@@ -130,14 +155,25 @@ pub fn runtime_read_target(fd: usize) -> Result<RuntimeReadTarget, isize> {
     }
 }
 
+pub fn runtime_lseek_result(fd: usize) -> isize {
+    match runtime_fd_kind(fd) {
+        Ok(RuntimeFdKind::Stdin | RuntimeFdKind::Stdout | RuntimeFdKind::Stderr | RuntimeFdKind::DevNull | RuntimeFdKind::DevZero) => ESPIPE,
+        Err(err) => err,
+    }
+}
+
+pub fn runtime_fstat_result(fd: usize) -> Result<RuntimeFdKind, isize> {
+    runtime_fd_kind(fd)
+}
+
 pub fn self_test() {
-    crate::println!("[fd-v57] self-test begin");
+    crate::println!("[fd-v58] self-test begin");
 
     let mut table = FdTable::with_stdio();
 
-    let stdin = table.get(0).expect("[fd-v57] missing stdin");
-    let stdout = table.get(1).expect("[fd-v57] missing stdout");
-    let stderr = table.get(2).expect("[fd-v57] missing stderr");
+    let stdin = table.get(0).expect("[fd-v58] missing stdin");
+    let stdout = table.get(1).expect("[fd-v58] missing stdout");
+    let stderr = table.get(2).expect("[fd-v58] missing stderr");
 
     assert_eq!(stdin.kind, FileKind::Stdin);
     assert!(stdin.readable);
@@ -149,20 +185,22 @@ pub fn self_test() {
 
     assert_eq!(runtime_write_target(1), Ok(RuntimeWriteTarget::Console));
     assert_eq!(runtime_read_target(0), Ok(RuntimeReadTarget::Stdin));
-    assert_eq!(runtime_write_target(3), Err(EBADF));
-    assert_eq!(runtime_read_target(4), Err(EBADF));
+    assert_eq!(runtime_lseek_result(1), ESPIPE);
+    assert_eq!(runtime_fstat_result(1), Ok(RuntimeFdKind::Stdout));
 
     assert_eq!(runtime_open_devnull(), 3);
-    assert_eq!(runtime_write_target(3), Ok(RuntimeWriteTarget::DevNull));
+    assert_eq!(runtime_fstat_result(3), Ok(RuntimeFdKind::DevNull));
     assert_eq!(runtime_close_fd(3), 0);
 
     assert_eq!(runtime_open_devzero(), 4);
     assert_eq!(runtime_read_target(4), Ok(RuntimeReadTarget::DevZero));
+    assert_eq!(runtime_fstat_result(4), Ok(RuntimeFdKind::DevZero));
+    assert_eq!(runtime_lseek_result(4), ESPIPE);
     assert_eq!(runtime_close_fd(4), 0);
 
-    let null_fd = table.alloc(FileKind::DevNull, true, true).expect("[fd-v57] alloc devnull fd failed");
-    crate::println!("[fd-v57] allocated /dev/null fd = {}", null_fd);
+    let null_fd = table.alloc(FileKind::DevNull, true, true).expect("[fd-v58] alloc devnull fd failed");
+    crate::println!("[fd-v58] allocated /dev/null fd = {}", null_fd);
     assert!(table.close(null_fd));
 
-    crate::println!("[fd-v57] self-test passed");
+    crate::println!("[fd-v58] self-test passed");
 }

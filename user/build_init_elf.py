@@ -51,8 +51,14 @@ def syscall_write_current_fd(addr, length):
     return load_abs(A1, addr) + li(A2, length) + li(A7, 64) + ecall()
 
 def syscall_read_current_fd_from_s0_spbuf(length):
-    # fd in s0, buffer = sp - 64, len = length
     return addi(A0, S0, 0) + addi(A1, 2, -64) + li(A2, length) + li(A7, 63) + ecall()
+
+def syscall_fstat_stdout_spbuf():
+    return li(A0, 1) + addi(A1, 2, -192) + li(A7, 80) + ecall()
+
+def syscall_lseek_stdout():
+    # lseek(stdout, 0, SEEK_SET)
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 62) + ecall()
 
 def syscall0(num):
     return li(A7, num) + ecall()
@@ -61,15 +67,15 @@ def syscall1(num, arg0):
     return li(A0, arg0) + li(A7, num) + ecall()
 
 def syscall_openat(path_addr, flags):
-    # openat(AT_FDCWD=-100, path, flags, mode=0)
     return li(A0, -100) + load_abs(A1, path_addr) + li(A2, flags) + li(A3, 0) + li(A7, 56) + ecall()
 
 def syscall_close_current_s0():
     return addi(A0, S0, 0) + li(A7, 57) + ecall()
 
 messages = [
-    b"hello from external init.elf v57 syscall write\n",
-    b"this write goes to devnull v57\n",
+    b"hello from external init.elf v58 syscall write\n",
+    b"external init fstat lseek passed\n",
+    b"this write goes to devnull v58\n",
     b"external init openat close passed\n",
     b"external init devzero read passed\n",
     b"external init getpid returned 1\n",
@@ -82,22 +88,25 @@ messages = [
 dummy = BASE
 code_dummy = (
     syscall_write_const_fd(1, dummy, len(messages[0])) +
+    syscall_fstat_stdout_spbuf() +
+    syscall_lseek_stdout() +
+    syscall_write_const_fd(1, dummy, len(messages[1])) +
     syscall_openat(dummy, 1) +
     addi(S0, A0, 0) +
-    addi(A0, S0, 0) + syscall_write_current_fd(dummy, len(messages[1])) +
+    addi(A0, S0, 0) + syscall_write_current_fd(dummy, len(messages[2])) +
     syscall_close_current_s0() +
-    syscall_write_const_fd(1, dummy, len(messages[2])) +
+    syscall_write_const_fd(1, dummy, len(messages[3])) +
     syscall_openat(dummy, 0) +
     addi(S0, A0, 0) +
     syscall_read_current_fd_from_s0_spbuf(16) +
     syscall_close_current_s0() +
-    syscall_write_const_fd(1, dummy, len(messages[3])) +
-    syscall0(172) +
     syscall_write_const_fd(1, dummy, len(messages[4])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, dummy, len(messages[5])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, dummy, len(messages[6])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, dummy, len(messages[7])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -110,22 +119,25 @@ for m in messages:
 
 code = (
     syscall_write_const_fd(1, msg_addrs[0], len(messages[0])) +
-    syscall_openat(msg_addrs[7], 1) +
+    syscall_fstat_stdout_spbuf() +
+    syscall_lseek_stdout() +
+    syscall_write_const_fd(1, msg_addrs[1], len(messages[1])) +
+    syscall_openat(msg_addrs[8], 1) +
     addi(S0, A0, 0) +
-    addi(A0, S0, 0) + syscall_write_current_fd(msg_addrs[1], len(messages[1])) +
+    addi(A0, S0, 0) + syscall_write_current_fd(msg_addrs[2], len(messages[2])) +
     syscall_close_current_s0() +
-    syscall_write_const_fd(1, msg_addrs[2], len(messages[2])) +
-    syscall_openat(msg_addrs[8], 0) +
+    syscall_write_const_fd(1, msg_addrs[3], len(messages[3])) +
+    syscall_openat(msg_addrs[9], 0) +
     addi(S0, A0, 0) +
     syscall_read_current_fd_from_s0_spbuf(16) +
     syscall_close_current_s0() +
-    syscall_write_const_fd(1, msg_addrs[3], len(messages[3])) +
-    syscall0(172) +
     syscall_write_const_fd(1, msg_addrs[4], len(messages[4])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, msg_addrs[5], len(messages[5])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, msg_addrs[6], len(messages[6])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, msg_addrs[7], len(messages[7])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -157,4 +169,4 @@ blob += bytes(SEG_OFF - len(blob))
 blob += segment
 
 OUT.write_bytes(blob)
-print(f"[build-init-elf-v57] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")
+print(f"[build-init-elf-v58] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")

@@ -1,18 +1,17 @@
 # LAST_APPLIED_FIX
 
-Version: v57
+Version: v58
 
 Goal:
-- Add `read` scaffold and exercise `/dev/zero` from external init.elf.
+- Add `fstat` and `lseek` scaffolds.
 
 Verified:
-- stdout write
+- fstat stdout copies a minimal stat structure to user stack
+- lseek stdout returns -ESPIPE
 - openat `/dev/null`
 - write `/dev/null`
-- close fd 3
 - openat `/dev/zero`
 - read fd 4 into user stack buffer
-- close fd 4
 - getpid/getppid
 - unsupported syscall
 - exit
