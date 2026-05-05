@@ -224,3 +224,12 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added fixed mmap window at `0x40040000..0x40044000`
 - Extended external init ELF to exercise mmap and munmap
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v62 - mprotect/madvise scaffold
+
+- Added `SYS_MPROTECT = 226`
+- Added `SYS_MADVISE = 233`
+- Added central `RuntimeSyscallAction::Mprotect`
+- Added central `RuntimeSyscallAction::Madvise`
+- Extended external init ELF to exercise mprotect and madvise on fixed mmap area
+- Kept external init ELF Sv39 U-mode smoke passing

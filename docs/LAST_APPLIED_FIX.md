@@ -1,17 +1,13 @@
 # LAST_APPLIED_FIX
 
-Version: v61
+Version: v62
 
 Goal:
-- Add mmap/munmap scaffold after brk.
+- Add mprotect/madvise scaffold after mmap/munmap.
 
 Verified:
-- mmap anonymous private page returns fixed user mapping
-- munmap succeeds on that fixed mapping
-- brk
-- fstat/lseek
-- getdents64 `/dev`
-- open/read/write/close device scaffolds
-- getpid/getppid
-- unsupported syscall
-- exit
+- mmap returns fixed user mapping
+- mprotect succeeds on that fixed mapping
+- madvise succeeds on that fixed mapping
+- munmap succeeds
+- prior brk/fstat/lseek/getdents64/open/read/write/close regressions remain passing

@@ -179,10 +179,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v61] mmap/munmap path enabled");
+    crate::println!("[external-init-v62] mprotect/madvise path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v61] load external init.elf failed");
+        .expect("[external-init-v62] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -312,7 +312,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v61] unexpected trap");
+        crate::println!("[external-init-v62] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -375,6 +375,14 @@ fn handle_syscall(cx: &mut TrapContext) {
             let ret = sys_munmap(addr, len);
             cx.regs[10] = ret as usize;
         }
+        RuntimeSyscallAction::Mprotect { addr, len, prot } => {
+            let ret = sys_mprotect(addr, len, prot);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Madvise { addr, len, advice } => {
+            let ret = sys_madvise(addr, len, advice);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
@@ -386,6 +394,39 @@ fn handle_syscall(cx: &mut TrapContext) {
 }
 
 
+
+
+fn sys_mprotect(addr: usize, len: usize, prot: usize) -> isize {
+    unsafe {
+        crate::println!("[mprotect-v62] addr = {:#x}", addr);
+        crate::println!("[mprotect-v62] len = {}", len);
+        crate::println!("[mprotect-v62] prot = {:#x}", prot);
+
+        if addr == USER_MMAP_START && len <= USER_MMAP_SIZE && USER_MMAP_ACTIVE {
+            crate::println!("[mprotect-v62] ret = 0");
+            0
+        } else {
+            crate::println!("[mprotect-v62] ret = -22");
+            crate::syscall::EINVAL
+        }
+    }
+}
+
+fn sys_madvise(addr: usize, len: usize, advice: usize) -> isize {
+    unsafe {
+        crate::println!("[madvise-v62] addr = {:#x}", addr);
+        crate::println!("[madvise-v62] len = {}", len);
+        crate::println!("[madvise-v62] advice = {}", advice);
+
+        if addr == USER_MMAP_START && len <= USER_MMAP_SIZE && USER_MMAP_ACTIVE {
+            crate::println!("[madvise-v62] ret = 0");
+            0
+        } else {
+            crate::println!("[madvise-v62] ret = -22");
+            crate::syscall::EINVAL
+        }
+    }
+}
 
 fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: isize, offset: usize) -> isize {
     unsafe {

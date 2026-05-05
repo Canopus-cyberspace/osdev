@@ -81,6 +81,14 @@ def syscall_mmap():
         addi(S0, A0, 0)
     )
 
+def syscall_mprotect_current_s0():
+    # mprotect(mmap_addr, 4096, PROT_READ)
+    return addi(A0, S0, 0) + li(A1, 4096) + li(A2, 1) + li(A7, 226) + ecall()
+
+def syscall_madvise_current_s0():
+    # madvise(mmap_addr, 4096, MADV_NORMAL)
+    return addi(A0, S0, 0) + li(A1, 4096) + li(A2, 0) + li(A7, 233) + ecall()
+
 def syscall_munmap_current_s0():
     return addi(A0, S0, 0) + li(A1, 4096) + li(A7, 215) + ecall()
 
@@ -97,14 +105,15 @@ def syscall_close_current_s0():
     return addi(A0, S0, 0) + li(A7, 57) + ecall()
 
 messages = [
-    b"hello from external init.elf v61 syscall write\n",
+    b"hello from external init.elf v62 syscall write\n",
     b"external init fstat lseek passed\n",
-    b"this write goes to devnull v61\n",
+    b"this write goes to devnull v62\n",
     b"external init openat close passed\n",
     b"external init devzero read passed\n",
     b"external init getdents64 dev passed\n",
     b"external init brk passed\n",
     b"external init mmap munmap passed\n",
+    b"external init mprotect madvise passed\n",
     b"external init getpid returned 1\n",
     b"external init getppid returned 0\n",
     b"external init unsupported returned -38\n",
@@ -140,12 +149,17 @@ code_dummy = (
     syscall_mmap() +
     syscall_munmap_current_s0() +
     syscall_write_const_fd(1, dummy, len(messages[7])) +
-    syscall0(172) +
+    syscall_mmap() +
+    syscall_mprotect_current_s0() +
+    syscall_madvise_current_s0() +
+    syscall_munmap_current_s0() +
     syscall_write_const_fd(1, dummy, len(messages[8])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, dummy, len(messages[9])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, dummy, len(messages[10])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, dummy, len(messages[11])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -161,17 +175,17 @@ code = (
     syscall_fstat_stdout_spbuf() +
     syscall_lseek_stdout() +
     syscall_write_const_fd(1, msg_addrs[1], len(messages[1])) +
-    syscall_openat(msg_addrs[11], 1) +
+    syscall_openat(msg_addrs[12], 1) +
     addi(S0, A0, 0) +
     addi(A0, S0, 0) + syscall_write_current_fd(msg_addrs[2], len(messages[2])) +
     syscall_close_current_s0() +
     syscall_write_const_fd(1, msg_addrs[3], len(messages[3])) +
-    syscall_openat(msg_addrs[12], 0) +
+    syscall_openat(msg_addrs[13], 0) +
     addi(S0, A0, 0) +
     syscall_read_current_fd_from_s0_spbuf(16) +
     syscall_close_current_s0() +
     syscall_write_const_fd(1, msg_addrs[4], len(messages[4])) +
-    syscall_openat(msg_addrs[13], 0) +
+    syscall_openat(msg_addrs[14], 0) +
     addi(S0, A0, 0) +
     syscall_getdents_current_fd_from_s0_spbuf(256) +
     syscall_close_current_s0() +
@@ -182,12 +196,17 @@ code = (
     syscall_mmap() +
     syscall_munmap_current_s0() +
     syscall_write_const_fd(1, msg_addrs[7], len(messages[7])) +
-    syscall0(172) +
+    syscall_mmap() +
+    syscall_mprotect_current_s0() +
+    syscall_madvise_current_s0() +
+    syscall_munmap_current_s0() +
     syscall_write_const_fd(1, msg_addrs[8], len(messages[8])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, msg_addrs[9], len(messages[9])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, msg_addrs[10], len(messages[10])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, msg_addrs[11], len(messages[11])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -219,4 +238,4 @@ blob += bytes(SEG_OFF - len(blob))
 blob += segment
 
 OUT.write_bytes(blob)
-print(f"[build-init-elf-v61] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")
+print(f"[build-init-elf-v62] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")

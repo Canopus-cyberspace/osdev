@@ -31,3 +31,15 @@ Still TODO:
 - file-backed mmap
 - page fault based lazy mapping
 - real PTE unmap and TLB invalidation per VMA
+
+## v62 - mprotect/madvise scaffold
+
+Implemented:
+- `mprotect(mmap_addr, 4096, PROT_READ)` validates fixed mmap window and returns 0
+- `madvise(mmap_addr, 4096, MADV_NORMAL)` validates fixed mmap window and returns 0
+
+Still TODO:
+- real PTE permission update
+- VMA metadata
+- lazy mmap
+- page fault handling

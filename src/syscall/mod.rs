@@ -20,6 +20,8 @@ pub const SYS_MUNMAP: usize = 215;
 pub const SYS_CLONE: usize = 220;
 pub const SYS_EXECVE: usize = 221;
 pub const SYS_MMAP: usize = 222;
+pub const SYS_MPROTECT: usize = 226;
+pub const SYS_MADVISE: usize = 233;
 pub const SYS_WAIT4: usize = 260;
 
 pub const ENOSYS: isize = -38;
@@ -90,6 +92,8 @@ pub enum RuntimeSyscallAction {
     Brk { addr: usize },
     Mmap { addr: usize, len: usize, prot: usize, flags: usize, fd: isize, offset: usize },
     Munmap { addr: usize, len: usize },
+    Mprotect { addr: usize, len: usize, prot: usize },
+    Madvise { addr: usize, len: usize, advice: usize },
     Exit { code: isize },
 }
 
@@ -119,9 +123,11 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
         SYS_FSTAT => RuntimeSyscallAction::FStat { fd: args.a0, user_stat: args.a1 },
         SYS_BRK => RuntimeSyscallAction::Brk { addr: args.a0 },
         SYS_MUNMAP => RuntimeSyscallAction::Munmap { addr: args.a0, len: args.a1 },
+        SYS_MPROTECT => RuntimeSyscallAction::Mprotect { addr: args.a0, len: args.a1, prot: args.a2 },
         SYS_EXIT => RuntimeSyscallAction::Exit { code: args.a0 as isize },
         SYS_GETPID => RuntimeSyscallAction::Return(1),
         SYS_GETPPID => RuntimeSyscallAction::Return(0),
+        SYS_MADVISE => RuntimeSyscallAction::Madvise { addr: args.a0, len: args.a1, advice: args.a2 },
         SYS_MMAP => RuntimeSyscallAction::Mmap { addr: args.a0, len: args.a1, prot: args.a2, flags: args.a3, fd: args.a4 as isize, offset: args.a5 },
         _ => RuntimeSyscallAction::Return(ENOSYS),
     }
