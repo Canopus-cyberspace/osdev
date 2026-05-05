@@ -254,3 +254,11 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added getrandom scaffold
 - Extended external init ELF to exercise process/resource/random syscalls
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v65 - path/tty/fcntl scaffold
+
+- Added getcwd/chdir/readlinkat/umask scaffolds
+- Added fcntl scaffold
+- Added ioctl TIOCGWINSZ scaffold
+- Extended external init ELF to exercise path/tty/fcntl syscalls
+- Kept external init ELF Sv39 U-mode smoke passing

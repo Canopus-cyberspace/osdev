@@ -179,10 +179,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v64] proc/resource/random path enabled");
+    crate::println!("[external-init-v65] path/tty/fcntl path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v64] load external init.elf failed");
+        .expect("[external-init-v65] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -312,7 +312,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v64] unexpected trap");
+        crate::println!("[external-init-v65] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -415,6 +415,30 @@ fn handle_syscall(cx: &mut TrapContext) {
             let ret = sys_getrandom_user(user_buf, len, flags);
             cx.regs[10] = ret as usize;
         }
+        RuntimeSyscallAction::Getcwd { user_buf, len } => {
+            let ret = sys_getcwd_user(user_buf, len);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Fcntl { fd, cmd, arg } => {
+            let ret = sys_fcntl(fd, cmd, arg);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Ioctl { fd, request, argp } => {
+            let ret = sys_ioctl_user(fd, request, argp);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Readlinkat { dirfd, user_path, user_buf, len } => {
+            let ret = sys_readlinkat_user(dirfd, user_path, user_buf, len);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Umask { mask } => {
+            let ret = sys_umask(mask);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Chdir { user_path } => {
+            let ret = sys_chdir_user(user_path);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
@@ -429,6 +453,100 @@ fn handle_syscall(cx: &mut TrapContext) {
 
 
 
+
+
+fn sys_getcwd_user(user_buf: usize, len: usize) -> isize {
+    crate::println!("[path-v65] getcwd buf = {:#x}", user_buf);
+    crate::println!("[path-v65] getcwd len = {}", len);
+
+    let cwd = b"/\0";
+    if len < cwd.len() {
+        crate::println!("[path-v65] getcwd ret = -22");
+        return crate::syscall::EINVAL;
+    }
+
+    with_sum_enabled(|| {
+        write_cstr(user_buf, cwd);
+    });
+
+    crate::println!("[path-v65] getcwd wrote /");
+    user_buf as isize
+}
+
+fn sys_fcntl(fd: usize, cmd: usize, arg: usize) -> isize {
+    crate::println!("[fcntl-v65] fd = {}", fd);
+    crate::println!("[fcntl-v65] cmd = {}", cmd);
+    crate::println!("[fcntl-v65] arg = {:#x}", arg);
+
+    let ret = match cmd {
+        1 => 0, // F_GETFD
+        2 => 0, // F_SETFD
+        3 => 0, // F_GETFL
+        4 => 0, // F_SETFL
+        _ => 0,
+    };
+
+    crate::println!("[fcntl-v65] ret = {}", ret);
+    ret
+}
+
+fn sys_ioctl_user(fd: usize, request: usize, argp: usize) -> isize {
+    crate::println!("[ioctl-v65] fd = {}", fd);
+    crate::println!("[ioctl-v65] request = {:#x}", request);
+    crate::println!("[ioctl-v65] argp = {:#x}", argp);
+
+    if request == 0x5413 && argp != 0 {
+        // struct winsize { ws_row, ws_col, ws_xpixel, ws_ypixel } as u16.
+        with_sum_enabled(|| {
+            unsafe {
+                core::ptr::write_volatile((argp + 0) as *mut u16, 24);
+                core::ptr::write_volatile((argp + 2) as *mut u16, 80);
+                core::ptr::write_volatile((argp + 4) as *mut u16, 0);
+                core::ptr::write_volatile((argp + 6) as *mut u16, 0);
+            }
+        });
+        crate::println!("[ioctl-v65] wrote winsize");
+        return 0;
+    }
+
+    crate::println!("[ioctl-v65] ret = 0");
+    0
+}
+
+fn sys_readlinkat_user(dirfd: isize, user_path: usize, user_buf: usize, len: usize) -> isize {
+    crate::println!("[readlinkat-v65] dirfd = {}", dirfd);
+    crate::println!("[readlinkat-v65] path = {:#x}", user_path);
+    crate::println!("[readlinkat-v65] buf = {:#x}", user_buf);
+    crate::println!("[readlinkat-v65] len = {}", len);
+
+    let target = b"/init.elf";
+    if len < target.len() {
+        return crate::syscall::EINVAL;
+    }
+
+    with_sum_enabled(|| {
+        let mut i = 0;
+        while i < target.len() {
+            unsafe { core::ptr::write_volatile((user_buf + i) as *mut u8, target[i]); }
+            i += 1;
+        }
+    });
+
+    crate::println!("[readlinkat-v65] wrote /init.elf");
+    target.len() as isize
+}
+
+fn sys_umask(mask: usize) -> isize {
+    crate::println!("[umask-v65] mask = {:#o}", mask);
+    crate::println!("[umask-v65] old mask = 0");
+    0
+}
+
+fn sys_chdir_user(user_path: usize) -> isize {
+    crate::println!("[path-v65] chdir path = {:#x}", user_path);
+    crate::println!("[path-v65] chdir ret = 0");
+    0
+}
 
 fn sys_set_tid_address_user(user_tidptr: usize) -> isize {
     crate::println!("[proc-v64] set_tid_address ptr = {:#x}", user_tidptr);

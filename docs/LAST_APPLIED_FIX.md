@@ -1,15 +1,15 @@
 # LAST_APPLIED_FIX
 
-Version: v64
+Version: v65
 
 Goal:
-- Add process/resource/random syscall scaffolds frequently used by libc startup and utilities.
+- Add common path/tty/fcntl syscall scaffolds used by libc startup, shells, and utilities.
 
 Verified:
-- set_tid_address
-- set_robust_list
-- getuid/geteuid/getgid/getegid/gettid
-- sysinfo
-- prlimit64
-- getrandom
-- prior fd/mm/time regressions remain passing
+- getcwd
+- fcntl
+- ioctl TIOCGWINSZ
+- readlinkat
+- umask
+- chdir
+- prior fd/mm/time/proc regressions remain passing
