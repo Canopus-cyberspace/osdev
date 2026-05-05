@@ -1,13 +1,12 @@
 # LAST_APPLIED_FIX
 
-Version: v62
+Version: v63
 
 Goal:
-- Add mprotect/madvise scaffold after mmap/munmap.
+- Add uname/clock_gettime/gettimeofday scaffolds.
 
 Verified:
-- mmap returns fixed user mapping
-- mprotect succeeds on that fixed mapping
-- madvise succeeds on that fixed mapping
-- munmap succeeds
-- prior brk/fstat/lseek/getdents64/open/read/write/close regressions remain passing
+- uname writes utsname to user buffer
+- clock_gettime writes timespec to user buffer
+- gettimeofday writes timeval to user buffer
+- prior mm/fd syscall regressions remain passing

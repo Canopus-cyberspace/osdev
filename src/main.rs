@@ -23,9 +23,9 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] mprotect madvise scaffold v62");
+    crate::println!("[stage] uname time scaffold v63");
 
-    crate::println!("[stage] v62 runtime path uses mprotect madvise scaffold");
+    crate::println!("[stage] v63 runtime path uses uname clock_gettime gettimeofday scaffold");
     mm::sv39_init_exec::run_external_init_elf_smoke();
 }
 

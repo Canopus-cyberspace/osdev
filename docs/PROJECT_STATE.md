@@ -233,3 +233,14 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added central `RuntimeSyscallAction::Madvise`
 - Extended external init ELF to exercise mprotect and madvise on fixed mmap area
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v63 - uname/time scaffold
+
+- Added `SYS_CLOCK_GETTIME = 113`
+- Added `SYS_UNAME = 160`
+- Added `SYS_GETTIMEOFDAY = 169`
+- Added central `RuntimeSyscallAction::Uname`
+- Added central `RuntimeSyscallAction::ClockGettime`
+- Added central `RuntimeSyscallAction::Gettimeofday`
+- Extended external init ELF to exercise uname/time syscalls
+- Kept external init ELF Sv39 U-mode smoke passing

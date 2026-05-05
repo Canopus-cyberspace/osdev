@@ -11,8 +11,11 @@ pub const SYS_GETDENTS64: usize = 61;
 pub const SYS_LSEEK: usize = 62;
 pub const SYS_READ: usize = 63;
 pub const SYS_WRITE: usize = 64;
+pub const SYS_CLOCK_GETTIME: usize = 113;
 pub const SYS_FSTAT: usize = 80;
 pub const SYS_EXIT: usize = 93;
+pub const SYS_UNAME: usize = 160;
+pub const SYS_GETTIMEOFDAY: usize = 169;
 pub const SYS_GETPID: usize = 172;
 pub const SYS_GETPPID: usize = 173;
 pub const SYS_BRK: usize = 214;
@@ -94,6 +97,9 @@ pub enum RuntimeSyscallAction {
     Munmap { addr: usize, len: usize },
     Mprotect { addr: usize, len: usize, prot: usize },
     Madvise { addr: usize, len: usize, advice: usize },
+    Uname { user_uts: usize },
+    ClockGettime { clock_id: usize, user_ts: usize },
+    Gettimeofday { user_tv: usize, user_tz: usize },
     Exit { code: isize },
 }
 
@@ -116,6 +122,7 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
             Ok(target) => RuntimeSyscallAction::Read { fd: args.a0, user_ptr: args.a1, len: args.a2, target },
             Err(err) => RuntimeSyscallAction::Return(err),
         },
+        SYS_CLOCK_GETTIME => RuntimeSyscallAction::ClockGettime { clock_id: args.a0, user_ts: args.a1 },
         SYS_WRITE => match crate::fd::runtime_write_target(args.a0) {
             Ok(target) => RuntimeSyscallAction::Write { fd: args.a0, user_ptr: args.a1, len: args.a2, target },
             Err(err) => RuntimeSyscallAction::Return(err),
@@ -125,9 +132,11 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
         SYS_MUNMAP => RuntimeSyscallAction::Munmap { addr: args.a0, len: args.a1 },
         SYS_MPROTECT => RuntimeSyscallAction::Mprotect { addr: args.a0, len: args.a1, prot: args.a2 },
         SYS_EXIT => RuntimeSyscallAction::Exit { code: args.a0 as isize },
+        SYS_GETTIMEOFDAY => RuntimeSyscallAction::Gettimeofday { user_tv: args.a0, user_tz: args.a1 },
         SYS_GETPID => RuntimeSyscallAction::Return(1),
         SYS_GETPPID => RuntimeSyscallAction::Return(0),
         SYS_MADVISE => RuntimeSyscallAction::Madvise { addr: args.a0, len: args.a1, advice: args.a2 },
+        SYS_UNAME => RuntimeSyscallAction::Uname { user_uts: args.a0 },
         SYS_MMAP => RuntimeSyscallAction::Mmap { addr: args.a0, len: args.a1, prot: args.a2, flags: args.a3, fd: args.a4 as isize, offset: args.a5 },
         _ => RuntimeSyscallAction::Return(ENOSYS),
     }

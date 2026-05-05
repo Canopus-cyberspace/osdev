@@ -179,10 +179,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v62] mprotect/madvise path enabled");
+    crate::println!("[external-init-v63] uname/time path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v62] load external init.elf failed");
+        .expect("[external-init-v63] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -312,7 +312,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v62] unexpected trap");
+        crate::println!("[external-init-v63] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -383,6 +383,18 @@ fn handle_syscall(cx: &mut TrapContext) {
             let ret = sys_madvise(addr, len, advice);
             cx.regs[10] = ret as usize;
         }
+        RuntimeSyscallAction::Uname { user_uts } => {
+            let ret = sys_uname_user(user_uts);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::ClockGettime { clock_id, user_ts } => {
+            let ret = sys_clock_gettime_user(clock_id, user_ts);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Gettimeofday { user_tv, user_tz } => {
+            let ret = sys_gettimeofday_user(user_tv, user_tz);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
@@ -395,6 +407,67 @@ fn handle_syscall(cx: &mut TrapContext) {
 
 
 
+
+
+fn sys_uname_user(user_uts: usize) -> isize {
+    crate::println!("[uname-v63] user uts = {:#x}", user_uts);
+
+    with_sum_enabled(|| {
+        for i in 0..390usize {
+            unsafe { core::ptr::write_volatile((user_uts + i) as *mut u8, 0); }
+        }
+
+        write_cstr(user_uts + 0 * 65, b"UESTC-Kernel\0");
+        write_cstr(user_uts + 1 * 65, b"qemu-riscv64\0");
+        write_cstr(user_uts + 2 * 65, b"0.1-v63\0");
+        write_cstr(user_uts + 3 * 65, b"v63-time-uname\0");
+        write_cstr(user_uts + 4 * 65, b"riscv64\0");
+        write_cstr(user_uts + 5 * 65, b"uestc.local\0");
+    });
+
+    crate::println!("[uname-v63] wrote utsname");
+    0
+}
+
+fn sys_clock_gettime_user(clock_id: usize, user_ts: usize) -> isize {
+    crate::println!("[clock-v63] clock_gettime id = {}", clock_id);
+    crate::println!("[clock-v63] timespec = {:#x}", user_ts);
+
+    with_sum_enabled(|| {
+        unsafe {
+            core::ptr::write_volatile((user_ts + 0) as *mut u64, 1);
+            core::ptr::write_volatile((user_ts + 8) as *mut u64, 234_567_890);
+        }
+    });
+
+    crate::println!("[clock-v63] wrote timespec");
+    0
+}
+
+fn sys_gettimeofday_user(user_tv: usize, user_tz: usize) -> isize {
+    crate::println!("[time-v63] gettimeofday tv = {:#x}", user_tv);
+    crate::println!("[time-v63] gettimeofday tz = {:#x}", user_tz);
+
+    if user_tv != 0 {
+        with_sum_enabled(|| {
+            unsafe {
+                core::ptr::write_volatile((user_tv + 0) as *mut u64, 1);
+                core::ptr::write_volatile((user_tv + 8) as *mut u64, 234_567);
+            }
+        });
+    }
+
+    crate::println!("[time-v63] wrote timeval");
+    0
+}
+
+fn write_cstr(dst: usize, src: &[u8]) {
+    let mut i = 0;
+    while i < src.len() {
+        unsafe { core::ptr::write_volatile((dst + i) as *mut u8, src[i]); }
+        i += 1;
+    }
+}
 
 fn sys_mprotect(addr: usize, len: usize, prot: usize) -> isize {
     unsafe {

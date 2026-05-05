@@ -1,6 +1,6 @@
 # SYSCALL_STATUS
 
-## v62 - mprotect/madvise scaffold
+## v63 - uname/time scaffold
 
 Runtime external init ELF now exercises:
 - fstat/lseek
@@ -8,15 +8,17 @@ Runtime external init ELF now exercises:
 - `/dev/zero` read
 - `/dev` getdents64
 - brk
-- mmap
-- munmap
-- mmap
-- mprotect
-- madvise
-- munmap
+- mmap/munmap
+- mprotect/madvise
+- uname
+- clock_gettime
+- gettimeofday
 - getpid/getppid/unsupported/exit
 
 Implemented central dispatcher actions:
+- Uname
+- ClockGettime
+- Gettimeofday
 - Mprotect
 - Madvise
 - Mmap
