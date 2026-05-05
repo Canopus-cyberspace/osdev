@@ -15,6 +15,7 @@ pub const SYS_FSTAT: usize = 80;
 pub const SYS_EXIT: usize = 93;
 pub const SYS_GETPID: usize = 172;
 pub const SYS_GETPPID: usize = 173;
+pub const SYS_BRK: usize = 214;
 pub const SYS_CLONE: usize = 220;
 pub const SYS_EXECVE: usize = 221;
 pub const SYS_WAIT4: usize = 260;
@@ -84,6 +85,7 @@ pub enum RuntimeSyscallAction {
     FStat { fd: usize, user_stat: usize },
     LSeek { fd: usize, offset: isize, whence: usize },
     GetDents64 { fd: usize, user_dirent: usize, len: usize },
+    Brk { addr: usize },
     Exit { code: isize },
 }
 
@@ -111,6 +113,7 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
             Err(err) => RuntimeSyscallAction::Return(err),
         },
         SYS_FSTAT => RuntimeSyscallAction::FStat { fd: args.a0, user_stat: args.a1 },
+        SYS_BRK => RuntimeSyscallAction::Brk { addr: args.a0 },
         SYS_EXIT => RuntimeSyscallAction::Exit { code: args.a0 as isize },
         SYS_GETPID => RuntimeSyscallAction::Return(1),
         SYS_GETPPID => RuntimeSyscallAction::Return(0),

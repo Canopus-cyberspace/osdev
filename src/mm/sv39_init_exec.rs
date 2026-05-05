@@ -11,6 +11,10 @@ use crate::syscall::{RuntimeSyscallAction, RuntimeSyscallArgs};
 const USER_STACK_TOP: usize = 0x4002_0000;
 const USER_STACK_PAGES: usize = 4;
 const USER_STACK_SIZE: usize = USER_STACK_PAGES * PAGE_SIZE;
+const USER_HEAP_START: usize = 0x4003_0000;
+const USER_HEAP_PAGES: usize = 4;
+const USER_HEAP_SIZE: usize = USER_HEAP_PAGES * PAGE_SIZE;
+const USER_HEAP_END: usize = USER_HEAP_START + USER_HEAP_SIZE;
 
 const PTE_V: usize = 1 << 0;
 const PTE_R: usize = 1 << 1;
@@ -35,6 +39,9 @@ struct PageTable512([usize; 512]);
 #[repr(C, align(4096))]
 struct UserStack([u8; USER_STACK_SIZE]);
 
+#[repr(C, align(4096))]
+struct UserHeap([u8; USER_HEAP_SIZE]);
+
 #[repr(C)]
 pub struct TrapContext {
     pub regs: [usize; 32],
@@ -46,6 +53,8 @@ static mut ROOT_TABLE: PageTable512 = PageTable512([0; 512]);
 static mut USER_L1_TABLE: PageTable512 = PageTable512([0; 512]);
 static mut USER_L0_TABLE: PageTable512 = PageTable512([0; 512]);
 static mut USER_STACK: UserStack = UserStack([0; USER_STACK_SIZE]);
+static mut USER_HEAP: UserHeap = UserHeap([0; USER_HEAP_SIZE]);
+static mut USER_BRK: usize = USER_HEAP_START;
 static mut INIT_CONTEXT: TrapContext = TrapContext { regs: [0; 32], sstatus: 0, sepc: 0 };
 static EXIT_SEEN: AtomicBool = AtomicBool::new(false);
 
@@ -161,10 +170,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v59] getdents64 /dev path enabled");
+    crate::println!("[external-init-v60] brk heap path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v59] load external init.elf failed");
+        .expect("[external-init-v60] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -188,6 +197,8 @@ unsafe fn build_page_table(loaded: LoadedInitImage) {
     USER_L1_TABLE.0 = [0; 512];
     USER_L0_TABLE.0 = [0; 512];
     USER_STACK.0.fill(0);
+    USER_HEAP.0.fill(0);
+    USER_BRK = USER_HEAP_START;
 
     ROOT_TABLE.0[0] = leaf_1g_pte(0x0000_0000, KERNEL_LEAF);
     ROOT_TABLE.0[2] = leaf_1g_pte(0x8000_0000, KERNEL_LEAF);
@@ -214,6 +225,17 @@ unsafe fn build_page_table(loaded: LoadedInitImage) {
     }
 
     crate::println!("[external-init-v50b] user text mapped {:#x} pages {}", loaded.vaddr, loaded.page_count);
+    let heap_pa = core::ptr::addr_of!(USER_HEAP) as usize;
+    let mut hp = 0;
+    while hp < USER_HEAP_PAGES {
+        let va = USER_HEAP_START + hp * PAGE_SIZE;
+        let pa = heap_pa + hp * PAGE_SIZE;
+        map_user_4k(va, pa, USER_STACK_FLAGS);
+        hp += 1;
+    }
+
+    crate::println!("[brk-v60] user heap mapped {:#x}..{:#x}", USER_HEAP_START, USER_HEAP_END);
+    
     crate::println!("[external-init-v50b] user stack mapped {:#x}..{:#x}", stack_base_va, USER_STACK_TOP);
     crate::println!("[external-init-v50b] root pa = {:#x}", root_pa());
 }
@@ -268,7 +290,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v59] unexpected trap");
+        crate::println!("[external-init-v60] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -319,12 +341,38 @@ fn handle_syscall(cx: &mut TrapContext) {
             let ret = sys_getdents64_user(fd, user_dirent, len);
             cx.regs[10] = ret as usize;
         }
+        RuntimeSyscallAction::Brk { addr } => {
+            let ret = sys_brk(addr);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
             crate::println!("[external-init-v50b] smoke passed");
             crate::println!("[external-init-v50b] kernel idle after external init ELF smoke");
             loop { unsafe { asm!("wfi"); } }
+        }
+    }
+}
+
+
+fn sys_brk(addr: usize) -> isize {
+    unsafe {
+        crate::println!("[brk-v60] request = {:#x}", addr);
+        crate::println!("[brk-v60] current = {:#x}", USER_BRK);
+
+        if addr == 0 {
+            crate::println!("[brk-v60] query returned {:#x}", USER_BRK);
+            return USER_BRK as isize;
+        }
+
+        if addr >= USER_HEAP_START && addr <= USER_HEAP_END {
+            USER_BRK = addr;
+            crate::println!("[brk-v60] updated = {:#x}", USER_BRK);
+            USER_BRK as isize
+        } else {
+            crate::println!("[brk-v60] rejected, keeping {:#x}", USER_BRK);
+            USER_BRK as isize
         }
     }
 }

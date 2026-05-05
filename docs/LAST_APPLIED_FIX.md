@@ -1,15 +1,15 @@
 # LAST_APPLIED_FIX
 
-Version: v59
+Version: v60
 
 Goal:
-- Add `getdents64` scaffold and expose a minimal `/dev` directory.
+- Add `brk` scaffold and map a small fixed user heap.
 
 Verified:
-- openat `/dev`
-- getdents64 fd 5 writes `.`, `..`, `null`, `zero`
-- close fd 5
+- brk(0)
+- brk(0x40031000)
 - fstat/lseek
+- getdents64 `/dev`
 - open/read/write/close device scaffolds
 - getpid/getppid
 - unsupported syscall

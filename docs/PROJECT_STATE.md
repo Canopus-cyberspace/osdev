@@ -205,3 +205,12 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added `/dev` directory scaffold at fd 5
 - Wrote minimal linux_dirent64 entries into user buffer
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v60 - brk heap scaffold
+
+- Added `SYS_BRK = 214`
+- Added central `RuntimeSyscallAction::Brk`
+- Added fixed user heap mapping at `0x40030000..0x40034000`
+- Implemented `brk(0)` query and in-range update
+- Extended external init ELF to exercise brk
+- Kept external init ELF Sv39 U-mode smoke passing

@@ -1,6 +1,6 @@
 # SYSCALL_STATUS
 
-## v59 - getdents64 scaffold
+## v60 - brk scaffold
 
 Runtime external init ELF now exercises:
 - write(stdout)
@@ -15,18 +15,9 @@ Runtime external init ELF now exercises:
 - openat("/dev")
 - getdents64(dev_fd, stack_buffer, 256)
 - close(dev_fd)
+- brk(0)
+- brk(0x40031000)
 - getpid
 - getppid
 - unsupported -> -38
 - exit
-
-Implemented central dispatcher actions:
-- GetDents64
-- FStat
-- LSeek
-- Read
-- OpenAt
-- Close
-- Write
-- Return
-- Exit
