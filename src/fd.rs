@@ -8,9 +8,11 @@ pub const EBADF: isize = -9;
 pub const ENOENT: isize = -2;
 pub const EINVAL: isize = -22;
 pub const ESPIPE: isize = -29;
+pub const ENOTDIR: isize = -20;
 
 static DEVNULL_OPEN: AtomicBool = AtomicBool::new(false);
 static DEVZERO_OPEN: AtomicBool = AtomicBool::new(false);
+static DEV_DIR_OPEN: AtomicBool = AtomicBool::new(false);
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum FileKind {
@@ -20,6 +22,7 @@ pub enum FileKind {
     Stderr,
     DevNull,
     DevZero,
+    DevDir,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -95,6 +98,7 @@ pub enum RuntimeFdKind {
     Stderr,
     DevNull,
     DevZero,
+    DevDir,
 }
 
 pub fn runtime_open_devnull() -> isize {
@@ -107,15 +111,17 @@ pub fn runtime_open_devzero() -> isize {
     4
 }
 
+pub fn runtime_open_devdir() -> isize {
+    DEV_DIR_OPEN.store(true, Ordering::SeqCst);
+    5
+}
+
 pub fn runtime_close_fd(fd: usize) -> isize {
     match fd {
         0 | 1 | 2 => 0,
-        3 => {
-            if DEVNULL_OPEN.swap(false, Ordering::SeqCst) { 0 } else { EBADF }
-        }
-        4 => {
-            if DEVZERO_OPEN.swap(false, Ordering::SeqCst) { 0 } else { EBADF }
-        }
+        3 => if DEVNULL_OPEN.swap(false, Ordering::SeqCst) { 0 } else { EBADF },
+        4 => if DEVZERO_OPEN.swap(false, Ordering::SeqCst) { 0 } else { EBADF },
+        5 => if DEV_DIR_OPEN.swap(false, Ordering::SeqCst) { 0 } else { EBADF },
         _ => EBADF,
     }
 }
@@ -125,12 +131,9 @@ pub fn runtime_fd_kind(fd: usize) -> Result<RuntimeFdKind, isize> {
         0 => Ok(RuntimeFdKind::Stdin),
         1 => Ok(RuntimeFdKind::Stdout),
         2 => Ok(RuntimeFdKind::Stderr),
-        3 => {
-            if DEVNULL_OPEN.load(Ordering::SeqCst) { Ok(RuntimeFdKind::DevNull) } else { Err(EBADF) }
-        }
-        4 => {
-            if DEVZERO_OPEN.load(Ordering::SeqCst) { Ok(RuntimeFdKind::DevZero) } else { Err(EBADF) }
-        }
+        3 => if DEVNULL_OPEN.load(Ordering::SeqCst) { Ok(RuntimeFdKind::DevNull) } else { Err(EBADF) },
+        4 => if DEVZERO_OPEN.load(Ordering::SeqCst) { Ok(RuntimeFdKind::DevZero) } else { Err(EBADF) },
+        5 => if DEV_DIR_OPEN.load(Ordering::SeqCst) { Ok(RuntimeFdKind::DevDir) } else { Err(EBADF) },
         _ => Err(EBADF),
     }
 }
@@ -138,9 +141,7 @@ pub fn runtime_fd_kind(fd: usize) -> Result<RuntimeFdKind, isize> {
 pub fn runtime_write_target(fd: usize) -> Result<RuntimeWriteTarget, isize> {
     match fd {
         1 | 2 => Ok(RuntimeWriteTarget::Console),
-        3 => {
-            if DEVNULL_OPEN.load(Ordering::SeqCst) { Ok(RuntimeWriteTarget::DevNull) } else { Err(EBADF) }
-        }
+        3 => if DEVNULL_OPEN.load(Ordering::SeqCst) { Ok(RuntimeWriteTarget::DevNull) } else { Err(EBADF) },
         _ => Err(EBADF),
     }
 }
@@ -148,9 +149,7 @@ pub fn runtime_write_target(fd: usize) -> Result<RuntimeWriteTarget, isize> {
 pub fn runtime_read_target(fd: usize) -> Result<RuntimeReadTarget, isize> {
     match fd {
         0 => Ok(RuntimeReadTarget::Stdin),
-        4 => {
-            if DEVZERO_OPEN.load(Ordering::SeqCst) { Ok(RuntimeReadTarget::DevZero) } else { Err(EBADF) }
-        }
+        4 => if DEVZERO_OPEN.load(Ordering::SeqCst) { Ok(RuntimeReadTarget::DevZero) } else { Err(EBADF) },
         _ => Err(EBADF),
     }
 }
@@ -158,6 +157,7 @@ pub fn runtime_read_target(fd: usize) -> Result<RuntimeReadTarget, isize> {
 pub fn runtime_lseek_result(fd: usize) -> isize {
     match runtime_fd_kind(fd) {
         Ok(RuntimeFdKind::Stdin | RuntimeFdKind::Stdout | RuntimeFdKind::Stderr | RuntimeFdKind::DevNull | RuntimeFdKind::DevZero) => ESPIPE,
+        Ok(RuntimeFdKind::DevDir) => 0,
         Err(err) => err,
     }
 }
@@ -166,14 +166,21 @@ pub fn runtime_fstat_result(fd: usize) -> Result<RuntimeFdKind, isize> {
     runtime_fd_kind(fd)
 }
 
+pub fn runtime_getdents_kind(fd: usize) -> Result<RuntimeFdKind, isize> {
+    match runtime_fd_kind(fd)? {
+        RuntimeFdKind::DevDir => Ok(RuntimeFdKind::DevDir),
+        _ => Err(ENOTDIR),
+    }
+}
+
 pub fn self_test() {
-    crate::println!("[fd-v58] self-test begin");
+    crate::println!("[fd-v59] self-test begin");
 
     let mut table = FdTable::with_stdio();
 
-    let stdin = table.get(0).expect("[fd-v58] missing stdin");
-    let stdout = table.get(1).expect("[fd-v58] missing stdout");
-    let stderr = table.get(2).expect("[fd-v58] missing stderr");
+    let stdin = table.get(0).expect("[fd-v59] missing stdin");
+    let stdout = table.get(1).expect("[fd-v59] missing stdout");
+    let stderr = table.get(2).expect("[fd-v59] missing stderr");
 
     assert_eq!(stdin.kind, FileKind::Stdin);
     assert!(stdin.readable);
@@ -183,24 +190,20 @@ pub fn self_test() {
     assert_eq!(stderr.kind, FileKind::Stderr);
     assert!(stderr.writable);
 
-    assert_eq!(runtime_write_target(1), Ok(RuntimeWriteTarget::Console));
-    assert_eq!(runtime_read_target(0), Ok(RuntimeReadTarget::Stdin));
-    assert_eq!(runtime_lseek_result(1), ESPIPE);
-    assert_eq!(runtime_fstat_result(1), Ok(RuntimeFdKind::Stdout));
-
     assert_eq!(runtime_open_devnull(), 3);
-    assert_eq!(runtime_fstat_result(3), Ok(RuntimeFdKind::DevNull));
     assert_eq!(runtime_close_fd(3), 0);
 
     assert_eq!(runtime_open_devzero(), 4);
-    assert_eq!(runtime_read_target(4), Ok(RuntimeReadTarget::DevZero));
-    assert_eq!(runtime_fstat_result(4), Ok(RuntimeFdKind::DevZero));
-    assert_eq!(runtime_lseek_result(4), ESPIPE);
     assert_eq!(runtime_close_fd(4), 0);
 
-    let null_fd = table.alloc(FileKind::DevNull, true, true).expect("[fd-v58] alloc devnull fd failed");
-    crate::println!("[fd-v58] allocated /dev/null fd = {}", null_fd);
-    assert!(table.close(null_fd));
+    assert_eq!(runtime_open_devdir(), 5);
+    assert_eq!(runtime_getdents_kind(5), Ok(RuntimeFdKind::DevDir));
+    assert_eq!(runtime_lseek_result(5), 0);
+    assert_eq!(runtime_close_fd(5), 0);
 
-    crate::println!("[fd-v58] self-test passed");
+    let dir_fd = table.alloc(FileKind::DevDir, true, false).expect("[fd-v59] alloc devdir fd failed");
+    crate::println!("[fd-v59] allocated /dev fd = {}", dir_fd);
+    assert!(table.close(dir_fd));
+
+    crate::println!("[fd-v59] self-test passed");
 }

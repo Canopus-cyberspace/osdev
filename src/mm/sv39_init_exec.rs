@@ -161,10 +161,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v58] fstat/lseek path enabled");
+    crate::println!("[external-init-v59] getdents64 /dev path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v58] load external init.elf failed");
+        .expect("[external-init-v59] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -268,7 +268,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v58] unexpected trap");
+        crate::println!("[external-init-v59] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -315,6 +315,10 @@ fn handle_syscall(cx: &mut TrapContext) {
             let ret = sys_lseek(fd, offset, whence);
             cx.regs[10] = ret as usize;
         }
+        RuntimeSyscallAction::GetDents64 { fd, user_dirent, len } => {
+            let ret = sys_getdents64_user(fd, user_dirent, len);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
@@ -350,6 +354,10 @@ fn sys_openat_user(dirfd: isize, user_path: usize, flags: usize, mode: usize) ->
         let fd = crate::fd::runtime_open_devzero();
         crate::println!("[openat-v57] opened /dev/zero fd = {}", fd);
         fd
+    } else if len == 4 && &buf[..4] == b"/dev" {
+        let fd = crate::fd::runtime_open_devdir();
+        crate::println!("[openat-v59] opened /dev fd = {}", fd);
+        fd
     } else {
         crate::println!("[openat-v56] unsupported path");
         crate::fd::ENOENT
@@ -361,6 +369,61 @@ fn sys_close_fd(fd: usize) -> isize {
     crate::println!("[close-v56] fd = {}", fd);
     crate::println!("[close-v56] ret = {}", ret);
     ret
+}
+
+fn sys_getdents64_user(fd: usize, user_dirent: usize, len: usize) -> isize {
+    crate::println!("[getdents64-v59] fd = {}", fd);
+    crate::println!("[getdents64-v59] buf = {:#x}", user_dirent);
+    crate::println!("[getdents64-v59] len = {}", len);
+
+    match crate::fd::runtime_getdents_kind(fd) {
+        Ok(RuntimeFdKind::DevDir) => {}
+        Ok(_) => return crate::fd::ENOTDIR,
+        Err(err) => return err,
+    }
+
+    if len < 160 {
+        return crate::fd::EINVAL;
+    }
+
+    let mut off = 0usize;
+
+    with_sum_enabled(|| {
+        off = write_dirent64(user_dirent, off, 1, 1, 4, b".\0");
+        off = write_dirent64(user_dirent, off, 2, 2, 4, b"..\0");
+        off = write_dirent64(user_dirent, off, 3, 3, 2, b"null\0");
+        off = write_dirent64(user_dirent, off, 4, 4, 2, b"zero\0");
+    });
+
+    crate::println!("[getdents64-v59] wrote /dev entries bytes = {}", off);
+    off as isize
+}
+
+fn write_dirent64(base: usize, off: usize, ino: u64, next_off: i64, dtype: u8, name: &[u8]) -> usize {
+    let header = 19usize;
+    let raw_len = header + name.len();
+    let reclen = (raw_len + 7) & !7usize;
+    let ptr = base + off;
+
+    unsafe {
+        core::ptr::write_volatile((ptr + 0) as *mut u64, ino);
+        core::ptr::write_volatile((ptr + 8) as *mut i64, next_off);
+        core::ptr::write_volatile((ptr + 16) as *mut u16, reclen as u16);
+        core::ptr::write_volatile((ptr + 18) as *mut u8, dtype);
+
+        let mut i = 0;
+        while i < name.len() {
+            core::ptr::write_volatile((ptr + 19 + i) as *mut u8, name[i]);
+            i += 1;
+        }
+
+        while 19 + i < reclen {
+            core::ptr::write_volatile((ptr + 19 + i) as *mut u8, 0);
+            i += 1;
+        }
+    }
+
+    off + reclen
 }
 
 fn sys_fstat_user(fd: usize, user_stat: usize) -> isize {
@@ -377,11 +440,9 @@ fn sys_fstat_user(fd: usize, user_stat: usize) -> isize {
             unsafe { core::ptr::write_volatile((user_stat + i) as *mut u8, 0); }
         }
 
-        // Minimal Linux-like stat fields. Exact layout is not complete yet; this
-        // is enough to prove user-copy-out and fd validation.
         let mode: u32 = match kind {
-            RuntimeFdKind::Stdin | RuntimeFdKind::Stdout | RuntimeFdKind::Stderr => 0o020000 | 0o666, // S_IFCHR
-            RuntimeFdKind::DevNull | RuntimeFdKind::DevZero => 0o020000 | 0o666,
+            RuntimeFdKind::DevDir => 0o040000 | 0o755,
+            RuntimeFdKind::Stdin | RuntimeFdKind::Stdout | RuntimeFdKind::Stderr | RuntimeFdKind::DevNull | RuntimeFdKind::DevZero => 0o020000 | 0o666,
         };
 
         unsafe {

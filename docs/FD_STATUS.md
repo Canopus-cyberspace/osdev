@@ -1,19 +1,22 @@
 # FD_STATUS
 
-## v58 - fstat/lseek scaffold
+## v59 - getdents64 `/dev` scaffold
 
 Implemented:
-- `/dev/null` open/write/close scaffold remains
-- `/dev/zero` open/read/close scaffold remains
-- `runtime_fd_kind`
-- `runtime_fstat_result`
-- `runtime_lseek_result`
-- character devices return `-ESPIPE` for lseek
-- fstat validates fd and writes a minimal stat buffer
+- `/dev` directory open/close scaffold
+- fd 5 reserved for `/dev`
+- `runtime_getdents_kind`
+- `RuntimeFdKind::DevDir`
+- getdents64 validates directory fd
+- `/dev` entries exposed:
+  - `.`
+  - `..`
+  - `null`
+  - `zero`
 
 Still TODO:
 - real per-process fd table
 - dynamic fd allocation
 - VFS-backed path resolution
-- complete stat layout
-- getdents64
+- real directory cursor offsets
+- root directory and procfs/tmpfs

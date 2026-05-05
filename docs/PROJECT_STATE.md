@@ -198,3 +198,10 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added minimal stat copy-out to user buffer
 - Added lseek scaffold returning -ESPIPE for character devices
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v59 - getdents64 `/dev` scaffold
+
+- Extended external init ELF to call getdents64
+- Added `/dev` directory scaffold at fd 5
+- Wrote minimal linux_dirent64 entries into user buffer
+- Kept external init ELF Sv39 U-mode smoke passing

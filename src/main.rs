@@ -23,9 +23,9 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] fstat lseek scaffold v58");
+    crate::println!("[stage] getdents64 devfs scaffold v59");
 
-    crate::println!("[stage] v58 runtime path uses fstat/lseek/read/openat/close fd scaffold");
+    crate::println!("[stage] v59 runtime path uses devfs getdents64 scaffold");
     mm::sv39_init_exec::run_external_init_elf_smoke();
 }
 

@@ -53,11 +53,13 @@ def syscall_write_current_fd(addr, length):
 def syscall_read_current_fd_from_s0_spbuf(length):
     return addi(A0, S0, 0) + addi(A1, 2, -64) + li(A2, length) + li(A7, 63) + ecall()
 
+def syscall_getdents_current_fd_from_s0_spbuf(length):
+    return addi(A0, S0, 0) + addi(A1, 2, -512) + li(A2, length) + li(A7, 61) + ecall()
+
 def syscall_fstat_stdout_spbuf():
     return li(A0, 1) + addi(A1, 2, -192) + li(A7, 80) + ecall()
 
 def syscall_lseek_stdout():
-    # lseek(stdout, 0, SEEK_SET)
     return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 62) + ecall()
 
 def syscall0(num):
@@ -73,16 +75,18 @@ def syscall_close_current_s0():
     return addi(A0, S0, 0) + li(A7, 57) + ecall()
 
 messages = [
-    b"hello from external init.elf v58 syscall write\n",
+    b"hello from external init.elf v59 syscall write\n",
     b"external init fstat lseek passed\n",
-    b"this write goes to devnull v58\n",
+    b"this write goes to devnull v59\n",
     b"external init openat close passed\n",
     b"external init devzero read passed\n",
+    b"external init getdents64 dev passed\n",
     b"external init getpid returned 1\n",
     b"external init getppid returned 0\n",
     b"external init unsupported returned -38\n",
     b"/dev/null\x00",
     b"/dev/zero\x00",
+    b"/dev\x00",
 ]
 
 dummy = BASE
@@ -101,12 +105,17 @@ code_dummy = (
     syscall_read_current_fd_from_s0_spbuf(16) +
     syscall_close_current_s0() +
     syscall_write_const_fd(1, dummy, len(messages[4])) +
-    syscall0(172) +
+    syscall_openat(dummy, 0) +
+    addi(S0, A0, 0) +
+    syscall_getdents_current_fd_from_s0_spbuf(256) +
+    syscall_close_current_s0() +
     syscall_write_const_fd(1, dummy, len(messages[5])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, dummy, len(messages[6])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, dummy, len(messages[7])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, dummy, len(messages[8])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -122,22 +131,27 @@ code = (
     syscall_fstat_stdout_spbuf() +
     syscall_lseek_stdout() +
     syscall_write_const_fd(1, msg_addrs[1], len(messages[1])) +
-    syscall_openat(msg_addrs[8], 1) +
+    syscall_openat(msg_addrs[9], 1) +
     addi(S0, A0, 0) +
     addi(A0, S0, 0) + syscall_write_current_fd(msg_addrs[2], len(messages[2])) +
     syscall_close_current_s0() +
     syscall_write_const_fd(1, msg_addrs[3], len(messages[3])) +
-    syscall_openat(msg_addrs[9], 0) +
+    syscall_openat(msg_addrs[10], 0) +
     addi(S0, A0, 0) +
     syscall_read_current_fd_from_s0_spbuf(16) +
     syscall_close_current_s0() +
     syscall_write_const_fd(1, msg_addrs[4], len(messages[4])) +
-    syscall0(172) +
+    syscall_openat(msg_addrs[11], 0) +
+    addi(S0, A0, 0) +
+    syscall_getdents_current_fd_from_s0_spbuf(256) +
+    syscall_close_current_s0() +
     syscall_write_const_fd(1, msg_addrs[5], len(messages[5])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, msg_addrs[6], len(messages[6])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, msg_addrs[7], len(messages[7])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, msg_addrs[8], len(messages[8])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -169,4 +183,4 @@ blob += bytes(SEG_OFF - len(blob))
 blob += segment
 
 OUT.write_bytes(blob)
-print(f"[build-init-elf-v58] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")
+print(f"[build-init-elf-v59] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")
