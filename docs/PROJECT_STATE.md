@@ -244,3 +244,13 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Added central `RuntimeSyscallAction::Gettimeofday`
 - Extended external init ELF to exercise uname/time syscalls
 - Kept external init ELF Sv39 U-mode smoke passing
+
+## v64 - process/resource/random scaffold
+
+- Added set_tid_address and set_robust_list scaffolds
+- Added getuid/geteuid/getgid/getegid/gettid return values
+- Added sysinfo scaffold
+- Added prlimit64 scaffold
+- Added getrandom scaffold
+- Extended external init ELF to exercise process/resource/random syscalls
+- Kept external init ELF Sv39 U-mode smoke passing

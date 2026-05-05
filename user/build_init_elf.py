@@ -98,6 +98,22 @@ def syscall_clock_gettime_spbuf():
 def syscall_gettimeofday_spbuf():
     return addi(A0, 2, -928) + li(A1, 0) + li(A7, 169) + ecall()
 
+def syscall_set_tid_address_spword():
+    return addi(A0, 2, -960) + li(A7, 96) + ecall()
+
+def syscall_set_robust_list_spword():
+    return addi(A0, 2, -976) + li(A1, 24) + li(A7, 99) + ecall()
+
+def syscall_sysinfo_spbuf():
+    return addi(A0, 2, -1152) + li(A7, 179) + ecall()
+
+def syscall_prlimit64_spbuf():
+    # prlimit64(pid=0, resource=RLIMIT_STACK=3, new_limit=NULL, old_limit=sp-1184)
+    return li(A0, 0) + li(A1, 3) + li(A2, 0) + addi(A3, 2, -1184) + li(A7, 261) + ecall()
+
+def syscall_getrandom_spbuf():
+    return addi(A0, 2, -1216) + li(A1, 16) + li(A2, 0) + li(A7, 278) + ecall()
+
 def syscall0(num):
     return li(A7, num) + ecall()
 
@@ -111,9 +127,9 @@ def syscall_close_current_s0():
     return addi(A0, S0, 0) + li(A7, 57) + ecall()
 
 messages = [
-    b"hello from external init.elf v63 syscall write\n",
+    b"hello from external init.elf v64 syscall write\n",
     b"external init fstat lseek passed\n",
-    b"this write goes to devnull v63\n",
+    b"this write goes to devnull v64\n",
     b"external init openat close passed\n",
     b"external init devzero read passed\n",
     b"external init getdents64 dev passed\n",
@@ -121,6 +137,7 @@ messages = [
     b"external init mmap munmap passed\n",
     b"external init mprotect madvise passed\n",
     b"external init uname time passed\n",
+    b"external init proc resource random passed\n",
     b"external init getpid returned 1\n",
     b"external init getppid returned 0\n",
     b"external init unsupported returned -38\n",
@@ -165,12 +182,23 @@ code_dummy = (
     syscall_clock_gettime_spbuf() +
     syscall_gettimeofday_spbuf() +
     syscall_write_const_fd(1, dummy, len(messages[9])) +
-    syscall0(172) +
+    syscall_set_tid_address_spword() +
+    syscall_set_robust_list_spword() +
+    syscall0(174) +
+    syscall0(175) +
+    syscall0(176) +
+    syscall0(177) +
+    syscall0(178) +
+    syscall_sysinfo_spbuf() +
+    syscall_prlimit64_spbuf() +
+    syscall_getrandom_spbuf() +
     syscall_write_const_fd(1, dummy, len(messages[10])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, dummy, len(messages[11])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, dummy, len(messages[12])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, dummy, len(messages[13])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -186,17 +214,17 @@ code = (
     syscall_fstat_stdout_spbuf() +
     syscall_lseek_stdout() +
     syscall_write_const_fd(1, msg_addrs[1], len(messages[1])) +
-    syscall_openat(msg_addrs[13], 1) +
+    syscall_openat(msg_addrs[14], 1) +
     addi(S0, A0, 0) +
     addi(A0, S0, 0) + syscall_write_current_fd(msg_addrs[2], len(messages[2])) +
     syscall_close_current_s0() +
     syscall_write_const_fd(1, msg_addrs[3], len(messages[3])) +
-    syscall_openat(msg_addrs[14], 0) +
+    syscall_openat(msg_addrs[15], 0) +
     addi(S0, A0, 0) +
     syscall_read_current_fd_from_s0_spbuf(16) +
     syscall_close_current_s0() +
     syscall_write_const_fd(1, msg_addrs[4], len(messages[4])) +
-    syscall_openat(msg_addrs[15], 0) +
+    syscall_openat(msg_addrs[16], 0) +
     addi(S0, A0, 0) +
     syscall_getdents_current_fd_from_s0_spbuf(256) +
     syscall_close_current_s0() +
@@ -216,12 +244,23 @@ code = (
     syscall_clock_gettime_spbuf() +
     syscall_gettimeofday_spbuf() +
     syscall_write_const_fd(1, msg_addrs[9], len(messages[9])) +
-    syscall0(172) +
+    syscall_set_tid_address_spword() +
+    syscall_set_robust_list_spword() +
+    syscall0(174) +
+    syscall0(175) +
+    syscall0(176) +
+    syscall0(177) +
+    syscall0(178) +
+    syscall_sysinfo_spbuf() +
+    syscall_prlimit64_spbuf() +
+    syscall_getrandom_spbuf() +
     syscall_write_const_fd(1, msg_addrs[10], len(messages[10])) +
-    syscall0(173) +
+    syscall0(172) +
     syscall_write_const_fd(1, msg_addrs[11], len(messages[11])) +
-    syscall0(9999) +
+    syscall0(173) +
     syscall_write_const_fd(1, msg_addrs[12], len(messages[12])) +
+    syscall0(9999) +
+    syscall_write_const_fd(1, msg_addrs[13], len(messages[13])) +
     syscall1(93, 0) +
     jal_zero_zero()
 )
@@ -253,4 +292,4 @@ blob += bytes(SEG_OFF - len(blob))
 blob += segment
 
 OUT.write_bytes(blob)
-print(f"[build-init-elf-v63] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")
+print(f"[build-init-elf-v64] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")

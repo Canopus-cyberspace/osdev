@@ -179,10 +179,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v63] uname/time path enabled");
+    crate::println!("[external-init-v64] proc/resource/random path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v63] load external init.elf failed");
+        .expect("[external-init-v64] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -312,7 +312,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v63] unexpected trap");
+        crate::println!("[external-init-v64] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -395,6 +395,26 @@ fn handle_syscall(cx: &mut TrapContext) {
             let ret = sys_gettimeofday_user(user_tv, user_tz);
             cx.regs[10] = ret as usize;
         }
+        RuntimeSyscallAction::SetTidAddress { user_tidptr } => {
+            let ret = sys_set_tid_address_user(user_tidptr);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::SetRobustList { head, len } => {
+            let ret = sys_set_robust_list(head, len);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Sysinfo { user_info } => {
+            let ret = sys_sysinfo_user(user_info);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Prlimit64 { pid, resource, new_limit, old_limit } => {
+            let ret = sys_prlimit64_user(pid, resource, new_limit, old_limit);
+            cx.regs[10] = ret as usize;
+        }
+        RuntimeSyscallAction::Getrandom { user_buf, len, flags } => {
+            let ret = sys_getrandom_user(user_buf, len, flags);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
@@ -408,6 +428,82 @@ fn handle_syscall(cx: &mut TrapContext) {
 
 
 
+
+
+fn sys_set_tid_address_user(user_tidptr: usize) -> isize {
+    crate::println!("[proc-v64] set_tid_address ptr = {:#x}", user_tidptr);
+
+    if user_tidptr != 0 {
+        with_sum_enabled(|| {
+            unsafe { core::ptr::write_volatile(user_tidptr as *mut u32, 1); }
+        });
+    }
+
+    crate::println!("[proc-v64] set_tid_address ret = 1");
+    1
+}
+
+fn sys_set_robust_list(head: usize, len: usize) -> isize {
+    crate::println!("[proc-v64] set_robust_list head = {:#x}", head);
+    crate::println!("[proc-v64] set_robust_list len = {}", len);
+    crate::println!("[proc-v64] set_robust_list ret = 0");
+    0
+}
+
+fn sys_sysinfo_user(user_info: usize) -> isize {
+    crate::println!("[sysinfo-v64] user info = {:#x}", user_info);
+
+    with_sum_enabled(|| {
+        for i in 0..128usize {
+            unsafe { core::ptr::write_volatile((user_info + i) as *mut u8, 0); }
+        }
+
+        unsafe {
+            core::ptr::write_volatile((user_info + 0) as *mut i64, 1);             // uptime
+            core::ptr::write_volatile((user_info + 32) as *mut u64, 64 * 1024 * 1024); // totalram-ish
+            core::ptr::write_volatile((user_info + 40) as *mut u64, 48 * 1024 * 1024); // freeram-ish
+            core::ptr::write_volatile((user_info + 104) as *mut u16, 1);           // procs
+        }
+    });
+
+    crate::println!("[sysinfo-v64] wrote sysinfo");
+    0
+}
+
+fn sys_prlimit64_user(pid: usize, resource: usize, new_limit: usize, old_limit: usize) -> isize {
+    crate::println!("[prlimit64-v64] pid = {}", pid);
+    crate::println!("[prlimit64-v64] resource = {}", resource);
+    crate::println!("[prlimit64-v64] new_limit = {:#x}", new_limit);
+    crate::println!("[prlimit64-v64] old_limit = {:#x}", old_limit);
+
+    if old_limit != 0 {
+        with_sum_enabled(|| {
+            unsafe {
+                core::ptr::write_volatile((old_limit + 0) as *mut u64, 8 * 1024 * 1024);
+                core::ptr::write_volatile((old_limit + 8) as *mut u64, 8 * 1024 * 1024);
+            }
+        });
+    }
+
+    crate::println!("[prlimit64-v64] wrote rlimit");
+    0
+}
+
+fn sys_getrandom_user(user_buf: usize, len: usize, flags: usize) -> isize {
+    crate::println!("[getrandom-v64] buf = {:#x}", user_buf);
+    crate::println!("[getrandom-v64] len = {}", len);
+    crate::println!("[getrandom-v64] flags = {:#x}", flags);
+
+    with_sum_enabled(|| {
+        for i in 0..len {
+            let value = (0xa5usize ^ (i.wrapping_mul(37))) as u8;
+            unsafe { core::ptr::write_volatile((user_buf + i) as *mut u8, value); }
+        }
+    });
+
+    crate::println!("[getrandom-v64] filled bytes = {}", len);
+    len as isize
+}
 
 fn sys_uname_user(user_uts: usize) -> isize {
     crate::println!("[uname-v63] user uts = {:#x}", user_uts);

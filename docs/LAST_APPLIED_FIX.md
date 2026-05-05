@@ -1,12 +1,15 @@
 # LAST_APPLIED_FIX
 
-Version: v63
+Version: v64
 
 Goal:
-- Add uname/clock_gettime/gettimeofday scaffolds.
+- Add process/resource/random syscall scaffolds frequently used by libc startup and utilities.
 
 Verified:
-- uname writes utsname to user buffer
-- clock_gettime writes timespec to user buffer
-- gettimeofday writes timeval to user buffer
-- prior mm/fd syscall regressions remain passing
+- set_tid_address
+- set_robust_list
+- getuid/geteuid/getgid/getegid/gettid
+- sysinfo
+- prlimit64
+- getrandom
+- prior fd/mm/time regressions remain passing

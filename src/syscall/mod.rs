@@ -13,10 +13,18 @@ pub const SYS_READ: usize = 63;
 pub const SYS_WRITE: usize = 64;
 pub const SYS_CLOCK_GETTIME: usize = 113;
 pub const SYS_FSTAT: usize = 80;
+pub const SYS_SET_TID_ADDRESS: usize = 96;
+pub const SYS_SET_ROBUST_LIST: usize = 99;
 pub const SYS_EXIT: usize = 93;
 pub const SYS_UNAME: usize = 160;
 pub const SYS_GETTIMEOFDAY: usize = 169;
 pub const SYS_GETPID: usize = 172;
+pub const SYS_GETUID: usize = 174;
+pub const SYS_GETEUID: usize = 175;
+pub const SYS_GETGID: usize = 176;
+pub const SYS_GETEGID: usize = 177;
+pub const SYS_GETTID: usize = 178;
+pub const SYS_SYSINFO: usize = 179;
 pub const SYS_GETPPID: usize = 173;
 pub const SYS_BRK: usize = 214;
 pub const SYS_MUNMAP: usize = 215;
@@ -26,6 +34,8 @@ pub const SYS_MMAP: usize = 222;
 pub const SYS_MPROTECT: usize = 226;
 pub const SYS_MADVISE: usize = 233;
 pub const SYS_WAIT4: usize = 260;
+pub const SYS_PRLIMIT64: usize = 261;
+pub const SYS_GETRANDOM: usize = 278;
 
 pub const ENOSYS: isize = -38;
 pub const EBADF: isize = -9;
@@ -100,6 +110,11 @@ pub enum RuntimeSyscallAction {
     Uname { user_uts: usize },
     ClockGettime { clock_id: usize, user_ts: usize },
     Gettimeofday { user_tv: usize, user_tz: usize },
+    SetTidAddress { user_tidptr: usize },
+    SetRobustList { head: usize, len: usize },
+    Sysinfo { user_info: usize },
+    Prlimit64 { pid: usize, resource: usize, new_limit: usize, old_limit: usize },
+    Getrandom { user_buf: usize, len: usize, flags: usize },
     Exit { code: isize },
 }
 
@@ -122,6 +137,8 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
             Ok(target) => RuntimeSyscallAction::Read { fd: args.a0, user_ptr: args.a1, len: args.a2, target },
             Err(err) => RuntimeSyscallAction::Return(err),
         },
+        SYS_SET_TID_ADDRESS => RuntimeSyscallAction::SetTidAddress { user_tidptr: args.a0 },
+        SYS_SET_ROBUST_LIST => RuntimeSyscallAction::SetRobustList { head: args.a0, len: args.a1 },
         SYS_CLOCK_GETTIME => RuntimeSyscallAction::ClockGettime { clock_id: args.a0, user_ts: args.a1 },
         SYS_WRITE => match crate::fd::runtime_write_target(args.a0) {
             Ok(target) => RuntimeSyscallAction::Write { fd: args.a0, user_ptr: args.a1, len: args.a2, target },
@@ -134,6 +151,14 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
         SYS_EXIT => RuntimeSyscallAction::Exit { code: args.a0 as isize },
         SYS_GETTIMEOFDAY => RuntimeSyscallAction::Gettimeofday { user_tv: args.a0, user_tz: args.a1 },
         SYS_GETPID => RuntimeSyscallAction::Return(1),
+        SYS_GETUID => RuntimeSyscallAction::Return(0),
+        SYS_GETEUID => RuntimeSyscallAction::Return(0),
+        SYS_GETGID => RuntimeSyscallAction::Return(0),
+        SYS_GETEGID => RuntimeSyscallAction::Return(0),
+        SYS_GETTID => RuntimeSyscallAction::Return(1),
+        SYS_SYSINFO => RuntimeSyscallAction::Sysinfo { user_info: args.a0 },
+        SYS_PRLIMIT64 => RuntimeSyscallAction::Prlimit64 { pid: args.a0, resource: args.a1, new_limit: args.a2, old_limit: args.a3 },
+        SYS_GETRANDOM => RuntimeSyscallAction::Getrandom { user_buf: args.a0, len: args.a1, flags: args.a2 },
         SYS_GETPPID => RuntimeSyscallAction::Return(0),
         SYS_MADVISE => RuntimeSyscallAction::Madvise { addr: args.a0, len: args.a1, advice: args.a2 },
         SYS_UNAME => RuntimeSyscallAction::Uname { user_uts: args.a0 },

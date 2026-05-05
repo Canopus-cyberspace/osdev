@@ -1,21 +1,24 @@
 # SYSCALL_STATUS
 
-## v63 - uname/time scaffold
+## v64 - process/resource/random scaffold
 
 Runtime external init ELF now exercises:
-- fstat/lseek
-- `/dev/null` write
-- `/dev/zero` read
-- `/dev` getdents64
-- brk
-- mmap/munmap
-- mprotect/madvise
-- uname
-- clock_gettime
-- gettimeofday
+- prior fd/mm/time syscalls
+- set_tid_address
+- set_robust_list
+- getuid/geteuid/getgid/getegid
+- gettid
+- sysinfo
+- prlimit64
+- getrandom
 - getpid/getppid/unsupported/exit
 
 Implemented central dispatcher actions:
+- SetTidAddress
+- SetRobustList
+- Sysinfo
+- Prlimit64
+- Getrandom
 - Uname
 - ClockGettime
 - Gettimeofday
