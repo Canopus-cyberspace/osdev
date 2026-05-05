@@ -153,3 +153,27 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - Root cause: `stvec` trap entry could become 2-byte aligned after code layout changes.
 - RISC-V `stvec` direct mode needs low two bits clear, so the trap entry is now explicitly `.balign 4`.
 - The external init ELF Sv39 U-mode smoke remains the primary regression path.
+
+## v54 - Central syscall dispatcher
+
+- Added central runtime syscall dispatcher in `src/syscall/mod.rs`
+- Moved runtime syscall decision out of `sv39_init_exec.rs`
+- External init ELF trap handler now delegates to `syscall::dispatch_runtime_syscall`
+- Preserved v53f trap entry alignment fix
+- External init ELF Sv39 U-mode smoke remains passing
+
+## v54 - Central syscall dispatcher
+
+- Added central runtime syscall dispatcher in `src/syscall/mod.rs`
+- Moved runtime syscall decision out of `sv39_init_exec.rs`
+- External init ELF trap handler now delegates to `syscall::dispatch_runtime_syscall`
+- Preserved v53f trap entry alignment fix
+- External init ELF Sv39 U-mode smoke remains passing
+
+## v55 - fd-backed write dispatcher
+
+- Added fd-backed write routing
+- stdout/stderr route to console
+- `/dev/null` scaffold target reserved at fd 3
+- bad fd returns -EBADF
+- External init ELF write/getpid/getppid/ENOSYS/exit remains passing

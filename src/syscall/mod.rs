@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::fd::{FdTable, FileKind};
+use crate::fd::{FdTable, FileKind, RuntimeWriteTarget};
 use crate::loader::process_image::build_init_process_info;
 use crate::loader::user_stack::build_initial_user_stack_dry_run;
 use crate::process::{make_init_process, make_zombie};
@@ -65,33 +65,108 @@ pub const fn sys_clone_scaffold() -> isize {
     ENOSYS
 }
 
+#[derive(Copy, Clone, Debug)]
+pub struct RuntimeSyscallArgs {
+    pub id: usize,
+    pub a0: usize,
+    pub a1: usize,
+    pub a2: usize,
+    pub a3: usize,
+    pub a4: usize,
+    pub a5: usize,
+}
+
+impl RuntimeSyscallArgs {
+    pub const fn new(id: usize, a0: usize, a1: usize, a2: usize, a3: usize, a4: usize, a5: usize) -> Self {
+        Self { id, a0, a1, a2, a3, a4, a5 }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum RuntimeSyscallAction {
+    Return(isize),
+    Write {
+        fd: usize,
+        user_ptr: usize,
+        len: usize,
+        target: RuntimeWriteTarget,
+    },
+    Exit {
+        code: isize,
+    },
+}
+
+pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallAction {
+    match args.id {
+        SYS_WRITE => match crate::fd::runtime_write_target(args.a0) {
+            Ok(target) => RuntimeSyscallAction::Write {
+                fd: args.a0,
+                user_ptr: args.a1,
+                len: args.a2,
+                target,
+            },
+            Err(err) => RuntimeSyscallAction::Return(err),
+        },
+        SYS_EXIT => RuntimeSyscallAction::Exit {
+            code: args.a0 as isize,
+        },
+        SYS_GETPID => RuntimeSyscallAction::Return(1),
+        SYS_GETPPID => RuntimeSyscallAction::Return(0),
+        _ => RuntimeSyscallAction::Return(ENOSYS),
+    }
+}
+
 pub fn self_test() {
-    crate::println!("[syscall-scaffold-v53d] self-test begin");
+    crate::println!("[syscall-dispatch-v55] self-test begin");
 
-    let getpid = dispatch_scaffold(SyscallFrame::new(SYS_GETPID, [0; 6]));
-    let getppid = dispatch_scaffold(SyscallFrame::new(SYS_GETPPID, [0; 6]));
-    let unsupported = dispatch_scaffold(SyscallFrame::new(9999, [0; 6]));
+    let write = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_WRITE, 1, 0x4000_0000, 12, 0, 0, 0));
+    match write {
+        RuntimeSyscallAction::Write { fd, user_ptr, len, target } => {
+            crate::println!("[syscall-dispatch-v55] write fd = {}", fd);
+            crate::println!("[syscall-dispatch-v55] write ptr = {:#x}", user_ptr);
+            crate::println!("[syscall-dispatch-v55] write len = {}", len);
+            crate::println!("[syscall-dispatch-v55] write target = {:?}", target);
+            assert_eq!(target, RuntimeWriteTarget::Console);
+        }
+        _ => panic!("[syscall-dispatch-v55] write dispatch failed"),
+    }
+
+    let bad_fd = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_WRITE, 99, 0, 1, 0, 0, 0));
+    assert_eq!(bad_fd, RuntimeSyscallAction::Return(EBADF));
+
+    let dev_null = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_WRITE, 3, 0, 1, 0, 0, 0));
+    match dev_null {
+        RuntimeSyscallAction::Write { target, .. } => assert_eq!(target, RuntimeWriteTarget::DevNull),
+        _ => panic!("[syscall-dispatch-v55] devnull dispatch failed"),
+    }
+
+    let getpid = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_GETPID, 0, 0, 0, 0, 0, 0));
+    let getppid = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_GETPPID, 0, 0, 0, 0, 0, 0));
+    let unsupported = dispatch_runtime_syscall(RuntimeSyscallArgs::new(9999, 0, 0, 0, 0, 0, 0));
+    let exit = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_EXIT, 0, 0, 0, 0, 0, 0));
+
+    assert_eq!(getpid, RuntimeSyscallAction::Return(1));
+    assert_eq!(getppid, RuntimeSyscallAction::Return(0));
+    assert_eq!(unsupported, RuntimeSyscallAction::Return(ENOSYS));
+    assert_eq!(exit, RuntimeSyscallAction::Exit { code: 0 });
+
     let exec_ret = dispatch_scaffold(SyscallFrame::new(SYS_EXECVE, [0; 6]));
-
-    crate::println!("[syscall-scaffold-v53d] getpid = {}", getpid);
-    crate::println!("[syscall-scaffold-v53d] getppid = {}", getppid);
-    crate::println!("[syscall-scaffold-v53d] unsupported = {}", unsupported);
-    crate::println!("[syscall-scaffold-v53d] execve scaffold ret = {}", exec_ret);
+    crate::println!("[syscall-dispatch-v55] execve scaffold ret = {}", exec_ret);
 
     if let Ok(info) = build_init_process_info() {
         let init = make_init_process(info);
         let zombie = make_zombie(init, 0);
-        crate::println!("[syscall-scaffold-v53d] zombie exit = {}", zombie.exit_code);
+        crate::println!("[syscall-dispatch-v55] zombie exit = {}", zombie.exit_code);
     }
 
     let mut fd_table = FdTable::with_stdio();
     let stdout_writable = fd_table.get(1).map(|fd| fd.writable).unwrap_or(false);
-    crate::println!("[syscall-scaffold-v53d] stdout writable = {}", stdout_writable as usize);
+    crate::println!("[syscall-dispatch-v55] stdout writable = {}", stdout_writable as usize);
 
-    if let Some(dev_null) = fd_table.alloc(FileKind::DevNull, true, true) {
-        let closed = fd_table.close(dev_null);
-        crate::println!("[syscall-scaffold-v53d] devnull fd closed = {}", closed as usize);
+    if let Some(dev_null_fd) = fd_table.alloc(FileKind::DevNull, true, true) {
+        let closed = fd_table.close(dev_null_fd);
+        crate::println!("[syscall-dispatch-v55] devnull fd closed = {}", closed as usize);
     }
 
-    crate::println!("[syscall-scaffold-v53d] self-test passed");
+    crate::println!("[syscall-dispatch-v55] self-test passed");
 }

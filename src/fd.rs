@@ -2,6 +2,9 @@
 
 pub const MAX_FD: usize = 16;
 
+pub const EBADF: isize = -9;
+pub const EINVAL: isize = -22;
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum FileKind {
     Empty,
@@ -71,25 +74,56 @@ impl FdTable {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum RuntimeWriteTarget {
+    Console,
+    DevNull,
+}
+
+pub fn runtime_write_target(fd: usize) -> Result<RuntimeWriteTarget, isize> {
+    match fd {
+        1 | 2 => Ok(RuntimeWriteTarget::Console),
+        3 => Ok(RuntimeWriteTarget::DevNull),
+        _ => Err(EBADF),
+    }
+}
+
+pub fn runtime_write_result(fd: usize, len: usize) -> Result<(RuntimeWriteTarget, isize), isize> {
+    let target = runtime_write_target(fd)?;
+    Ok((target, len as isize))
+}
+
 pub fn self_test() {
-    crate::println!("[fd-v53c] self-test begin");
+    crate::println!("[fd-v55] self-test begin");
 
     let mut table = FdTable::with_stdio();
 
-    let stdio_ok =
-        table.get(0).map(|fd| fd.kind == FileKind::Stdin && fd.readable && !fd.writable).unwrap_or(false)
-        && table.get(1).map(|fd| fd.kind == FileKind::Stdout && !fd.readable && fd.writable).unwrap_or(false)
-        && table.get(2).map(|fd| fd.kind == FileKind::Stderr && fd.writable).unwrap_or(false);
+    let stdin = table.get(0).expect("[fd-v55] missing stdin");
+    let stdout = table.get(1).expect("[fd-v55] missing stdout");
+    let stderr = table.get(2).expect("[fd-v55] missing stderr");
 
-    crate::println!("[fd-v53c] stdio ok = {}", stdio_ok as usize);
+    assert_eq!(stdin.kind, FileKind::Stdin);
+    assert!(stdin.readable);
+    assert!(!stdin.writable);
 
-    if let Some(null_fd) = table.alloc(FileKind::DevNull, true, true) {
-        crate::println!("[fd-v53c] allocated /dev/null fd = {}", null_fd);
-        let closed = table.close(null_fd);
-        crate::println!("[fd-v53c] closed /dev/null = {}", closed as usize);
-    } else {
-        crate::println!("[fd-v53c] /dev/null allocation skipped");
-    }
+    assert_eq!(stdout.kind, FileKind::Stdout);
+    assert!(!stdout.readable);
+    assert!(stdout.writable);
 
-    crate::println!("[fd-v53c] self-test passed");
+    assert_eq!(stderr.kind, FileKind::Stderr);
+    assert!(stderr.writable);
+
+    assert_eq!(runtime_write_target(1), Ok(RuntimeWriteTarget::Console));
+    assert_eq!(runtime_write_target(2), Ok(RuntimeWriteTarget::Console));
+    assert_eq!(runtime_write_target(3), Ok(RuntimeWriteTarget::DevNull));
+    assert_eq!(runtime_write_target(99), Err(EBADF));
+
+    let null_fd = table.alloc(FileKind::DevNull, true, true)
+        .expect("[fd-v55] alloc devnull fd failed");
+    crate::println!("[fd-v55] allocated /dev/null fd = {}", null_fd);
+    assert!(null_fd >= 3);
+    assert!(table.close(null_fd));
+    assert!(table.get(null_fd).is_none());
+
+    crate::println!("[fd-v55] self-test passed");
 }

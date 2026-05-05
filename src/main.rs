@@ -23,11 +23,9 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] v53d scaffold isolated; external init ELF regression");
+    crate::println!("[stage] fd backed write dispatcher v55");
 
-    crate::println!("[stage] v53d scaffold modules compile-only");
-    crate::println!("[stage] v53d entering external init ELF regression");
-
+    crate::println!("[stage] v55 runtime path uses fd-backed write");
     mm::sv39_init_exec::run_external_init_elf_smoke();
 }
 

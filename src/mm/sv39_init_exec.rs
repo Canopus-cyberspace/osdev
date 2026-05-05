@@ -5,6 +5,8 @@ use core::sync::atomic::{AtomicBool, Ordering};
 
 use crate::config::PAGE_SIZE;
 use crate::loader::init_image::{load_init_image_to_page, LoadedInitImage};
+use crate::fd::RuntimeWriteTarget;
+use crate::syscall::{RuntimeSyscallAction, RuntimeSyscallArgs};
 
 const USER_STACK_TOP: usize = 0x4002_0000;
 const USER_STACK_PAGES: usize = 4;
@@ -283,43 +285,57 @@ fn handle_syscall(cx: &mut TrapContext) {
     let a0 = cx.regs[10];
     let a1 = cx.regs[11];
     let a2 = cx.regs[12];
+    let a3 = cx.regs[13];
+    let a4 = cx.regs[14];
+    let a5 = cx.regs[15];
 
     crate::println!("[external-init-v50b] syscall id = {}", id);
+    crate::println!("[syscall-dispatch-v54] central dispatch id = {}", id);
 
-    match id {
-        64 => {
-            let written = sys_write_user(a0, a1, a2);
+    let args = RuntimeSyscallArgs::new(id, a0, a1, a2, a3, a4, a5);
+
+    match crate::syscall::dispatch_runtime_syscall(args) {
+        RuntimeSyscallAction::Return(value) => {
+            cx.regs[10] = value as usize;
+        }
+        RuntimeSyscallAction::Write { fd, user_ptr, len, target } => {
+            let written = sys_write_user(fd, user_ptr, len, target);
             cx.regs[10] = written as usize;
         }
-        93 => {
-            crate::println!("[external-init-v50b] exit code = {}", a0);
+        RuntimeSyscallAction::Exit { code } => {
+            crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
             crate::println!("[external-init-v50b] smoke passed");
             crate::println!("[external-init-v50b] kernel idle after external init ELF smoke");
             loop { unsafe { asm!("wfi"); } }
         }
-        172 => cx.regs[10] = 1,
-        173 => cx.regs[10] = 0,
-        _ => cx.regs[10] = (-38isize) as usize,
     }
 }
 
-fn sys_write_user(fd: usize, user_ptr: usize, len: usize) -> isize {
-    if fd != 1 && fd != 2 {
-        return -9;
-    }
+fn sys_write_user(fd: usize, user_ptr: usize, len: usize, target: RuntimeWriteTarget) -> isize {
+    crate::println!("[fd-v55] write fd = {}", fd);
+    crate::println!("[fd-v55] write len = {}", len);
+
     if len == 0 {
         return 0;
     }
 
-    with_sum_enabled(|| {
-        for i in 0..len {
-            let ch = unsafe { core::ptr::read_volatile((user_ptr + i) as *const u8) };
-            crate::sbi::console_putchar(ch as usize);
-        }
-    });
+    match target {
+        RuntimeWriteTarget::Console => {
+            with_sum_enabled(|| {
+                for i in 0..len {
+                    let ch = unsafe { core::ptr::read_volatile((user_ptr + i) as *const u8) };
+                    crate::sbi::console_putchar(ch as usize);
+                }
+            });
 
-    len as isize
+            len as isize
+        }
+        RuntimeWriteTarget::DevNull => {
+            crate::println!("[fd-v55] /dev/null swallowed write");
+            len as isize
+        }
+    }
 }
 
 fn with_sum_enabled<F: FnOnce()>(f: F) {

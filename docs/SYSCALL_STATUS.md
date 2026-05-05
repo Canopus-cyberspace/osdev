@@ -1,19 +1,21 @@
 # SYSCALL_STATUS
 
-## v53d
+## v55 - fd-backed write dispatcher
 
-Status:
-- syscall scaffold exists and compiles in `src/syscall/mod.rs`
-- runtime self-test is temporarily compile-only
-- external init ELF syscall path remains the primary QEMU regression
-
-Runtime verified:
-- write
+Runtime external init ELF smoke verifies through central dispatcher and fd-backed write:
+- write(fd=1)
 - getpid
 - getppid
 - unsupported -> -38
 - exit
 
-Reason for compile-only scaffold:
-- v53c showed runtime self-tests before external init can interfere with the stable external init smoke.
-- Next step should connect the external init trap path to the central syscall dispatcher directly.
+Implemented:
+- `RuntimeSyscallAction::Write { fd, user_ptr, len, target }`
+- central dispatcher performs fd write target validation
+- runtime layer outputs console writes and supports `/dev/null` scaffold target
+
+Still TODO:
+- central read/openat/close/fstat/lseek/getdents64
+- brk/mmap/munmap
+- real execve syscall
+- wait4/fork/clone
