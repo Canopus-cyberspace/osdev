@@ -1,18 +1,16 @@
 # FD_STATUS
 
-## v56 - openat/close `/dev/null` scaffold
+## v57 - read `/dev/zero` scaffold
 
 Implemented:
-- runtime `/dev/null` open state
-- `runtime_open_devnull`
-- `runtime_close_fd`
-- `runtime_write_target` checks fd state
-- fd 1/2 route to console
-- fd 3 routes to `/dev/null` only after openat
-- invalid fd returns `-EBADF`
+- `/dev/null` open/write/close scaffold remains
+- `/dev/zero` open/read/close scaffold
+- `runtime_read_target`
+- `RuntimeReadTarget::{Stdin, DevZero}`
+- fd 4 reserved for `/dev/zero`
 
 Still TODO:
 - real per-process fd table
 - dynamic fd allocation
 - VFS-backed path resolution
-- read/fstat/lseek/getdents64
+- fstat/lseek/getdents64

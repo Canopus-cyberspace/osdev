@@ -1,12 +1,15 @@
 # SYSCALL_STATUS
 
-## v56 - openat/close scaffold
+## v57 - read scaffold
 
 Runtime external init ELF now exercises:
 - write(stdout)
-- openat(AT_FDCWD, "/dev/null", O_WRONLY, 0)
+- openat("/dev/null")
 - write(devnull_fd)
 - close(devnull_fd)
+- openat("/dev/zero")
+- read(devzero_fd, stack_buffer, 16)
+- close(devzero_fd)
 - write(stdout)
 - getpid
 - getppid
@@ -14,6 +17,7 @@ Runtime external init ELF now exercises:
 - exit
 
 Implemented central dispatcher actions:
+- Read
 - OpenAt
 - Close
 - Write

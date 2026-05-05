@@ -4,7 +4,7 @@ use core::arch::{asm, global_asm};
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use crate::config::PAGE_SIZE;
-use crate::fd::RuntimeWriteTarget;
+use crate::fd::{RuntimeReadTarget, RuntimeWriteTarget};
 use crate::loader::init_image::{load_init_image_to_page, LoadedInitImage};
 use crate::syscall::{RuntimeSyscallAction, RuntimeSyscallArgs};
 
@@ -161,10 +161,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v56] openat/close path enabled");
+    crate::println!("[external-init-v57] read /dev/zero path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v56] load external init.elf failed");
+        .expect("[external-init-v57] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -268,7 +268,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v56] unexpected trap");
+        crate::println!("[external-init-v57] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -294,6 +294,10 @@ fn handle_syscall(cx: &mut TrapContext) {
         RuntimeSyscallAction::Write { fd, user_ptr, len, target } => {
             let written = sys_write_user(fd, user_ptr, len, target);
             cx.regs[10] = written as usize;
+        }
+        RuntimeSyscallAction::Read { fd, user_ptr, len, target } => {
+            let read = sys_read_user(fd, user_ptr, len, target);
+            cx.regs[10] = read as usize;
         }
         RuntimeSyscallAction::OpenAt { dirfd, user_path, flags, mode } => {
             let fd = sys_openat_user(dirfd, user_path, flags, mode);
@@ -325,9 +329,7 @@ fn sys_openat_user(dirfd: isize, user_path: usize, flags: usize, mode: usize) ->
         while len + 1 < buf.len() {
             let ch = unsafe { core::ptr::read_volatile((user_path + len) as *const u8) };
             buf[len] = ch;
-            if ch == 0 {
-                break;
-            }
+            if ch == 0 { break; }
             len += 1;
         }
     });
@@ -335,6 +337,10 @@ fn sys_openat_user(dirfd: isize, user_path: usize, flags: usize, mode: usize) ->
     if len == 9 && &buf[..9] == b"/dev/null" {
         let fd = crate::fd::runtime_open_devnull();
         crate::println!("[openat-v56] opened /dev/null fd = {}", fd);
+        fd
+    } else if len == 9 && &buf[..9] == b"/dev/zero" {
+        let fd = crate::fd::runtime_open_devzero();
+        crate::println!("[openat-v57] opened /dev/zero fd = {}", fd);
         fd
     } else {
         crate::println!("[openat-v56] unsupported path");
@@ -349,13 +355,34 @@ fn sys_close_fd(fd: usize) -> isize {
     ret
 }
 
+fn sys_read_user(fd: usize, user_ptr: usize, len: usize, target: RuntimeReadTarget) -> isize {
+    crate::println!("[read-v57] fd = {}", fd);
+    crate::println!("[read-v57] len = {}", len);
+
+    if len == 0 { return 0; }
+
+    match target {
+        RuntimeReadTarget::Stdin => {
+            crate::println!("[read-v57] stdin returns EOF");
+            0
+        }
+        RuntimeReadTarget::DevZero => {
+            with_sum_enabled(|| {
+                for i in 0..len {
+                    unsafe { core::ptr::write_volatile((user_ptr + i) as *mut u8, 0); }
+                }
+            });
+            crate::println!("[read-v57] /dev/zero filled buffer");
+            len as isize
+        }
+    }
+}
+
 fn sys_write_user(fd: usize, user_ptr: usize, len: usize, target: RuntimeWriteTarget) -> isize {
     crate::println!("[fd-v55] write fd = {}", fd);
     crate::println!("[fd-v55] write len = {}", len);
 
-    if len == 0 {
-        return 0;
-    }
+    if len == 0 { return 0; }
 
     match target {
         RuntimeWriteTarget::Console => {
@@ -365,7 +392,6 @@ fn sys_write_user(fd: usize, user_ptr: usize, len: usize, target: RuntimeWriteTa
                     crate::sbi::console_putchar(ch as usize);
                 }
             });
-
             len as isize
         }
         RuntimeWriteTarget::DevNull => {
@@ -413,10 +439,7 @@ fn read_satp() -> usize {
     value
 }
 
-fn root_pa() -> usize {
-    core::ptr::addr_of!(ROOT_TABLE) as usize
-}
-
+fn root_pa() -> usize { core::ptr::addr_of!(ROOT_TABLE) as usize }
 const fn table_pte(pa: usize) -> usize { ((pa >> 12) << 10) | PTE_V }
 const fn leaf_1g_pte(pa: usize, flags: usize) -> usize { ((pa >> 12) << 10) | flags }
 const fn leaf_4k_pte(pa: usize, flags: usize) -> usize { ((pa >> 12) << 10) | flags }
