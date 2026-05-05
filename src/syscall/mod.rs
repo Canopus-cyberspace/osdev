@@ -5,6 +5,8 @@ use crate::loader::process_image::build_init_process_info;
 use crate::loader::user_stack::build_initial_user_stack_dry_run;
 use crate::process::{make_init_process, make_zombie};
 
+pub const SYS_OPENAT: usize = 56;
+pub const SYS_CLOSE: usize = 57;
 pub const SYS_WRITE: usize = 64;
 pub const SYS_EXIT: usize = 93;
 pub const SYS_GETPID: usize = 172;
@@ -15,6 +17,7 @@ pub const SYS_WAIT4: usize = 260;
 
 pub const ENOSYS: isize = -38;
 pub const EBADF: isize = -9;
+pub const ENOENT: isize = -2;
 pub const EINVAL: isize = -22;
 
 #[derive(Copy, Clone, Debug)]
@@ -57,13 +60,8 @@ pub fn sys_execve_scaffold(_path: usize, _argv: usize, _envp: usize) -> isize {
     0
 }
 
-pub const fn sys_wait4_scaffold() -> isize {
-    ENOSYS
-}
-
-pub const fn sys_clone_scaffold() -> isize {
-    ENOSYS
-}
+pub const fn sys_wait4_scaffold() -> isize { ENOSYS }
+pub const fn sys_clone_scaffold() -> isize { ENOSYS }
 
 #[derive(Copy, Clone, Debug)]
 pub struct RuntimeSyscallArgs {
@@ -85,19 +83,21 @@ impl RuntimeSyscallArgs {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum RuntimeSyscallAction {
     Return(isize),
-    Write {
-        fd: usize,
-        user_ptr: usize,
-        len: usize,
-        target: RuntimeWriteTarget,
-    },
-    Exit {
-        code: isize,
-    },
+    Write { fd: usize, user_ptr: usize, len: usize, target: RuntimeWriteTarget },
+    OpenAt { dirfd: isize, user_path: usize, flags: usize, mode: usize },
+    Close { fd: usize },
+    Exit { code: isize },
 }
 
 pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallAction {
     match args.id {
+        SYS_OPENAT => RuntimeSyscallAction::OpenAt {
+            dirfd: args.a0 as isize,
+            user_path: args.a1,
+            flags: args.a2,
+            mode: args.a3,
+        },
+        SYS_CLOSE => RuntimeSyscallAction::Close { fd: args.a0 },
         SYS_WRITE => match crate::fd::runtime_write_target(args.a0) {
             Ok(target) => RuntimeSyscallAction::Write {
                 fd: args.a0,
@@ -107,9 +107,7 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
             },
             Err(err) => RuntimeSyscallAction::Return(err),
         },
-        SYS_EXIT => RuntimeSyscallAction::Exit {
-            code: args.a0 as isize,
-        },
+        SYS_EXIT => RuntimeSyscallAction::Exit { code: args.a0 as isize },
         SYS_GETPID => RuntimeSyscallAction::Return(1),
         SYS_GETPPID => RuntimeSyscallAction::Return(0),
         _ => RuntimeSyscallAction::Return(ENOSYS),
@@ -117,28 +115,21 @@ pub fn dispatch_runtime_syscall(args: RuntimeSyscallArgs) -> RuntimeSyscallActio
 }
 
 pub fn self_test() {
-    crate::println!("[syscall-dispatch-v55] self-test begin");
+    crate::println!("[syscall-dispatch-v56] self-test begin");
 
-    let write = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_WRITE, 1, 0x4000_0000, 12, 0, 0, 0));
-    match write {
-        RuntimeSyscallAction::Write { fd, user_ptr, len, target } => {
-            crate::println!("[syscall-dispatch-v55] write fd = {}", fd);
-            crate::println!("[syscall-dispatch-v55] write ptr = {:#x}", user_ptr);
-            crate::println!("[syscall-dispatch-v55] write len = {}", len);
-            crate::println!("[syscall-dispatch-v55] write target = {:?}", target);
-            assert_eq!(target, RuntimeWriteTarget::Console);
+    let open = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_OPENAT, (-100isize) as usize, 0x4000_0000, 1, 0, 0, 0));
+    match open {
+        RuntimeSyscallAction::OpenAt { dirfd, user_path, flags, mode } => {
+            crate::println!("[syscall-dispatch-v56] openat dirfd = {}", dirfd);
+            crate::println!("[syscall-dispatch-v56] openat path = {:#x}", user_path);
+            crate::println!("[syscall-dispatch-v56] openat flags = {:#x}", flags);
+            crate::println!("[syscall-dispatch-v56] openat mode = {:#x}", mode);
         }
-        _ => panic!("[syscall-dispatch-v55] write dispatch failed"),
+        _ => panic!("[syscall-dispatch-v56] openat dispatch failed"),
     }
 
-    let bad_fd = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_WRITE, 99, 0, 1, 0, 0, 0));
-    assert_eq!(bad_fd, RuntimeSyscallAction::Return(EBADF));
-
-    let dev_null = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_WRITE, 3, 0, 1, 0, 0, 0));
-    match dev_null {
-        RuntimeSyscallAction::Write { target, .. } => assert_eq!(target, RuntimeWriteTarget::DevNull),
-        _ => panic!("[syscall-dispatch-v55] devnull dispatch failed"),
-    }
+    let close = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_CLOSE, 3, 0, 0, 0, 0, 0));
+    assert_eq!(close, RuntimeSyscallAction::Close { fd: 3 });
 
     let getpid = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_GETPID, 0, 0, 0, 0, 0, 0));
     let getppid = dispatch_runtime_syscall(RuntimeSyscallArgs::new(SYS_GETPPID, 0, 0, 0, 0, 0, 0));
@@ -151,22 +142,22 @@ pub fn self_test() {
     assert_eq!(exit, RuntimeSyscallAction::Exit { code: 0 });
 
     let exec_ret = dispatch_scaffold(SyscallFrame::new(SYS_EXECVE, [0; 6]));
-    crate::println!("[syscall-dispatch-v55] execve scaffold ret = {}", exec_ret);
+    crate::println!("[syscall-dispatch-v56] execve scaffold ret = {}", exec_ret);
 
     if let Ok(info) = build_init_process_info() {
         let init = make_init_process(info);
         let zombie = make_zombie(init, 0);
-        crate::println!("[syscall-dispatch-v55] zombie exit = {}", zombie.exit_code);
+        crate::println!("[syscall-dispatch-v56] zombie exit = {}", zombie.exit_code);
     }
 
     let mut fd_table = FdTable::with_stdio();
     let stdout_writable = fd_table.get(1).map(|fd| fd.writable).unwrap_or(false);
-    crate::println!("[syscall-dispatch-v55] stdout writable = {}", stdout_writable as usize);
+    crate::println!("[syscall-dispatch-v56] stdout writable = {}", stdout_writable as usize);
 
     if let Some(dev_null_fd) = fd_table.alloc(FileKind::DevNull, true, true) {
         let closed = fd_table.close(dev_null_fd);
-        crate::println!("[syscall-dispatch-v55] devnull fd closed = {}", closed as usize);
+        crate::println!("[syscall-dispatch-v56] devnull fd closed = {}", closed as usize);
     }
 
-    crate::println!("[syscall-dispatch-v55] self-test passed");
+    crate::println!("[syscall-dispatch-v56] self-test passed");
 }

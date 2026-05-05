@@ -177,3 +177,10 @@ Static ELF loader parser scaffold passed; Sv39 + U-mode ecall smoke remains pass
 - `/dev/null` scaffold target reserved at fd 3
 - bad fd returns -EBADF
 - External init ELF write/getpid/getppid/ENOSYS/exit remains passing
+
+## v56 - openat/close `/dev/null` scaffold
+
+- Extended external init ELF to call openat and close
+- Added `/dev/null` open/close runtime scaffold
+- Added central syscall actions for openat and close
+- Kept external init ELF Sv39 U-mode smoke passing

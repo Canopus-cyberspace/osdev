@@ -1,13 +1,15 @@
 # LAST_APPLIED_FIX
 
-Version: v55
+Version: v56
 
 Goal:
-- Move `write` closer to real fd semantics.
+- Add `openat`/`close` scaffold and exercise `/dev/null` from external init.elf.
 
-Changed:
-- Added `RuntimeWriteTarget`
-- Added fd-backed write target selection
-- Updated central syscall dispatcher write action
-- Updated external init runtime write to use fd target
-- Preserved v53f trap entry alignment
+Verified:
+- stdout write
+- openat `/dev/null`
+- write to `/dev/null`
+- close fd 3
+- getpid/getppid
+- unsupported syscall
+- exit

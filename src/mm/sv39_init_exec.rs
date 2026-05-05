@@ -4,8 +4,8 @@ use core::arch::{asm, global_asm};
 use core::sync::atomic::{AtomicBool, Ordering};
 
 use crate::config::PAGE_SIZE;
-use crate::loader::init_image::{load_init_image_to_page, LoadedInitImage};
 use crate::fd::RuntimeWriteTarget;
+use crate::loader::init_image::{load_init_image_to_page, LoadedInitImage};
 use crate::syscall::{RuntimeSyscallAction, RuntimeSyscallArgs};
 
 const USER_STACK_TOP: usize = 0x4002_0000;
@@ -161,10 +161,10 @@ external_init_trap_stack_top:
 
 pub fn run_external_init_elf_smoke() -> ! {
     crate::println!("[external-init-v50b] begin");
-    crate::println!("[external-init-v50b] robust trap path with sscratch restore");
+    crate::println!("[external-init-v56] openat/close path enabled");
 
     let loaded = load_init_image_to_page()
-        .expect("[external-init-v50b] load external init.elf failed");
+        .expect("[external-init-v56] load external init.elf failed");
 
     crate::println!("[external-init-v50b] elf entry = {:#x}", loaded.entry);
     crate::println!("[external-init-v50b] elf vaddr  = {:#x}", loaded.vaddr);
@@ -189,10 +189,7 @@ unsafe fn build_page_table(loaded: LoadedInitImage) {
     USER_L0_TABLE.0 = [0; 512];
     USER_STACK.0.fill(0);
 
-    // Low 1GiB identity map keeps UART MMIO usable at 0x1000_0000.
     ROOT_TABLE.0[0] = leaf_1g_pte(0x0000_0000, KERNEL_LEAF);
-
-    // Kernel/OpenSBI/QEMU RAM identity map.
     ROOT_TABLE.0[2] = leaf_1g_pte(0x8000_0000, KERNEL_LEAF);
 
     ROOT_TABLE.0[vpn2(loaded.vaddr)] = table_pte(core::ptr::addr_of!(USER_L1_TABLE) as usize);
@@ -234,10 +231,6 @@ unsafe fn install_trap_entry() {
     crate::println!("[external-init-v53f] trap entry raw = {:#x}", entry_raw);
     crate::println!("[external-init-v53f] trap entry aligned = {:#x}", entry);
 
-    if entry_raw != entry {
-        crate::println!("[external-init-v53f] corrected stvec low bits");
-    }
-
     asm!("csrw stvec, {}", in(reg) entry);
     crate::println!("[external-init-v50b] stvec = {:#x}", entry);
 }
@@ -275,7 +268,7 @@ pub extern "C" fn rust_sv39_init_v50b_trap_handler(cx: &mut TrapContext) {
         cx.sepc += 4;
         handle_syscall(cx);
     } else {
-        crate::println!("[external-init-v50b] unexpected trap");
+        crate::println!("[external-init-v56] unexpected trap");
         loop { unsafe { asm!("wfi"); } }
     }
 }
@@ -302,6 +295,14 @@ fn handle_syscall(cx: &mut TrapContext) {
             let written = sys_write_user(fd, user_ptr, len, target);
             cx.regs[10] = written as usize;
         }
+        RuntimeSyscallAction::OpenAt { dirfd, user_path, flags, mode } => {
+            let fd = sys_openat_user(dirfd, user_path, flags, mode);
+            cx.regs[10] = fd as usize;
+        }
+        RuntimeSyscallAction::Close { fd } => {
+            let ret = sys_close_fd(fd);
+            cx.regs[10] = ret as usize;
+        }
         RuntimeSyscallAction::Exit { code } => {
             crate::println!("[external-init-v50b] exit code = {}", code);
             EXIT_SEEN.store(true, Ordering::SeqCst);
@@ -310,6 +311,42 @@ fn handle_syscall(cx: &mut TrapContext) {
             loop { unsafe { asm!("wfi"); } }
         }
     }
+}
+
+fn sys_openat_user(dirfd: isize, user_path: usize, flags: usize, mode: usize) -> isize {
+    crate::println!("[openat-v56] dirfd = {}", dirfd);
+    crate::println!("[openat-v56] flags = {:#x}", flags);
+    crate::println!("[openat-v56] mode = {:#x}", mode);
+
+    let mut buf = [0u8; 64];
+    let mut len = 0usize;
+
+    with_sum_enabled(|| {
+        while len + 1 < buf.len() {
+            let ch = unsafe { core::ptr::read_volatile((user_path + len) as *const u8) };
+            buf[len] = ch;
+            if ch == 0 {
+                break;
+            }
+            len += 1;
+        }
+    });
+
+    if len == 9 && &buf[..9] == b"/dev/null" {
+        let fd = crate::fd::runtime_open_devnull();
+        crate::println!("[openat-v56] opened /dev/null fd = {}", fd);
+        fd
+    } else {
+        crate::println!("[openat-v56] unsupported path");
+        crate::fd::ENOENT
+    }
+}
+
+fn sys_close_fd(fd: usize) -> isize {
+    let ret = crate::fd::runtime_close_fd(fd);
+    crate::println!("[close-v56] fd = {}", fd);
+    crate::println!("[close-v56] ret = {}", ret);
+    ret
 }
 
 fn sys_write_user(fd: usize, user_ptr: usize, len: usize, target: RuntimeWriteTarget) -> isize {
@@ -332,7 +369,7 @@ fn sys_write_user(fd: usize, user_ptr: usize, len: usize, target: RuntimeWriteTa
             len as isize
         }
         RuntimeWriteTarget::DevNull => {
-            crate::println!("[fd-v55] /dev/null swallowed write");
+            crate::println!("[fd-v56] /dev/null swallowed write");
             len as isize
         }
     }
@@ -340,13 +377,9 @@ fn sys_write_user(fd: usize, user_ptr: usize, len: usize, target: RuntimeWriteTa
 
 fn with_sum_enabled<F: FnOnce()>(f: F) {
     let old = read_sstatus();
-    unsafe {
-        asm!("csrs sstatus, {}", in(reg) SSTATUS_SUM);
-    }
+    unsafe { asm!("csrs sstatus, {}", in(reg) SSTATUS_SUM); }
     f();
-    unsafe {
-        asm!("csrw sstatus, {}", in(reg) old);
-    }
+    unsafe { asm!("csrw sstatus, {}", in(reg) old); }
 }
 
 fn user_sstatus() -> usize {
@@ -384,26 +417,9 @@ fn root_pa() -> usize {
     core::ptr::addr_of!(ROOT_TABLE) as usize
 }
 
-const fn table_pte(pa: usize) -> usize {
-    ((pa >> 12) << 10) | PTE_V
-}
-
-const fn leaf_1g_pte(pa: usize, flags: usize) -> usize {
-    ((pa >> 12) << 10) | flags
-}
-
-const fn leaf_4k_pte(pa: usize, flags: usize) -> usize {
-    ((pa >> 12) << 10) | flags
-}
-
-const fn vpn0(va: usize) -> usize {
-    (va >> 12) & 0x1ff
-}
-
-const fn vpn1(va: usize) -> usize {
-    (va >> 21) & 0x1ff
-}
-
-const fn vpn2(va: usize) -> usize {
-    (va >> 30) & 0x1ff
-}
+const fn table_pte(pa: usize) -> usize { ((pa >> 12) << 10) | PTE_V }
+const fn leaf_1g_pte(pa: usize, flags: usize) -> usize { ((pa >> 12) << 10) | flags }
+const fn leaf_4k_pte(pa: usize, flags: usize) -> usize { ((pa >> 12) << 10) | flags }
+const fn vpn0(va: usize) -> usize { (va >> 12) & 0x1ff }
+const fn vpn1(va: usize) -> usize { (va >> 21) & 0x1ff }
+const fn vpn2(va: usize) -> usize { (va >> 30) & 0x1ff }

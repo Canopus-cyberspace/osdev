@@ -23,9 +23,9 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] fd backed write dispatcher v55");
+    crate::println!("[stage] openat close devnull scaffold v56");
 
-    crate::println!("[stage] v55 runtime path uses fd-backed write");
+    crate::println!("[stage] v56 runtime path uses central dispatcher and fd-backed io");
     mm::sv39_init_exec::run_external_init_elf_smoke();
 }
 
