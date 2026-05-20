@@ -1,0 +1,1 @@
+PASS wrong argv such as cat wrong.txt does not match the captured B02-B04 command/argv evidence.

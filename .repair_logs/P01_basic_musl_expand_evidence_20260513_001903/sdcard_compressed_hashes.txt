@@ -1,0 +1,4 @@
+2b59aee4d26681b2d78a8faa615ac216f723a8ea157544e7867bbc8c77aac087  /home/lenovo/oscomp-official-env/testdata/sdcard-rv.img.xz
+9a98993b3142f7a7c2ed00a248cd092ab013a29533d2d052c8904ec4430876d5  /home/lenovo/oscomp-official-env/testdata/sdcard-rv.img.gz
+3cbeae1095d788cd8255e4929bcc6dace96dbe4999b6eaec003ae6fe2cdba42b  /home/lenovo/oscomp-official-env/testdata/sdcard-la.img.xz
+59bacc01b33356123fd1ed9293dc839ec33f83b2b90f59ea79b52b2f91213db5  /home/lenovo/oscomp-official-env/testdata/sdcard-la.img.gz

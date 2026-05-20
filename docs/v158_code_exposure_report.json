@@ -1,0 +1,103 @@
+{
+  "version": "v158",
+  "stable_modules_connected": [
+    {
+      "module": "ucompat_vfs_tree_v151k7",
+      "file": "src/fs/ucompat_vfs_tree_v151k7.rs",
+      "function": "run_v151k7_tree_scenario",
+      "pass_marker": "[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS",
+      "fail_prefix": "[ucompat-v151k7] vfs_tree_dirfd_multiinode FAIL step=",
+      "tag": "v151k7"
+    },
+    {
+      "module": "ucompat_vfs_core_v154",
+      "file": "src/fs/ucompat_vfs_core_v154.rs",
+      "function": "run_v154_core_scenario",
+      "pass_marker": "[ucompat-v154] fs_core_multi_feature PASS",
+      "fail_prefix": "[ucompat-v154] fs_core_multi_feature FAIL step=",
+      "tag": "v154"
+    },
+    {
+      "module": "ucompat_vfs_core_v155",
+      "file": "src/fs/ucompat_vfs_core_v155.rs",
+      "function": "run_v155_namespace_procfd_scenario",
+      "pass_marker": "[ucompat-v155] namespace_procfd_multi_feature PASS",
+      "fail_prefix": "[ucompat-v155] namespace_procfd_multi_feature FAIL step=",
+      "tag": "v155"
+    },
+    {
+      "module": "ucompat_procfs_v156",
+      "file": "src/fs/ucompat_procfs_v156.rs",
+      "function": "run_v156_procfs_fd_observability_scenario",
+      "pass_marker": "[ucompat-v156] procfs_fd_observability PASS",
+      "fail_prefix": "[ucompat-v156] procfs_fd_observability FAIL step=",
+      "tag": "v156"
+    },
+    {
+      "module": "ucompat_proc_task_v157",
+      "file": "src/fs/ucompat_proc_task_v157.rs",
+      "function": "run_v157_process_signal_task_scenario",
+      "pass_marker": "[ucompat-v157] process_signal_task PASS",
+      "fail_prefix": "[ucompat-v157] process_signal_task FAIL step=",
+      "tag": "v157"
+    },
+    {
+      "module": "ucompat_vfs_tree_v151k",
+      "file": "src/fs/ucompat_vfs_tree_v151k.rs",
+      "function": "run_v151k_tree_scenario",
+      "pass_marker": "[ucompat-v158] ucompat_vfs_tree_v151k PASS",
+      "fail_prefix": "[ucompat-v158] ucompat_vfs_tree_v151k FAIL step=",
+      "tag": "ucompat_vfs_tree_v151k"
+    }
+  ],
+  "fs_ucompat_files": [
+    "src/fs/ucompat_fdtable.rs",
+    "src/fs/ucompat_history_v158.rs",
+    "src/fs/ucompat_memfs.rs",
+    "src/fs/ucompat_proc_task_v157.rs",
+    "src/fs/ucompat_procfs_v156.rs",
+    "src/fs/ucompat_vfs.rs",
+    "src/fs/ucompat_vfs_core_v154.rs",
+    "src/fs/ucompat_vfs_core_v155.rs",
+    "src/fs/ucompat_vfs_namespace_v152.rs",
+    "src/fs/ucompat_vfs_namespace_v152b.rs",
+    "src/fs/ucompat_vfs_tree.rs",
+    "src/fs/ucompat_vfs_tree_v151k.rs",
+    "src/fs/ucompat_vfs_tree_v151k3.rs",
+    "src/fs/ucompat_vfs_tree_v151k4.rs",
+    "src/fs/ucompat_vfs_tree_v151k5.rs",
+    "src/fs/ucompat_vfs_tree_v151k6.rs",
+    "src/fs/ucompat_vfs_tree_v151k7.rs"
+  ],
+  "mod_rs_exposed_modules": [
+    "ucompat_vfs_tree",
+    "ucompat_vfs",
+    "ucompat_fdtable",
+    "ucompat_memfs",
+    "devfs",
+    "ext4",
+    "fat32",
+    "fd_table",
+    "file",
+    "pipe",
+    "procfs",
+    "tmpfs",
+    "vfs",
+    "ucompat_vfs_tree_v151k7",
+    "ucompat_vfs_core_v154",
+    "ucompat_vfs_core_v155",
+    "ucompat_procfs_v156",
+    "ucompat_proc_task_v157",
+    "ucompat_vfs_tree_v151k",
+    "ucompat_history_v158"
+  ],
+  "failed_or_archival_residual_files_not_exposed_by_v158": [
+    "src/fs/ucompat_vfs_namespace_v152.rs",
+    "src/fs/ucompat_vfs_namespace_v152b.rs",
+    "src/fs/ucompat_vfs_tree_v151k3.rs",
+    "src/fs/ucompat_vfs_tree_v151k4.rs",
+    "src/fs/ucompat_vfs_tree_v151k5.rs",
+    "src/fs/ucompat_vfs_tree_v151k6.rs"
+  ],
+  "policy": "Stable historical implementations are connected; known failed prototypes are reported but not enabled blindly."
+}

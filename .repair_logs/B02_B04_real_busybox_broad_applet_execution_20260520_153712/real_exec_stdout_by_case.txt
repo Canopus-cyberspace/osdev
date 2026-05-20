@@ -1,0 +1,178 @@
+===== test_write REAL-RUN =====
+========== START test_write ==========
+Hello operating system contest.
+========== END test_write ==========
+===== test_getpid REAL-RUN =====
+========== START test_getpid ==========
+getpid success.
+pid = 1
+========== END test_getpid ==========
+===== test_getppid REAL-RUN =====
+========== START test_getppid ==========
+  getppid success. ppid : 1
+========== END test_getppid ==========
+===== test_uname REAL-RUN =====
+========== START test_uname ==========
+Uname: UESTC-Kernel qemu-riscv64 0.1-v63 v63-time-uname riscv64 uestc.local
+========== END test_uname ==========
+===== test_getcwd REAL-RUN =====
+========== START test_getcwd ==========
+getcwd: /musl/basic successfully!
+========== END test_getcwd ==========
+===== test_brk REAL-RUN =====
+========== START test_brk ==========
+Before alloc,heap pos: 1073938432
+After alloc,heap pos: 1073938496
+Alloc again,heap pos: 1073938560
+========== END test_brk ==========
+===== test_gettimeofday REAL-RUN =====
+========== START test_gettimeofday ==========
+gettimeofday success.
+start:1234, end:2234
+interval: 1000
+========== END test_gettimeofday ==========
+===== test_times REAL-RUN =====
+========== START test_times ==========
+mytimes success
+{tms_utime:0, tms_stime:0, tms_cutime:0, tms_cstime:0}
+========== END test_times ==========
+===== test_sleep REAL-RUN =====
+========== START test_sleep ==========
+sleep success.
+========== END test_sleep ==========
+===== test_close REAL-RUN =====
+========== START test_close ==========
+  close 3 success.
+========== END test_close ==========
+===== test_dup REAL-RUN =====
+========== START test_dup ==========
+  new fd is 3.
+========== END test_dup ==========
+===== test_dup2 REAL-RUN =====
+========== START test_dup2 ==========
+  from fd 100
+========== END test_dup2 ==========
+===== test_open REAL-RUN =====
+========== START test_open ==========
+Hi, this is a text file.
+syscalls testing success!
+
+========== END test_open ==========
+===== test_read REAL-RUN =====
+========== START test_read ==========
+Hi, this is a text file.
+syscalls testing success!
+
+========== END test_read ==========
+===== test_openat REAL-RUN =====
+========== START test_openat ==========
+open dir fd: 3
+openat fd: 4
+openat success.
+========== END test_openat ==========
+===== test_fstat REAL-RUN =====
+========== START test_fstat ==========
+fstat ret: 0
+fstat: dev: 10017, inode: 10017, mode: 33188, nlink: 1, size: 52, atime: 0, mtime: 0, ctime: 0
+========== END test_fstat ==========
+===== test_getdents REAL-RUN =====
+========== START test_getdents ==========
+open fd:3
+getdents fd:232
+getdents success.
+text.txt
+
+========== END test_getdents ==========
+===== test_chdir REAL-RUN =====
+========== START test_chdir ==========
+chdir ret: 0
+  current working dir : /musl/basic/test_chdir
+========== END test_chdir ==========
+===== test_mkdir REAL-RUN =====
+========== START test_mkdir ==========
+mkdir ret: 0
+  mkdir success.
+========== END test_mkdir ==========
+===== test_unlink REAL-RUN =====
+========== START test_unlink ==========
+  unlink success!
+========== END test_unlink ==========
+===== test_pipe REAL-RUN =====
+========== START test_pipe ==========
+cpid: 2
+cpid: 0
+  Write to pipe successfully.
+
+========== END test_pipe ==========
+===== test_yield REAL-RUN =====
+========== START test_yield ==========
+  I am child process: 2. iteration 0.
+  I am child process: 3. iteration 1.
+  I am child process: 4. iteration 2.
+  I am child process: 2. iteration 0.
+  I am child process: 3. iteration 1.
+  I am child process: 4. iteration 2.
+  I am child process: 2. iteration 0.
+  I am child process: 3. iteration 1.
+  I am child process: 4. iteration 2.
+  I am child process: 2. iteration 0.
+  I am child process: 3. iteration 1.
+  I am child process: 4. iteration 2.
+  I am child process: 2. iteration 0.
+  I am child process: 3. iteration 1.
+  I am child process: 4. iteration 2.
+========== END test_yield ==========
+===== test_wait REAL-RUN =====
+========== START test_wait ==========
+This is child process
+wait child success.
+wstatus: 0
+========== END test_wait ==========
+===== test_waitpid REAL-RUN =====
+========== START test_waitpid ==========
+This is child process
+waitpid successfully.
+wstatus: 3
+========== END test_waitpid ==========
+===== test_fork REAL-RUN =====
+========== START test_fork ==========
+  child process.
+  parent process. wstatus:0
+========== END test_fork ==========
+===== test_clone REAL-RUN =====
+========== START test_clone ==========
+  Child says successfully!
+clone process successfully.
+pid:2
+========== END test_clone ==========
+===== test_execve REAL-RUN =====
+========== START test_execve ==========
+  I am test_echo.
+execve success.
+========== END main ==========
+===== test_mmap REAL-RUN =====
+========== START test_mmap ==========
+file len: 28
+mmap content:   Hello, mmap successfully!
+
+========== END test_mmap ==========
+===== test_mount REAL-RUN =====
+========== START test_mount ==========
+Mounting dev:/dev/vda2 to ./mnt
+mount return: 0
+mount successfully
+umount return: 0
+========== END test_mount ==========
+===== test_munmap REAL-RUN =====
+========== START test_munmap ==========
+file len: 28
+munmap return: 0
+munmap successfully!
+========== END test_munmap ==========
+===== test_umount REAL-RUN =====
+========== START test_umount ==========
+Mounting dev:/dev/vda2 to ./mnt
+mount return: 0
+umount success.
+return: 0
+========== END test_umount ==========

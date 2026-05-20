@@ -1,0 +1,15 @@
+P07 official Docker 20260510 evidence
+source_log_dir=/home/lenovo/oscomp-official-env/logs/evaluate_20260515_163749
+basic_musl_group.txt 4432 bytes
+busybox_musl_group.txt 2178 bytes
+console_log 61747 bytes
+docker_evaluate.log 379354 bytes
+environment_fingerprint.txt 862 bytes
+judge_basic_musl.json 1834 bytes
+judge_busybox_musl.json 3673 bytes
+os_serial_out_la.txt 310 bytes
+os_serial_out_rv.txt 42315 bytes
+project_root_large_artifact_manifest.txt 1048 bytes
+run.log 292 bytes
+score_summary.txt 3061 bytes
+small_evidence_manifest.txt 116 bytes

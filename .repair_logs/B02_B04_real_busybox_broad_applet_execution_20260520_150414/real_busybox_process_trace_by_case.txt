@@ -1,0 +1,273 @@
+busybox_true: [B01-realrun-busybox] enter case=busybox_true command="busybox true" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_true: [B01-realrun-busybox] real exit case=busybox_true command="busybox true" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_true: [B01-realrun-busybox] real stdout begin case=busybox_true
+busybox_true: [B01-realrun-busybox] real stdout end case=busybox_true
+busybox_true: [B01-realrun-busybox] real stderr begin case=busybox_true
+busybox_true: [B01-realrun-busybox] real stderr end case=busybox_true
+busybox_true: [B01-realrun-busybox-result] case=busybox_true class=REAL-RUN command="busybox true" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox true" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:3 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_echo_independent: [B01-realrun-busybox] enter case=busybox_echo_independent command="busybox echo #### independent command test" sepc=0x10148 sp=0x4001ff30 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_echo_independent: [B01-realrun-busybox] real exit case=busybox_echo_independent command="busybox echo #### independent command test" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_echo_independent: [B01-realrun-busybox] real stdout begin case=busybox_echo_independent
+busybox_echo_independent: [B01-realrun-busybox] real stdout end case=busybox_echo_independent
+busybox_echo_independent: [B01-realrun-busybox] real stderr begin case=busybox_echo_independent
+busybox_echo_independent: [B01-realrun-busybox] real stderr end case=busybox_echo_independent
+busybox_echo_independent: [B01-realrun-busybox-result] case=busybox_echo_independent class=REAL-RUN command="busybox echo #### independent command test" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox echo #### independent command test" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:6 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=30 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_pwd: [B01-realrun-busybox] enter case=busybox_pwd command="busybox pwd" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_pwd: [B01-realrun-busybox] real exit case=busybox_pwd command="busybox pwd" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_pwd: [B01-realrun-busybox] real stdout begin case=busybox_pwd
+busybox_pwd: [B01-realrun-busybox] real stdout end case=busybox_pwd
+busybox_pwd: [B01-realrun-busybox] real stderr begin case=busybox_pwd
+busybox_pwd: [B01-realrun-busybox] real stderr end case=busybox_pwd
+busybox_pwd: [B01-realrun-busybox-result] case=busybox_pwd class=REAL-RUN command="busybox pwd" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox pwd" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:8 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=6 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_ls: [B01-realrun-busybox] enter case=busybox_ls command="busybox ls" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_ls: [B01-realrun-busybox] real exit case=busybox_ls command="busybox ls" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_ls: [B01-realrun-busybox] real stdout begin case=busybox_ls
+busybox_ls: [B01-realrun-busybox] real stdout end case=busybox_ls
+busybox_ls: [B01-realrun-busybox] real stderr begin case=busybox_ls
+busybox_ls: [B01-realrun-busybox] real stderr end case=busybox_ls
+busybox_ls: [B01-realrun-busybox-result] case=busybox_ls class=REAL-RUN command="busybox ls" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox ls" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:20 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=70 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_cat_test_txt: [B01-realrun-busybox] enter case=busybox_cat_test_txt command="busybox cat test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_cat_test_txt: [B01-realrun-busybox] real exit case=busybox_cat_test_txt command="busybox cat test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_cat_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_cat_test_txt
+busybox_cat_test_txt: [B01-realrun-busybox] real stdout end case=busybox_cat_test_txt
+busybox_cat_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_cat_test_txt
+busybox_cat_test_txt: [B01-realrun-busybox] real stderr end case=busybox_cat_test_txt
+busybox_cat_test_txt: [B01-realrun-busybox-result] case=busybox_cat_test_txt class=REAL-RUN command="busybox cat test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox cat test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:7 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=12 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_touch_test_txt: [B01-realrun-busybox] enter case=busybox_touch_test_txt command="busybox touch test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_touch_test_txt: [B01-realrun-busybox] real exit case=busybox_touch_test_txt command="busybox touch test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_touch_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_touch_test_txt
+busybox_touch_test_txt: [B01-realrun-busybox] real stdout end case=busybox_touch_test_txt
+busybox_touch_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_touch_test_txt
+busybox_touch_test_txt: [B01-realrun-busybox] real stderr end case=busybox_touch_test_txt
+busybox_touch_test_txt: [B01-realrun-busybox-result] case=busybox_touch_test_txt class=REAL-RUN command="busybox touch test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox touch test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:4 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_rm_test_txt: [B01-realrun-busybox] enter case=busybox_rm_test_txt command="busybox rm test.txt" sepc=0x10148 sp=0x4001ff50 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_rm_test_txt: [B01-realrun-busybox] real exit case=busybox_rm_test_txt command="busybox rm test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_rm_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_rm_test_txt
+busybox_rm_test_txt: [B01-realrun-busybox] real stdout end case=busybox_rm_test_txt
+busybox_rm_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_rm_test_txt
+busybox_rm_test_txt: [B01-realrun-busybox] real stderr end case=busybox_rm_test_txt
+busybox_rm_test_txt: [B01-realrun-busybox-result] case=busybox_rm_test_txt class=REAL-RUN command="busybox rm test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox rm test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:6 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_mkdir_test_dir: [B01-realrun-busybox] enter case=busybox_mkdir_test_dir command="busybox mkdir test_dir" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_mkdir_test_dir: [B01-realrun-busybox] real exit case=busybox_mkdir_test_dir command="busybox mkdir test_dir" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_mkdir_test_dir: [B01-realrun-busybox] real stdout begin case=busybox_mkdir_test_dir
+busybox_mkdir_test_dir: [B01-realrun-busybox] real stdout end case=busybox_mkdir_test_dir
+busybox_mkdir_test_dir: [B01-realrun-busybox] real stderr begin case=busybox_mkdir_test_dir
+busybox_mkdir_test_dir: [B01-realrun-busybox] real stderr end case=busybox_mkdir_test_dir
+busybox_mkdir_test_dir: [B01-realrun-busybox-result] case=busybox_mkdir_test_dir class=REAL-RUN command="busybox mkdir test_dir" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox mkdir test_dir" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:4 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_rmdir_test: [B01-realrun-busybox] enter case=busybox_rmdir_test command="busybox rmdir test" sepc=0x10148 sp=0x4001ff50 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_rmdir_test: [B01-realrun-busybox] real exit case=busybox_rmdir_test command="busybox rmdir test" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_rmdir_test: [B01-realrun-busybox] real stdout begin case=busybox_rmdir_test
+busybox_rmdir_test: [B01-realrun-busybox] real stdout end case=busybox_rmdir_test
+busybox_rmdir_test: [B01-realrun-busybox] real stderr begin case=busybox_rmdir_test
+busybox_rmdir_test: [B01-realrun-busybox] real stderr end case=busybox_rmdir_test
+busybox_rmdir_test: [B01-realrun-busybox-result] case=busybox_rmdir_test class=REAL-RUN command="busybox rmdir test" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox rmdir test" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:4 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_mv_test_dir_test: [B01-realrun-busybox] enter case=busybox_mv_test_dir_test command="busybox mv test_dir test" sepc=0x10148 sp=0x4001ff38 load=0x10000 file_size=1387560 cwd=/musl argv_count=4
+busybox_mv_test_dir_test: [B01-realrun-busybox] real exit case=busybox_mv_test_dir_test command="busybox mv test_dir test" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_mv_test_dir_test: [B01-realrun-busybox] real stdout begin case=busybox_mv_test_dir_test
+busybox_mv_test_dir_test: [B01-realrun-busybox] real stdout end case=busybox_mv_test_dir_test
+busybox_mv_test_dir_test: [B01-realrun-busybox] real stderr begin case=busybox_mv_test_dir_test
+busybox_mv_test_dir_test: [B01-realrun-busybox] real stderr end case=busybox_mv_test_dir_test
+busybox_mv_test_dir_test: [B01-realrun-busybox-result] case=busybox_mv_test_dir_test class=REAL-RUN command="busybox mv test_dir test" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox mv test_dir test" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:5 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_cp_busybox_cmd_bak: [B01-realrun-busybox] enter case=busybox_cp_busybox_cmd_bak command="busybox cp busybox_cmd.txt busybox_cmd.bak" sepc=0x10148 sp=0x4001ff28 load=0x10000 file_size=1387560 cwd=/musl argv_count=4
+busybox_cp_busybox_cmd_bak: [B01-realrun-busybox] real exit case=busybox_cp_busybox_cmd_bak command="busybox cp busybox_cmd.txt busybox_cmd.bak" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_cp_busybox_cmd_bak: [B01-realrun-busybox] real stdout begin case=busybox_cp_busybox_cmd_bak
+busybox_cp_busybox_cmd_bak: [B01-realrun-busybox] real stdout end case=busybox_cp_busybox_cmd_bak
+busybox_cp_busybox_cmd_bak: [B01-realrun-busybox] real stderr begin case=busybox_cp_busybox_cmd_bak
+busybox_cp_busybox_cmd_bak: [B01-realrun-busybox] real stderr end case=busybox_cp_busybox_cmd_bak
+busybox_cp_busybox_cmd_bak: [B01-realrun-busybox-result] case=busybox_cp_busybox_cmd_bak class=REAL-RUN command="busybox cp busybox_cmd.txt busybox_cmd.bak" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox cp busybox_cmd.txt busybox_cmd.bak" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:13 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_rm_busybox_cmd_bak: [B01-realrun-busybox] enter case=busybox_rm_busybox_cmd_bak command="busybox rm busybox_cmd.bak" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_rm_busybox_cmd_bak: [B01-realrun-busybox] real exit case=busybox_rm_busybox_cmd_bak command="busybox rm busybox_cmd.bak" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_rm_busybox_cmd_bak: [B01-realrun-busybox] real stdout begin case=busybox_rm_busybox_cmd_bak
+busybox_rm_busybox_cmd_bak: [B01-realrun-busybox] real stdout end case=busybox_rm_busybox_cmd_bak
+busybox_rm_busybox_cmd_bak: [B01-realrun-busybox] real stderr begin case=busybox_rm_busybox_cmd_bak
+busybox_rm_busybox_cmd_bak: [B01-realrun-busybox] real stderr end case=busybox_rm_busybox_cmd_bak
+busybox_rm_busybox_cmd_bak: [B01-realrun-busybox-result] case=busybox_rm_busybox_cmd_bak class=REAL-RUN command="busybox rm busybox_cmd.bak" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox rm busybox_cmd.bak" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:6 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_stat_test_txt: [B01-realrun-busybox] enter case=busybox_stat_test_txt command="busybox stat test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_stat_test_txt: [B01-realrun-busybox] real exit case=busybox_stat_test_txt command="busybox stat test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_stat_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_stat_test_txt
+busybox_stat_test_txt: [B01-realrun-busybox] real stdout end case=busybox_stat_test_txt
+busybox_stat_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_stat_test_txt
+busybox_stat_test_txt: [B01-realrun-busybox] real stderr end case=busybox_stat_test_txt
+busybox_stat_test_txt: [B01-realrun-busybox-result] case=busybox_stat_test_txt class=REAL-RUN command="busybox stat test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox stat test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:17 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=339 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_find_busybox_cmd: [B01-realrun-busybox] enter case=busybox_find_busybox_cmd command="busybox find -name busybox_cmd.txt" sepc=0x10148 sp=0x4001ff38 load=0x10000 file_size=1387560 cwd=/musl argv_count=4
+busybox_find_busybox_cmd: [B01-realrun-busybox] real exit case=busybox_find_busybox_cmd command="busybox find -name busybox_cmd.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_find_busybox_cmd: [B01-realrun-busybox] real stdout begin case=busybox_find_busybox_cmd
+busybox_find_busybox_cmd: [B01-realrun-busybox] real stdout end case=busybox_find_busybox_cmd
+busybox_find_busybox_cmd: [B01-realrun-busybox] real stderr begin case=busybox_find_busybox_cmd
+busybox_find_busybox_cmd: [B01-realrun-busybox] real stderr end case=busybox_find_busybox_cmd
+busybox_find_busybox_cmd: [B01-realrun-busybox-result] case=busybox_find_busybox_cmd class=REAL-RUN command="busybox find -name busybox_cmd.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox find -name busybox_cmd.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:16 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=18 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_wc_test_txt: [B01-realrun-busybox] enter case=busybox_wc_test_txt command="busybox wc test.txt" sepc=0x10148 sp=0x4001ff50 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_wc_test_txt: [B01-realrun-busybox] real exit case=busybox_wc_test_txt command="busybox wc test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_wc_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_wc_test_txt
+busybox_wc_test_txt: [B01-realrun-busybox] real stdout end case=busybox_wc_test_txt
+busybox_wc_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_wc_test_txt
+busybox_wc_test_txt: [B01-realrun-busybox] real stderr end case=busybox_wc_test_txt
+busybox_wc_test_txt: [B01-realrun-busybox-result] case=busybox_wc_test_txt class=REAL-RUN command="busybox wc test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox wc test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:11 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=39 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_head_test_txt: [B01-realrun-busybox] enter case=busybox_head_test_txt command="busybox head test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_head_test_txt: [B01-realrun-busybox] real exit case=busybox_head_test_txt command="busybox head test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_head_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_head_test_txt
+busybox_head_test_txt: [B01-realrun-busybox] real stdout end case=busybox_head_test_txt
+busybox_head_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_head_test_txt
+busybox_head_test_txt: [B01-realrun-busybox] real stderr end case=busybox_head_test_txt
+busybox_head_test_txt: [B01-realrun-busybox-result] case=busybox_head_test_txt class=REAL-RUN command="busybox head test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox head test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:11 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=12 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_tail_test_txt: [B01-realrun-busybox] enter case=busybox_tail_test_txt command="busybox tail test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_tail_test_txt: [B01-realrun-busybox] real exit case=busybox_tail_test_txt command="busybox tail test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_tail_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_tail_test_txt
+busybox_tail_test_txt: [B01-realrun-busybox] real stdout end case=busybox_tail_test_txt
+busybox_tail_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_tail_test_txt
+busybox_tail_test_txt: [B01-realrun-busybox] real stderr end case=busybox_tail_test_txt
+busybox_tail_test_txt: [B01-realrun-busybox-result] case=busybox_tail_test_txt class=REAL-RUN command="busybox tail test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox tail test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:12 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=12 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_sort_test_txt: [B01-realrun-busybox] enter case=busybox_sort_test_txt command="busybox sort test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_sort_test_txt: [B01-realrun-busybox] real exit case=busybox_sort_test_txt command="busybox sort test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_sort_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_sort_test_txt
+busybox_sort_test_txt: [B01-realrun-busybox] real stdout end case=busybox_sort_test_txt
+busybox_sort_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_sort_test_txt
+busybox_sort_test_txt: [B01-realrun-busybox] real stderr end case=busybox_sort_test_txt
+busybox_sort_test_txt: [B01-realrun-busybox-result] case=busybox_sort_test_txt class=REAL-RUN command="busybox sort test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox sort test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:11 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=12 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_uniq_test_txt: [B01-realrun-busybox] enter case=busybox_uniq_test_txt command="busybox uniq test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_uniq_test_txt: [B01-realrun-busybox] real exit case=busybox_uniq_test_txt command="busybox uniq test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_uniq_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_uniq_test_txt
+busybox_uniq_test_txt: [B01-realrun-busybox] real stdout end case=busybox_uniq_test_txt
+busybox_uniq_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_uniq_test_txt
+busybox_uniq_test_txt: [B01-realrun-busybox] real stderr end case=busybox_uniq_test_txt
+busybox_uniq_test_txt: [B01-realrun-busybox-result] case=busybox_uniq_test_txt class=REAL-RUN command="busybox uniq test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox uniq test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:11 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=12 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_grep_hello_cmd: [B01-realrun-busybox] enter case=busybox_grep_hello_cmd command="busybox grep hello busybox_cmd.txt" sepc=0x10148 sp=0x4001ff38 load=0x10000 file_size=1387560 cwd=/musl argv_count=4
+busybox_grep_hello_cmd: [B01-realrun-busybox] real exit case=busybox_grep_hello_cmd command="busybox grep hello busybox_cmd.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_grep_hello_cmd: [B01-realrun-busybox] real stdout begin case=busybox_grep_hello_cmd
+busybox_grep_hello_cmd: [B01-realrun-busybox] real stdout end case=busybox_grep_hello_cmd
+busybox_grep_hello_cmd: [B01-realrun-busybox] real stderr begin case=busybox_grep_hello_cmd
+busybox_grep_hello_cmd: [B01-realrun-busybox] real stderr end case=busybox_grep_hello_cmd
+busybox_grep_hello_cmd: [B01-realrun-busybox-result] case=busybox_grep_hello_cmd class=REAL-RUN command="busybox grep hello busybox_cmd.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox grep hello busybox_cmd.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:12 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=22 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_cut_c3_test_txt: [B01-realrun-busybox] enter case=busybox_cut_c3_test_txt command="busybox cut -c 3 test.txt" sepc=0x10148 sp=0x4001ff30 load=0x10000 file_size=1387560 cwd=/musl argv_count=5
+busybox_cut_c3_test_txt: [B01-realrun-busybox] real exit case=busybox_cut_c3_test_txt command="busybox cut -c 3 test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_cut_c3_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_cut_c3_test_txt
+busybox_cut_c3_test_txt: [B01-realrun-busybox] real stdout end case=busybox_cut_c3_test_txt
+busybox_cut_c3_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_cut_c3_test_txt
+busybox_cut_c3_test_txt: [B01-realrun-busybox] real stderr end case=busybox_cut_c3_test_txt
+busybox_cut_c3_test_txt: [B01-realrun-busybox-result] case=busybox_cut_c3_test_txt class=REAL-RUN command="busybox cut -c 3 test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox cut -c 3 test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:11 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=2 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_od_test_txt: [B01-realrun-busybox] enter case=busybox_od_test_txt command="busybox od test.txt" sepc=0x10148 sp=0x4001ff50 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_od_test_txt: [B01-realrun-busybox] real exit case=busybox_od_test_txt command="busybox od test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_od_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_od_test_txt
+busybox_od_test_txt: [B01-realrun-busybox] real stdout end case=busybox_od_test_txt
+busybox_od_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_od_test_txt
+busybox_od_test_txt: [B01-realrun-busybox] real stderr end case=busybox_od_test_txt
+busybox_od_test_txt: [B01-realrun-busybox-result] case=busybox_od_test_txt class=REAL-RUN command="busybox od test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox od test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:13 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=58 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_hexdump_c_test_txt: [B01-realrun-busybox] enter case=busybox_hexdump_c_test_txt command="busybox hexdump -C test.txt" sepc=0x10148 sp=0x4001ff38 load=0x10000 file_size=1387560 cwd=/musl argv_count=4
+busybox_hexdump_c_test_txt: [B01-realrun-busybox] real exit case=busybox_hexdump_c_test_txt command="busybox hexdump -C test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_hexdump_c_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_hexdump_c_test_txt
+busybox_hexdump_c_test_txt: [B01-realrun-busybox] real stdout end case=busybox_hexdump_c_test_txt
+busybox_hexdump_c_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_hexdump_c_test_txt
+busybox_hexdump_c_test_txt: [B01-realrun-busybox] real stderr end case=busybox_hexdump_c_test_txt
+busybox_hexdump_c_test_txt: [B01-realrun-busybox-result] case=busybox_hexdump_c_test_txt class=REAL-RUN command="busybox hexdump -C test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox hexdump -C test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:13 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=84 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_md5sum_test_txt: [B01-realrun-busybox] enter case=busybox_md5sum_test_txt command="busybox md5sum test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_md5sum_test_txt: [B01-realrun-busybox] real exit case=busybox_md5sum_test_txt command="busybox md5sum test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_md5sum_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_md5sum_test_txt
+busybox_md5sum_test_txt: [B01-realrun-busybox] real stdout end case=busybox_md5sum_test_txt
+busybox_md5sum_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_md5sum_test_txt
+busybox_md5sum_test_txt: [B01-realrun-busybox] real stderr end case=busybox_md5sum_test_txt
+busybox_md5sum_test_txt: [B01-realrun-busybox-result] case=busybox_md5sum_test_txt class=REAL-RUN command="busybox md5sum test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox md5sum test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:11 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=43 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_strings_test_txt: [B01-realrun-busybox] enter case=busybox_strings_test_txt command="busybox strings test.txt" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_strings_test_txt: [B01-realrun-busybox] real exit case=busybox_strings_test_txt command="busybox strings test.txt" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_strings_test_txt: [B01-realrun-busybox] real stdout begin case=busybox_strings_test_txt
+busybox_strings_test_txt: [B01-realrun-busybox] real stdout end case=busybox_strings_test_txt
+busybox_strings_test_txt: [B01-realrun-busybox] real stderr begin case=busybox_strings_test_txt
+busybox_strings_test_txt: [B01-realrun-busybox] real stderr end case=busybox_strings_test_txt
+busybox_strings_test_txt: [B01-realrun-busybox-result] case=busybox_strings_test_txt class=REAL-RUN command="busybox strings test.txt" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox strings test.txt" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:11 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=12 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_basename_aaa_bbb: [B01-realrun-busybox] enter case=busybox_basename_aaa_bbb command="busybox basename /aaa/bbb" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_basename_aaa_bbb: [B01-realrun-busybox] real exit case=busybox_basename_aaa_bbb command="busybox basename /aaa/bbb" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_basename_aaa_bbb: [B01-realrun-busybox] real stdout begin case=busybox_basename_aaa_bbb
+busybox_basename_aaa_bbb: [B01-realrun-busybox] real stdout end case=busybox_basename_aaa_bbb
+busybox_basename_aaa_bbb: [B01-realrun-busybox] real stderr begin case=busybox_basename_aaa_bbb
+busybox_basename_aaa_bbb: [B01-realrun-busybox] real stderr end case=busybox_basename_aaa_bbb
+busybox_basename_aaa_bbb: [B01-realrun-busybox-result] case=busybox_basename_aaa_bbb class=REAL-RUN command="busybox basename /aaa/bbb" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox basename /aaa/bbb" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:4 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=4 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_dirname_aaa_bbb: [B01-realrun-busybox] enter case=busybox_dirname_aaa_bbb command="busybox dirname /aaa/bbb" sepc=0x10148 sp=0x4001ff40 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_dirname_aaa_bbb: [B01-realrun-busybox] real exit case=busybox_dirname_aaa_bbb command="busybox dirname /aaa/bbb" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_dirname_aaa_bbb: [B01-realrun-busybox] real stdout begin case=busybox_dirname_aaa_bbb
+busybox_dirname_aaa_bbb: [B01-realrun-busybox] real stdout end case=busybox_dirname_aaa_bbb
+busybox_dirname_aaa_bbb: [B01-realrun-busybox] real stderr begin case=busybox_dirname_aaa_bbb
+busybox_dirname_aaa_bbb: [B01-realrun-busybox] real stderr end case=busybox_dirname_aaa_bbb
+busybox_dirname_aaa_bbb: [B01-realrun-busybox-result] case=busybox_dirname_aaa_bbb class=REAL-RUN command="busybox dirname /aaa/bbb" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox dirname /aaa/bbb" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:5 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=5 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_date: [B01-realrun-busybox] enter case=busybox_date command="busybox date" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_date: [B01-realrun-busybox] real exit case=busybox_date command="busybox date" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_date: [B01-realrun-busybox] real stdout begin case=busybox_date
+busybox_date: [B01-realrun-busybox] real stdout end case=busybox_date
+busybox_date: [B01-realrun-busybox] real stderr begin case=busybox_date
+busybox_date: [B01-realrun-busybox] real stderr end case=busybox_date
+busybox_date: [B01-realrun-busybox-result] case=busybox_date class=REAL-RUN command="busybox date" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox date" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:7 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=29 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_cal: [B01-realrun-busybox] enter case=busybox_cal command="busybox cal" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_cal: [B01-realrun-busybox] real exit case=busybox_cal command="busybox cal" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_cal: [B01-realrun-busybox] real stdout begin case=busybox_cal
+busybox_cal: [B01-realrun-busybox] real stdout end case=busybox_cal
+busybox_cal: [B01-realrun-busybox] real stderr begin case=busybox_cal
+busybox_cal: [B01-realrun-busybox] real stderr end case=busybox_cal
+busybox_cal: [B01-realrun-busybox-result] case=busybox_cal class=REAL-RUN command="busybox cal" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox cal" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:16 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=165 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_df: [B01-realrun-busybox] enter case=busybox_df command="busybox df" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_df: [B01-realrun-busybox] real exit case=busybox_df command="busybox df" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_df: [B01-realrun-busybox] real stdout begin case=busybox_df
+busybox_df: [B01-realrun-busybox] real stdout end case=busybox_df
+busybox_df: [B01-realrun-busybox] real stderr begin case=busybox_df
+busybox_df: [B01-realrun-busybox] real stderr end case=busybox_df
+busybox_df: [B01-realrun-busybox-result] case=busybox_df class=REAL-RUN command="busybox df" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox df" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:13 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=137 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_du: [B01-realrun-busybox] enter case=busybox_du command="busybox du" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_du: [B01-realrun-busybox] real exit case=busybox_du command="busybox du" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_du: [B01-realrun-busybox] real stdout begin case=busybox_du
+busybox_du: [B01-realrun-busybox] real stdout end case=busybox_du
+busybox_du: [B01-realrun-busybox] real stderr begin case=busybox_du
+busybox_du: [B01-realrun-busybox] real stderr end case=busybox_du
+busybox_du: [B01-realrun-busybox-result] case=busybox_du class=REAL-RUN command="busybox du" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox du" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:17 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=4 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_dmesg: [B01-realrun-busybox] enter case=busybox_dmesg command="busybox dmesg" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_dmesg: [B01-realrun-busybox] real exit case=busybox_dmesg command="busybox dmesg" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_dmesg: [B01-realrun-busybox] real stdout begin case=busybox_dmesg
+busybox_dmesg: [B01-realrun-busybox] real stdout end case=busybox_dmesg
+busybox_dmesg: [B01-realrun-busybox] real stderr begin case=busybox_dmesg
+busybox_dmesg: [B01-realrun-busybox] real stderr end case=busybox_dmesg
+busybox_dmesg: [B01-realrun-busybox-result] case=busybox_dmesg class=REAL-RUN command="busybox dmesg" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox dmesg" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:7 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_ps: [B01-realrun-busybox] enter case=busybox_ps command="busybox ps" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_ps: [B01-realrun-busybox] real exit case=busybox_ps command="busybox ps" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_ps: [B01-realrun-busybox] real stdout begin case=busybox_ps
+busybox_ps: [B01-realrun-busybox] real stdout end case=busybox_ps
+busybox_ps: [B01-realrun-busybox] real stderr begin case=busybox_ps
+busybox_ps: [B01-realrun-busybox] real stderr end case=busybox_ps
+busybox_ps: [B01-realrun-busybox-result] case=busybox_ps class=REAL-RUN command="busybox ps" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox ps" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:16 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=29 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_free: [B01-realrun-busybox] enter case=busybox_free command="busybox free" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_free: [B01-realrun-busybox] real exit case=busybox_free command="busybox free" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_free: [B01-realrun-busybox] real stdout begin case=busybox_free
+busybox_free: [B01-realrun-busybox] real stdout end case=busybox_free
+busybox_free: [B01-realrun-busybox] real stderr begin case=busybox_free
+busybox_free: [B01-realrun-busybox] real stderr end case=busybox_free
+busybox_free: [B01-realrun-busybox-result] case=busybox_free class=REAL-RUN command="busybox free" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox free" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:15 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=260 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_uptime: [B01-realrun-busybox] enter case=busybox_uptime command="busybox uptime" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_uptime: [B01-realrun-busybox] real exit case=busybox_uptime command="busybox uptime" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_uptime: [B01-realrun-busybox] real stdout begin case=busybox_uptime
+busybox_uptime: [B01-realrun-busybox] real stdout end case=busybox_uptime
+busybox_uptime: [B01-realrun-busybox] real stderr begin case=busybox_uptime
+busybox_uptime: [B01-realrun-busybox] real stderr end case=busybox_uptime
+busybox_uptime: [B01-realrun-busybox-result] case=busybox_uptime class=REAL-RUN command="busybox uptime" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox uptime" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:8 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=62 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_uname: [B01-realrun-busybox] enter case=busybox_uname command="busybox uname" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_uname: [B01-realrun-busybox] real exit case=busybox_uname command="busybox uname" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_uname: [B01-realrun-busybox] real stdout begin case=busybox_uname
+busybox_uname: [B01-realrun-busybox] real stdout end case=busybox_uname
+busybox_uname: [B01-realrun-busybox] real stderr begin case=busybox_uname
+busybox_uname: [B01-realrun-busybox] real stderr end case=busybox_uname
+busybox_uname: [B01-realrun-busybox-result] case=busybox_uname class=REAL-RUN command="busybox uname" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox uname" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:6 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=13 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_which_ls: [B01-realrun-busybox] enter case=busybox_which_ls command="busybox which ls" sepc=0x10148 sp=0x4001ff50 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_which_ls: [B01-realrun-busybox] real exit case=busybox_which_ls command="busybox which ls" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_which_ls: [B01-realrun-busybox] real stdout begin case=busybox_which_ls
+busybox_which_ls: [B01-realrun-busybox] real stdout end case=busybox_which_ls
+busybox_which_ls: [B01-realrun-busybox] real stderr begin case=busybox_which_ls
+busybox_which_ls: [B01-realrun-busybox] real stderr end case=busybox_which_ls
+busybox_which_ls: [B01-realrun-busybox-result] case=busybox_which_ls class=REAL-RUN command="busybox which ls" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox which ls" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:10 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=8 stderr_len=0 exit_code=0 final_task_state=Exited verified=1
+busybox_false: [B01-realrun-busybox] enter case=busybox_false command="busybox false" sepc=0x10148 sp=0x4001ff58 load=0x10000 file_size=1387560 cwd=/musl argv_count=2
+busybox_false: [B01-realrun-busybox] real exit case=busybox_false command="busybox false" exit_code=1 expected=1 stdout_ok=1 entered_umode=1
+busybox_false: [B01-realrun-busybox] real stdout begin case=busybox_false
+busybox_false: [B01-realrun-busybox] real stdout end case=busybox_false
+busybox_false: [B01-realrun-busybox] real stderr begin case=busybox_false
+busybox_false: [B01-realrun-busybox] real stderr end case=busybox_false
+busybox_false: [B01-realrun-busybox-result] case=busybox_false class=REAL-RUN command="busybox false" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox false" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:3 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=1 final_task_state=Exited verified=1
+busybox_sleep_1: [B01-realrun-busybox] enter case=busybox_sleep_1 command="busybox sleep 1" sepc=0x10148 sp=0x4001ff50 load=0x10000 file_size=1387560 cwd=/musl argv_count=3
+busybox_sleep_1: [B01-realrun-busybox] real exit case=busybox_sleep_1 command="busybox sleep 1" exit_code=0 expected=0 stdout_ok=1 entered_umode=1
+busybox_sleep_1: [B01-realrun-busybox] real stdout begin case=busybox_sleep_1
+busybox_sleep_1: [B01-realrun-busybox] real stdout end case=busybox_sleep_1
+busybox_sleep_1: [B01-realrun-busybox] real stderr begin case=busybox_sleep_1
+busybox_sleep_1: [B01-realrun-busybox] real stderr end case=busybox_sleep_1
+busybox_sleep_1: [B01-realrun-busybox-result] case=busybox_sleep_1 class=REAL-RUN command="busybox sleep 1" program_path=/musl/busybox elf_sha256=bc09c5ae5eabf091d0ded0208a17a1173725f10d8b79264d896d09c9553c68de entry_pc=0x10148 loaded_segments=2 argv="busybox sleep 1" envp=PATH=/musl:/bin:/usr/bin:.,HOME=/musl auxv=AT_PAGESZ,AT_ENTRY entered_umode=1 syscall_trace=serial:4 fd_trace=serial vfs_trace=serial process_trace=serial exec_trace=serial stdout_len=0 stderr_len=0 exit_code=0 final_task_state=Exited verified=1

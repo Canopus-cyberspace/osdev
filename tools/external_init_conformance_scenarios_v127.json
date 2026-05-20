@@ -1,0 +1,27 @@
+{
+  "version": "v127",
+  "mode": "dry-run-plan",
+  "goal": "Prepare explicit external-init syscall conformance scenarios without changing the single-marker smoke path yet.",
+  "runner_contract": {
+    "scenario_marker_prefix": "[ucompat-v127]",
+    "result_markers": ["PASS", "FAIL", "SKIP"],
+    "execution_model": "future external init emits per-scenario result lines; v127 only validates plan and evidence."
+  },
+  "scenarios": [
+    {"id": "vfs_open_rw_lseek", "group": "vfs", "syscalls": ["openat", "write", "lseek", "read", "close"], "oracle": "roundtrip bytes and offset"},
+    {"id": "getdents_statx", "group": "vfs", "syscalls": ["getdents64", "statx", "fstat"], "oracle": "dirent/stat shape"},
+    {"id": "mmap_brk_basic", "group": "memory", "syscalls": ["mmap", "munmap", "mprotect", "brk"], "oracle": "mapped page access and protection"},
+    {"id": "process_fork_wait", "group": "process", "syscalls": ["clone", "exit", "wait4", "getpid"], "oracle": "child status observed by parent"},
+    {"id": "execve_stack", "group": "process", "syscalls": ["execve"], "oracle": "argc argv envp auxv stack layout"},
+    {"id": "pipe_poll_eventfd", "group": "waitable_fd", "syscalls": ["pipe2", "poll", "eventfd2", "read", "write"], "oracle": "readiness and payload"},
+    {"id": "timerfd_epoll", "group": "waitable_fd", "syscalls": ["timerfd_create", "timerfd_settime", "epoll_ctl", "epoll_pwait"], "oracle": "timeout/readiness event"},
+    {"id": "futex_wait_wake", "group": "sync", "syscalls": ["futex", "futex_waitv", "sched_yield"], "oracle": "waiter wakes"},
+    {"id": "signal_delivery_return", "group": "signal", "syscalls": ["rt_sigaction", "tgkill", "rt_sigreturn"], "oracle": "handler runs and context returns"},
+    {"id": "socketpair_msg", "group": "socket", "syscalls": ["socketpair", "sendmsg", "recvmsg", "poll"], "oracle": "message roundtrip"},
+    {"id": "ipc_msg_shm_sem", "group": "ipc", "syscalls": ["msgget", "msgsnd", "msgrcv", "shmget", "shmat", "semget"], "oracle": "object lifecycle smoke"},
+    {"id": "identity_time_random", "group": "libc_base", "syscalls": ["clock_gettime", "getrandom", "getuid", "gettid", "getrusage"], "oracle": "result shapes and errno"},
+    {"id": "fcntl_tty_flags", "group": "fd_control", "syscalls": ["fcntl", "ioctl", "dup3"], "oracle": "flags and fd aliasing"},
+    {"id": "path_cwd_dirfd", "group": "path", "syscalls": ["getcwd", "chdir", "openat", "readlinkat"], "oracle": "relative path resolution"},
+    {"id": "security_permissions", "group": "security", "syscalls": ["capget", "faccessat2", "landlock_create_ruleset", "prctl"], "oracle": "permission-compatible return values"}
+  ]
+}

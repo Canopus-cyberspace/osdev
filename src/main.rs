@@ -3,19 +3,23 @@
 #![allow(dead_code)]
 #![allow(static_mut_refs)]
 
+pub mod fs;
+pub mod official;
 use core::arch::global_asm;
 
 global_asm!(include_str!("../arch/riscv64/boot.S"));
 
 mod config;
+mod compat;
 mod console;
-mod fd;
+mod drivers;
 mod lang_items;
 mod loader;
 mod mm;
-mod process;
 mod sbi;
 mod syscall;
+mod task;
+mod trap;
 
 #[no_mangle]
 pub extern "C" fn rust_main() -> ! {
@@ -23,9 +27,9 @@ pub extern "C" fn rust_main() -> ! {
 
     crate::println!("UESTC-Kernel booting...");
     crate::println!("[arch] riscv64");
-    crate::println!("[stage] path tty fcntl scaffold v65");
+    crate::println!("[stage] ipc msg netio scaffold v82");
 
-    crate::println!("[stage] v65 runtime path uses path tty fcntl scaffold");
+    crate::println!("[stage] v82 runtime path uses ipc msg netio scaffold");
     mm::sv39_init_exec::run_external_init_elf_smoke();
 }
 

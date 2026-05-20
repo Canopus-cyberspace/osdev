@@ -1,0 +1,5 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-15T17:50:13+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/K01_real_official_basic_elf_execution_20260515_172128

@@ -1,0 +1,5 @@
+[INFO] env root: /home/lenovo/oscomp-official-env
+[INFO] project:  /home/lenovo/projects/uestc-kernel
+[INFO] autotest: /home/lenovo/oscomp-official-env/autotest-for-oskernel
+[INFO] data:     /home/lenovo/oscomp-official-env/testdata
+[INFO] docker:   docker.exe zhouzhouyi/os-contest:20260510

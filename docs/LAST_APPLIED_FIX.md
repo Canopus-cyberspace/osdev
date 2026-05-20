@@ -1,15 +1,15 @@
 # LAST_APPLIED_FIX
 
-Version: v65
+Version: v82
 
 Goal:
-- Add common path/tty/fcntl syscall scaffolds used by libc startup, shells, and utilities.
+- Add IPC/message/net I/O compatibility syscall scaffolds.
 
 Verified:
-- getcwd
-- fcntl
-- ioctl TIOCGWINSZ
-- readlinkat
-- umask
-- chdir
-- prior fd/mm/time/proc regressions remain passing
+- mq_open/mq_unlink/mq_timedsend/mq_timedreceive/mq_notify/mq_getsetattr
+- msgget/msgctl/msgrcv/msgsnd
+- semget/semctl/semtimedop/semop
+- shmget/shmctl/shmat/shmdt
+- recvmsg/sendmsg/recvmmsg/sendmmsg
+- readahead/fadvise64
+- rt_tgsigqueueinfo

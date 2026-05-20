@@ -1,35 +1,100 @@
+# =========================
+# Build outputs
+# =========================
 /target/
+/build/
+/dist/
 
-/user/*.elf
-/user/*.bin
-/user/*.o
-/user/*.map
+/kernel-rv
+/kernel-la
+/kernel-rv.*
+/kernel-la.*
 
-*.img
-*.qcow2
-*.raw
-*.iso
+# =========================
+# Disk images / runtime images
+# =========================
+/*.img
+/*.raw
+/*.qcow2
+/*.iso
 
-*.log
-*.out
+# =========================
+# Official test logs / serial output
+# =========================
+/*.log
+/os_serial_out_*.txt
+/docker_evaluate.log
+/evaluate_*/
+/official_autotest_*.log
+/official_autotest_direct_*.log
 
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
+# =========================
+# AI-generated / assistant working files
+# =========================
+/AGENTS.md
+/AGENTS.md.*
+/PLANS.md
+/PLANS.md.*
+/prompts/
+/checklists/
+/v*_patch_report.json
+/*_patch_report.json
 
+/apply_fix.sh
+/apply_fix.bat
+/apply_fix.sh.*
+/apply_fix.bat.*
+
+# 如果 docs 目录主要是 AI 生成的说明文档，可以打开下一行
+# /docs/
+
+# =========================
+# Office / document files
+# =========================
+*.doc
+*.docx
+*.wps
+*.pdf
+*.ppt
+*.pptx
+
+# =========================
+# Backup / temporary files
+# =========================
+*.bak
+*.bak_*
+*.tmp
+*.temp
+*.orig
+*.rej
+*~
+
+# =========================
+# Editor / IDE files
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
 .DS_Store
-Thumbs.db
 
+# =========================
+# Python cache
+# =========================
 __pycache__/
-*.pyc
-.pytest_cache/
-.venv/
-.env
-.conda/
+*.py[cod]
 
-# Repair / backup logs
-.repair_logs/
-.backup_repair*/
-.backup_before_full_skeleton/
-.backup_before_*/
-*.log
+# =========================
+# Debug dumps
+# =========================
+*.dmp
+*.dump
+*.core
+core
+
+# =========================
+# Local environment
+# =========================
+.env
+.env.*
+!.env.example

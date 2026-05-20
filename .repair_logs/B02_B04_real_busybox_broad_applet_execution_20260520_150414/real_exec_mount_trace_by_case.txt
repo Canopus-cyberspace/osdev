@@ -1,0 +1,22 @@
+test_mount: [fsmount-v70] mount source = 0x400020f0
+test_mount: [fsmount-v70] mount target = 0x400020b0
+test_mount: [fsmount-v70] mount fstype = 0x40001f70
+test_mount: [fsmount-v70] mount flags = 0x0
+test_mount: [fsmount-v70] mount data = 0x0
+test_mount: [fsmount-v178] mount canonical ret = 0
+test_mount: [K05-mount-trace] case=test_mount op=mount source=/dev/vda2 target=./mnt fstype=vfat flags=0x0 ret=0
+test_mount: [fsmount-v70] umount2 target = 0x400020b0
+test_mount: [fsmount-v70] umount2 flags = 0x0
+test_mount: [fsmount-v178] umount2 canonical ret = 0
+test_mount: [K05-mount-trace] case=test_mount op=umount target=./mnt flags=0x0 ret=0
+test_umount: [fsmount-v70] mount source = 0x400020e0
+test_umount: [fsmount-v70] mount target = 0x400020a0
+test_umount: [fsmount-v70] mount fstype = 0x40001f70
+test_umount: [fsmount-v70] mount flags = 0x0
+test_umount: [fsmount-v70] mount data = 0x0
+test_umount: [fsmount-v178] mount canonical ret = 0
+test_umount: [K05-mount-trace] case=test_umount op=mount source=/dev/vda2 target=./mnt fstype=vfat flags=0x0 ret=0
+test_umount: [fsmount-v70] umount2 target = 0x400020a0
+test_umount: [fsmount-v70] umount2 flags = 0x0
+test_umount: [fsmount-v178] umount2 canonical ret = 0
+test_umount: [K05-mount-trace] case=test_umount op=umount target=./mnt flags=0x0 ret=0

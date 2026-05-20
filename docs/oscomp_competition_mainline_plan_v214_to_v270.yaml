@@ -1,0 +1,313 @@
+schema: "oscomp_kernel_track_competition_mainline_plan.v1"
+generated_at: "2026-05-09"
+baseline:
+  stable_version: "v214"
+  project_path_default: "/home/lenovo/projects/uestc-kernel"
+  fresh_qemu_serial: ".repair_logs/qemu-run-20260509_201406.serial.log"
+  meaning: "v214 is the current stable baseline. Starting from v215, all work should directly follow the OS kernel competition requirement mainline."
+  do_not_use:
+    - "do not detour into generic marker expansion"
+    - "do not postpone competition requirements until after v270"
+    - "do not treat v270 as current baseline"
+mainline_policy:
+  principle: "v215-v270 全程都是比赛要求主线，而不是先跑版本号再回主线。"
+  must_preserve:
+    - "all v151k7-v214 runtime behavior and evidence"
+    - "v207-v214 storage image batch behavior"
+    - "Windows .bat + WSL apply flow"
+    - "Miniconda osdev/cargo env/riscv64gc target workflow"
+    - "binary-safe fresh QEMU runtime scan"
+    - "forbidden warning gate"
+  forbidden_warning_gate:
+    - "matches any value"
+    - "unreachable pattern"
+    - "warning: unused variable:"
+  forbidden_implementation_patterns:
+    - "marker-only implementation"
+    - "active_once-only implementation"
+    - "fake PASS from repair/build logs"
+    - "ramdisk as final substitute for required virtio-blk path"
+    - "loopback/local socket as final substitute for required virtio-net path"
+    - "hardcoded official-test output without real kernel semantics"
+    - "rewriting stable runtime entrypoints unnecessarily"
+captured_competition_requirements:
+  official_evaluation:
+    - "prepare for official autotest-for-oskernel build/evaluate flow"
+    - "prepare for Docker image zhouzhouyi/os-contest:20260104"
+    - "prepare for sdcard-rv.img.xz and sdcard-la.img.xz"
+    - "provide reproducible build/run instructions"
+    - "provide technical report and submission checklist"
+  architecture:
+    - "RISC-V64 QEMU support"
+    - "LoongArch64 QEMU support"
+    - "separate architecture-specific trap/page-table/context-switch/syscall ABI into HAL/arch layers"
+  storage:
+    - "real virtio-blk MMIO/virtqueue/descriptor path"
+    - "sector read/write through block device path"
+    - "block cache must connect to real block backend"
+    - "ramdisk may remain fallback/test but cannot be final competition evidence"
+  filesystem:
+    - "readonly Ext4-backed filesystem image path"
+    - "superblock/group descriptor/inode table/dirent/extent or block map"
+    - "open/read/getdents/stat/execve through Ext4-backed VFS"
+    - "document unsupported Ext4 advanced features"
+  userland:
+    - "load and execute real Linux ELF from rootfs/Ext4"
+    - "init/rootfs handoff"
+    - "BusyBox/sh minimal compatibility"
+    - "expand syscall matrix for bash/git/vim/gcc/rustc directions"
+  network:
+    - "network tests require real virtio-net or physical NIC path"
+    - "local socket/loopback cannot replace virtio-net"
+    - "plan RX/TX descriptor path and minimal ARP/IP/ICMP/UDP/TCP progression"
+  integrity:
+    - "no fake PASS"
+    - "no marker-only scoring"
+    - "no hardcoded official output"
+    - "open-source and third-party attribution must be documented"
+    - "fresh runtime evidence required for every batch"
+current_v214_capabilities:
+  already_present:
+    - "process/fork/exec/wait foundation"
+    - "real U-mode ELF execution bridge"
+    - "page fault/mmap/brk/munmap/mprotect foundation"
+    - "scheduler/timer tick/blocking wait wakeup"
+    - "pipe/poll/futex/signal/IPC foundations"
+    - "VFS/fd/procfs/devfs/tmpfs/mount/statfs foundations"
+    - "block-device abstraction"
+    - "ramdisk backend"
+    - "block cache"
+    - "bounded readonly image parser"
+    - "image-backed VFS metadata I/O"
+    - "execve from image-backed file"
+    - "filesystem error-path hardening"
+  largest_gaps:
+    - "real virtio-blk backend"
+    - "real readonly Ext4 image parsing"
+    - "official sdcard-rv/sdcard-la path"
+    - "init/rootfs handoff"
+    - "BusyBox/sh and real Linux userspace"
+    - "LoongArch64"
+    - "virtio-net"
+    - "official autotest integration"
+competition_mainline_plan_v215_to_v270:
+  v215_v222_storage_ext4_mainline:
+    priority: "P0"
+    goal: "从 v214 的 ramdisk/image parser 推进到真实 virtio-blk + Ext4 + init/rootfs handoff。"
+    versions:
+      v215:
+        title: "real virtio-blk MMIO and virtqueue descriptor path"
+        must_implement:
+          - "virtio MMIO register discovery"
+          - "minimal feature negotiation"
+          - "virtqueue descriptor/avail/used ring model"
+          - "sector read through virtio-blk"
+          - "sector write or readonly-safe write-test path"
+          - "block cache can use virtio backend"
+        pass_evidence:
+          - "[ucompat-v215] real virtio blk queue path PASS"
+          - "fresh log proves device=virtio-blk and not_ramdisk=true"
+      v216:
+        title: "official-style disk image probing"
+        must_implement:
+          - "read first sectors through virtio-blk"
+          - "detect raw Ext4 vs partitioned image"
+          - "probe superblock offset"
+          - "stable errno for invalid/unsupported image"
+        pass_evidence:
+          - "[ucompat-v216] disk image probe PASS"
+      v217:
+        title: "readonly Ext4 metadata parser"
+        must_implement:
+          - "Ext4 superblock parser"
+          - "group descriptor parser"
+          - "inode table reader"
+          - "root inode lookup"
+          - "directory entry traversal"
+        pass_evidence:
+          - "[ucompat-v217] readonly ext4 metadata PASS"
+      v218:
+        title: "Ext4 file data read through block map/extent"
+        must_implement:
+          - "extent header/leaf parser for regular files"
+          - "file block mapping"
+          - "read file bytes through block cache"
+          - "bounded limitation report for unsupported Ext4 features"
+        pass_evidence:
+          - "[ucompat-v218] ext4 regular file read PASS"
+      v219:
+        title: "execve from real Ext4-backed file"
+        must_implement:
+          - "node-file helper backed by Ext4"
+          - "ELF bytes loaded from virtio-blk + block cache + Ext4"
+          - "argv/envp/auxv preserved"
+          - "exit code captured from real U-mode program"
+        pass_evidence:
+          - "[ucompat-v219] execve from real ext4 image PASS"
+      v220:
+        title: "Ext4 VFS syscall integration and errno hardening"
+        must_implement:
+          - "open/read/stat/getdents on Ext4-backed nodes"
+          - "ENOENT/ENOTDIR/EISDIR/EACCES/EINVAL/EBADF coverage"
+          - "large file partial read and repeated open/read/close stress"
+        pass_evidence:
+          - "[ucompat-v220] ext4 vfs errno hardening PASS"
+      v221:
+        title: "init/rootfs handoff from mounted image"
+        must_implement:
+          - "mount Ext4 image as root or competition rootfs"
+          - "select /init, /bin/init, /bin/sh, or configured init path"
+          - "handoff argv/envp/auxv"
+          - "capture console output and exit/wait state"
+        pass_evidence:
+          - "[ucompat-v221] init rootfs handoff PASS"
+      v222:
+        title: "storage and Ext4 competition readiness report"
+        must_implement:
+          - "formal report for virtio-blk + Ext4 path"
+          - "limitations matrix"
+          - "fresh QEMU logs"
+          - "official image readiness checklist"
+        pass_evidence:
+          - "[ucompat-v222] storage ext4 readiness PASS"
+  v223_v230_official_autotest_and_rv_userspace:
+    priority: "P0"
+    goal: "把内部自测转向官方 autotest 与 RISC-V 官方镜像/userspace smoke。"
+    versions:
+      v223:
+        title: "official autotest Docker adapter"
+        must_implement:
+          - "detect official judge environment"
+          - "support expected kernel artifact layout"
+          - "provide exact Docker/autotest command notes"
+          - "preserve local run-qemu workflow"
+        pass_evidence:
+          - "[ucompat-v223] official autotest adapter PASS"
+      v224:
+        title: "official-style sdcard-rv boot and filesystem smoke"
+        must_implement:
+          - "boot with official-style sdcard-rv image"
+          - "read root directory"
+          - "open/read known files"
+          - "execute simple ELF if present"
+        pass_evidence:
+          - "[ucompat-v224] sdcard rv smoke PASS"
+      v225:
+        title: "BusyBox/sh minimal compatibility"
+        must_implement:
+          - "execute busybox or /bin/sh when available"
+          - "cwd/path/openat/read/write/close/fstat/getdents essentials"
+          - "basic tty/ioctl/isatty compatibility"
+          - "run echo/cat/ls/pwd style smoke"
+        pass_evidence:
+          - "[ucompat-v225] busybox sh minimal PASS"
+      v226:
+        title: "Linux syscall compatibility expansion for shell/coreutils"
+        must_implement:
+          - "mmap/fstat/newfstatat/getdents64/openat/read/write/close/dup/pipe/wait4/rt_sigaction refinements"
+          - "fcntl/ioctl/tty/path flags audit"
+          - "syscall support matrix generated from runtime evidence"
+        pass_evidence:
+          - "[ucompat-v226] linux syscall matrix PASS"
+      v227:
+        title: "procfs/devfs/tty compatibility hardening"
+        must_implement:
+          - "/proc/self, /proc/mounts, /proc/meminfo, /proc/stat minimal nodes"
+          - "/dev/null, /dev/zero, /dev/tty or console nodes"
+          - "tty ioctl fallbacks used by shells and libc"
+          - "stable fd/stat behavior"
+        pass_evidence:
+          - "[ucompat-v227] proc dev tty compatibility PASS"
+      v228:
+        title: "shell process pipeline and signal behavior"
+        must_implement:
+          - "fork/exec/wait with shell-like process trees"
+          - "pipe/dup2/close-on-exec correctness"
+          - "SIGCHLD wait state"
+          - "basic job-control-safe fallbacks"
+        pass_evidence:
+          - "[ucompat-v228] shell process pipeline PASS"
+      v229:
+        title: "RISC-V official userspace regression suite"
+        must_implement:
+          - "run a set of real RISC-V userland binaries from image"
+          - "capture exit codes"
+          - "capture syscall coverage"
+          - "preserve v151k7-v228 regressions"
+        pass_evidence:
+          - "[ucompat-v229] riscv userspace regression PASS"
+      v230:
+        title: "official autotest RV convergence report"
+        must_implement:
+          - "official autotest dry-run checklist"
+          - "fresh logs packaged"
+          - "gap list for remaining official tests"
+          - "next-step priorities grounded in failing tests"
+        pass_evidence:
+          - "[ucompat-v230] official rv convergence PASS"
+  v231_v238_syscall_and_linux_programs:
+    priority: "P1"
+    goal: "从 BusyBox/sh 扩展到更真实 Linux 程序所需的系统调用与文件/内存/进程组合语义。"
+    versions:
+      v231: "coreutils-style file/path syscall hardening"
+      v232: "dynamic loader and ELF auxiliary vector compatibility audit"
+      v233: "mmap/file-backed mapping and page cache bridge"
+      v234: "fcntl/ioctl/termios/tty behavior expansion"
+      v235: "signal/timer/poll/epoll compatibility expansion"
+      v236: "process group/session/job-control foundation"
+      v237: "git/vim/gcc/rustc requirement-oriented syscall gap report and first smoke"
+      v238: "Linux userspace compatibility regression report"
+  v239_v246_loongarch64_mainline:
+    priority: "P0/P1"
+    goal: "补齐 LoongArch64 这一比赛平台大缺口。"
+    versions:
+      v239: "arch HAL split and LoongArch64 build/toolchain detection"
+      v240: "LoongArch64 QEMU early boot and serial smoke"
+      v241: "LoongArch64 exception/trap/syscall entry"
+      v242: "LoongArch64 page table and user mapping foundation"
+      v243: "LoongArch64 context switch and scheduler smoke"
+      v244: "LoongArch64 ELF loader and U-mode smoke"
+      v245: "LoongArch64 storage/image reuse through common VFS/block layer"
+      v246: "LoongArch64 official-style sdcard-la smoke report"
+  v247_v254_network_mainline:
+    priority: "P1"
+    goal: "补齐真实网络路径，不再只依赖 AF_UNIX/local socket。"
+    versions:
+      v247: "virtio-net MMIO discovery and feature negotiation"
+      v248: "virtio-net RX/TX virtqueue setup"
+      v249: "packet buffer and interrupt/polling receive path"
+      v250: "ARP and IPv4 minimal stack"
+      v251: "ICMP/UDP smoke"
+      v252: "TCP minimal connection foundation or documented staged plan"
+      v253: "socket API bridge to network stack"
+      v254: "network readiness report and limitations"
+  v255_v270_submission_convergence:
+    priority: "P0/P1"
+    goal: "把实现收敛成可提交、可复现、可解释的比赛版本。"
+    versions:
+      v255: "official failing-test triage harness"
+      v256: "filesystem/process/memory stress regression"
+      v257: "scheduler/blocking/futex/timer stress regression"
+      v258: "security/permission/namespace sanity regression"
+      v259: "Ext4/virtio-blk long-run stability hardening"
+      v260: "official judge output compatibility and log cleanup"
+      v261: "performance and footprint audit"
+      v262: "panic/error recovery and diagnostic report"
+      v263: "technical report draft generated from implementation evidence"
+      v264: "open-source license and third-party attribution bundle"
+      v265: "submission packaging script"
+      v266: "clean-room rebuild from fresh checkout"
+      v267: "official autotest full dry run"
+      v268: "known limitations and workaround documentation"
+      v269: "final regression freeze"
+      v270: "competition mainline readiness baseline"
+next_package_recommendation:
+  version: "v215"
+  name: "v215_real_virtio_blk_mmio_queue_descriptor_path"
+  must_include:
+    - "real virtio-blk MMIO/virtqueue implementation"
+    - "block cache backend switch from ramdisk to virtio when available"
+    - "ramdisk retained only as fallback/test helper"
+    - "fresh QEMU evidence proving not_ramdisk=true"
+    - "Windows apply_fix.bat"
+    - "build/QEMU/forbidden-warning gates"

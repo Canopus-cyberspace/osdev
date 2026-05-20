@@ -1,0 +1,11 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-13T10:11:16+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/P01_basic_musl_expand_20260513_010320
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/P01_basic_musl_expand_20260513_010229
+# Large artifact cleanup manifest
+timestamp=2026-05-13T10:11:16+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/P02_basic_musl_fs_expand_20260513_092320

@@ -1,0 +1,63 @@
+verdict Accpted
+score 153
+basic-musl-rv 100.0
+busybox-musl-rv 53.0
+basic-musl-la 0.0
+busybox-musl-la 0.0
+lua-musl-rv 0.0
+rank 153.0
+judge-basic-total 100
+judge-busybox-total 53
+busybox-musl busybox echo "#### independent command test" 1 1
+busybox-musl busybox ash -c exit 1 1
+busybox-musl busybox sh -c exit 1 1
+busybox-musl busybox basename /aaa/bbb 1 1
+busybox-musl busybox cal 1 1
+busybox-musl busybox clear 1 1
+busybox-musl busybox date 1 1
+busybox-musl busybox df 1 1
+busybox-musl busybox dirname /aaa/bbb 1 1
+busybox-musl busybox dmesg 1 1
+busybox-musl busybox du 1 1
+busybox-musl busybox expr 1 + 1 1 1
+busybox-musl busybox false 1 1
+busybox-musl busybox true 1 1
+busybox-musl busybox which ls 1 1
+busybox-musl busybox uname 1 1
+busybox-musl busybox uptime 1 1
+busybox-musl busybox ps 1 1
+busybox-musl busybox pwd 1 1
+busybox-musl busybox free 1 1
+busybox-musl busybox hwclock 1 1
+busybox-musl busybox kill 10 1 1
+busybox-musl busybox ls 1 1
+busybox-musl busybox sleep 1 1 1
+busybox-musl busybox echo "#### file opration test" 1 1
+busybox-musl busybox touch test.txt 1 1
+busybox-musl busybox echo "hello world" > test.txt 1 1
+busybox-musl busybox cat test.txt 1 1
+busybox-musl busybox cut -c 3 test.txt 1 1
+busybox-musl busybox od test.txt 1 1
+busybox-musl busybox head test.txt 1 1
+busybox-musl busybox tail test.txt 1 1
+busybox-musl busybox hexdump -C test.txt 1 1
+busybox-musl busybox md5sum test.txt 1 1
+busybox-musl busybox echo "ccccccc" >> test.txt 1 1
+busybox-musl busybox echo "bbbbbbb" >> test.txt 1 1
+busybox-musl busybox echo "aaaaaaa" >> test.txt 1 1
+busybox-musl busybox echo "2222222" >> test.txt 1 1
+busybox-musl busybox echo "1111111" >> test.txt 1 1
+busybox-musl busybox sort test.txt | ./busybox uniq 1 1
+busybox-musl busybox stat test.txt 1 1
+busybox-musl busybox strings test.txt 1 1
+busybox-musl busybox wc test.txt 1 1
+busybox-musl busybox [ -f test.txt ] 1 1
+busybox-musl busybox more test.txt 1 1
+busybox-musl busybox rm test.txt 1 1
+busybox-musl busybox mkdir test_dir 1 1
+busybox-musl busybox mv test_dir test 1 1
+busybox-musl busybox rmdir test 1 1
+busybox-musl busybox grep hello busybox_cmd.txt 1 1
+busybox-musl busybox cp busybox_cmd.txt busybox_cmd.bak 1 1
+busybox-musl busybox rm busybox_cmd.bak 1 1
+busybox-musl busybox find -name "busybox_cmd.txt" 1 1

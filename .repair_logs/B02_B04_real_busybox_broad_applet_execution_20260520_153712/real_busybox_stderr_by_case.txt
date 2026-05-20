@@ -1,0 +1,39 @@
+===== busybox_true REAL-RUN busybox true =====
+===== busybox_echo_independent REAL-RUN busybox echo #### independent command test =====
+===== busybox_pwd REAL-RUN busybox pwd =====
+===== busybox_ls REAL-RUN busybox ls =====
+===== busybox_cat_test_txt REAL-RUN busybox cat test.txt =====
+===== busybox_touch_test_txt REAL-RUN busybox touch test.txt =====
+===== busybox_rm_test_txt REAL-RUN busybox rm test.txt =====
+===== busybox_mkdir_test_dir REAL-RUN busybox mkdir test_dir =====
+===== busybox_rmdir_test REAL-RUN busybox rmdir test =====
+===== busybox_mv_test_dir_test REAL-RUN busybox mv test_dir test =====
+===== busybox_cp_busybox_cmd_bak REAL-RUN busybox cp busybox_cmd.txt busybox_cmd.bak =====
+===== busybox_rm_busybox_cmd_bak REAL-RUN busybox rm busybox_cmd.bak =====
+===== busybox_stat_test_txt REAL-RUN busybox stat test.txt =====
+===== busybox_find_busybox_cmd REAL-RUN busybox find -name busybox_cmd.txt =====
+===== busybox_wc_test_txt REAL-RUN busybox wc test.txt =====
+===== busybox_head_test_txt REAL-RUN busybox head test.txt =====
+===== busybox_tail_test_txt REAL-RUN busybox tail test.txt =====
+===== busybox_sort_test_txt REAL-RUN busybox sort test.txt =====
+===== busybox_uniq_test_txt REAL-RUN busybox uniq test.txt =====
+===== busybox_grep_hello_cmd REAL-RUN busybox grep hello busybox_cmd.txt =====
+===== busybox_cut_c3_test_txt REAL-RUN busybox cut -c 3 test.txt =====
+===== busybox_od_test_txt REAL-RUN busybox od test.txt =====
+===== busybox_hexdump_c_test_txt REAL-RUN busybox hexdump -C test.txt =====
+===== busybox_md5sum_test_txt REAL-RUN busybox md5sum test.txt =====
+===== busybox_strings_test_txt REAL-RUN busybox strings test.txt =====
+===== busybox_basename_aaa_bbb REAL-RUN busybox basename /aaa/bbb =====
+===== busybox_dirname_aaa_bbb REAL-RUN busybox dirname /aaa/bbb =====
+===== busybox_date REAL-RUN busybox date =====
+===== busybox_cal REAL-RUN busybox cal =====
+===== busybox_df REAL-RUN busybox df =====
+===== busybox_du REAL-RUN busybox du =====
+===== busybox_dmesg REAL-RUN busybox dmesg =====
+===== busybox_ps REAL-RUN busybox ps =====
+===== busybox_free REAL-RUN busybox free =====
+===== busybox_uptime REAL-RUN busybox uptime =====
+===== busybox_uname REAL-RUN busybox uname =====
+===== busybox_which_ls REAL-RUN busybox which ls =====
+===== busybox_false REAL-RUN busybox false =====
+===== busybox_sleep_1 REAL-RUN busybox sleep 1 =====

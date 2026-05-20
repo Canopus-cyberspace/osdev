@@ -1,0 +1,12 @@
+# Project-root large artifact references removed after P05 official run
+timestamp: 2026-05-13T11:29:59+08:00
+
+path: /home/lenovo/projects/uestc-kernel/sdcard-rv.img
+size_bytes: 4294967296
+sha256: 95973543db6b84a9a5e70f30da466ce292867aff5b689fb14c88dc9406e378b8
+type: Linux rev 1.0 ext4 filesystem data, UUID=362039d9-0839-44c2-a906-fb38bb1e9b25 (extents) (64bit) (large files) (huge files)
+
+path: /home/lenovo/projects/uestc-kernel/sdcard-la.img
+size_bytes: 4294967296
+sha256: 1aa79d03cf41e2a80ae4ed43771101c1e67ec8db41c3c20b77792fe6b1b85b50
+type: Linux rev 1.0 ext4 filesystem data, UUID=7514f5e4-89e2-4223-b78f-70e718c9acf6 (extents) (64bit) (large files) (huge files)

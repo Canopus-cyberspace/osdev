@@ -1,0 +1,145 @@
+test_getppid: [K04b-process-trace] getppid pid=1 ppid=1
+test_pipe: [K04a-task-trace] fork parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sepc=0x40001d60
+test_pipe: [process-v165] clone K04a context child pid = 2
+test_pipe: [K04a-task-trace] parent-block reason=pipe_read_empty retry_sepc=0x40001d20
+test_pipe: [K04a-task-trace] switch reason=pipe_read_empty to=child slot=0 pid=2 sepc=0x40001d60
+test_pipe: [K04a-task-trace] child-exit slot=0 pid=2 code=0
+test_pipe: [K04a-task-trace] switch reason=child_exit_parent to=parent pid=1 sepc=0x40001d20
+test_pipe: [process-v69] wait4 pid = -1
+test_pipe: [process-v69] wait4 status = 0x0
+test_pipe: [process-v69] wait4 options = 0x0
+test_pipe: [process-v69] wait4 rusage = 0x0
+test_pipe: [process-v165] wait4 canonical status = 0
+test_pipe: [process-v165] wait4 ret = 2
+test_yield: [K04a-task-trace] fork parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sepc=0x40001cc6
+test_yield: [process-v165] clone K04a context child pid = 2
+test_yield: [K04a-task-trace] fork parent_pid=1 child_pid=3 slot=1 flags=0x11 child_sepc=0x40001cc6
+test_yield: [process-v165] clone K04a context child pid = 3
+test_yield: [K04a-task-trace] fork parent_pid=1 child_pid=4 slot=2 flags=0x11 child_sepc=0x40001cc6
+test_yield: [process-v165] clone K04a context child pid = 4
+test_yield: [process-v69] wait4 pid = -1
+test_yield: [process-v69] wait4 status = 0x0
+test_yield: [process-v69] wait4 options = 0x0
+test_yield: [process-v69] wait4 rusage = 0x0
+test_yield: [process-v165] wait4 canonical status = 0
+test_yield: [process-v165] wait4 ret = 0
+test_yield: [K04a-task-trace] parent-block reason=wait4_pending retry_sepc=0x40001d9e
+test_yield: [K04a-task-trace] switch reason=wait4_pending to=child slot=0 pid=2 sepc=0x40001cc6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=1 pid=3 sepc=0x40001cc6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=2 pid=4 sepc=0x40001cc6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=0 pid=2 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=1 pid=3 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=2 pid=4 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=0 pid=2 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=1 pid=3 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=2 pid=4 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=0 pid=2 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=1 pid=3 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=2 pid=4 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=0 pid=2 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=1 pid=3 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=2 pid=4 sepc=0x40001cb6
+test_yield: [K04a-task-trace] switch reason=sched_yield to=child slot=0 pid=2 sepc=0x40001cb6
+test_yield: [K04a-task-trace] child-exit slot=0 pid=2 code=0
+test_yield: [K04a-task-trace] switch reason=child_exit_next to=child slot=1 pid=3 sepc=0x40001cb6
+test_yield: [K04a-task-trace] child-exit slot=1 pid=3 code=0
+test_yield: [K04a-task-trace] switch reason=child_exit_next to=child slot=2 pid=4 sepc=0x40001cb6
+test_yield: [K04a-task-trace] child-exit slot=2 pid=4 code=0
+test_yield: [K04a-task-trace] switch reason=child_exit_parent to=parent pid=1 sepc=0x40001d9e
+test_yield: [process-v69] wait4 pid = -1
+test_yield: [process-v69] wait4 status = 0x0
+test_yield: [process-v69] wait4 options = 0x0
+test_yield: [process-v69] wait4 rusage = 0x0
+test_yield: [process-v165] wait4 canonical status = 0
+test_yield: [process-v165] wait4 ret = 2
+test_yield: [process-v69] wait4 pid = -1
+test_yield: [process-v69] wait4 status = 0x0
+test_yield: [process-v69] wait4 options = 0x0
+test_yield: [process-v69] wait4 rusage = 0x0
+test_yield: [process-v165] wait4 canonical status = 0
+test_yield: [process-v165] wait4 ret = 3
+test_yield: [process-v69] wait4 pid = -1
+test_yield: [process-v69] wait4 status = 0x0
+test_yield: [process-v69] wait4 options = 0x0
+test_yield: [process-v69] wait4 rusage = 0x0
+test_yield: [process-v165] wait4 canonical status = 0
+test_yield: [process-v165] wait4 ret = 4
+test_wait: [K04a-task-trace] fork parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sepc=0x40001ce6
+test_wait: [process-v165] clone K04a context child pid = 2
+test_wait: [process-v69] wait4 pid = -1
+test_wait: [process-v69] wait4 status = 0x4001ff4c
+test_wait: [process-v69] wait4 options = 0x0
+test_wait: [process-v69] wait4 rusage = 0x0
+test_wait: [process-v165] wait4 canonical status = 0
+test_wait: [process-v165] wait4 ret = 0
+test_wait: [K04a-task-trace] parent-block reason=wait4_pending retry_sepc=0x40001dbe
+test_wait: [K04a-task-trace] switch reason=wait4_pending to=child slot=0 pid=2 sepc=0x40001ce6
+test_wait: [K04a-task-trace] child-exit slot=0 pid=2 code=0
+test_wait: [K04a-task-trace] switch reason=child_exit_parent to=parent pid=1 sepc=0x40001dbe
+test_wait: [process-v69] wait4 pid = -1
+test_wait: [process-v69] wait4 status = 0x4001ff4c
+test_wait: [process-v69] wait4 options = 0x0
+test_wait: [process-v69] wait4 rusage = 0x0
+test_wait: [process-v165] wait4 canonical status = 0
+test_wait: [process-v165] wait4 ret = 2
+test_waitpid: [K04a-task-trace] fork parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sepc=0x40001d16
+test_waitpid: [process-v165] clone K04a context child pid = 2
+test_waitpid: [process-v69] wait4 pid = 2
+test_waitpid: [process-v69] wait4 status = 0x4001ff4c
+test_waitpid: [process-v69] wait4 options = 0x0
+test_waitpid: [process-v69] wait4 rusage = 0x0
+test_waitpid: [process-v165] wait4 canonical status = 0
+test_waitpid: [process-v165] wait4 ret = 0
+test_waitpid: [K04a-task-trace] parent-block reason=wait4_pending retry_sepc=0x40001d3c
+test_waitpid: [K04a-task-trace] switch reason=wait4_pending to=child slot=0 pid=2 sepc=0x40001d16
+test_waitpid: [K04a-task-trace] child-exit slot=0 pid=2 code=3
+test_waitpid: [K04a-task-trace] switch reason=child_exit_parent to=parent pid=1 sepc=0x40001d3c
+test_waitpid: [process-v69] wait4 pid = 2
+test_waitpid: [process-v69] wait4 status = 0x4001ff4c
+test_waitpid: [process-v69] wait4 options = 0x0
+test_waitpid: [process-v69] wait4 rusage = 0x0
+test_waitpid: [process-v165] wait4 canonical status = 768
+test_waitpid: [process-v165] wait4 ret = 2
+test_fork: [K04a-task-trace] fork parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sepc=0x40001cc4
+test_fork: [K04b-process-trace] clone parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sp=0x4001ff50 child_sepc=0x40001cc4
+test_fork: [process-v165] clone K04a context child pid = 2
+test_fork: [process-v69] wait4 pid = -1
+test_fork: [process-v69] wait4 status = 0x4001ff5c
+test_fork: [process-v69] wait4 options = 0x0
+test_fork: [process-v69] wait4 rusage = 0x0
+test_fork: [process-v165] wait4 canonical status = 0
+test_fork: [process-v165] wait4 ret = 0
+test_fork: [K04a-task-trace] parent-block reason=wait4_pending retry_sepc=0x40001d9c
+test_fork: [K04a-task-trace] switch reason=wait4_pending to=child slot=0 pid=2 sepc=0x40001cc4
+test_fork: [K04a-task-trace] child-exit slot=0 pid=2 code=0
+test_fork: [K04b-process-trace] child-exit slot=0 pid=2 code=0
+test_fork: [K04a-task-trace] switch reason=child_exit_parent to=parent pid=1 sepc=0x40001d9c
+test_fork: [process-v69] wait4 pid = -1
+test_fork: [process-v69] wait4 status = 0x4001ff5c
+test_fork: [process-v69] wait4 options = 0x0
+test_fork: [process-v69] wait4 rusage = 0x0
+test_fork: [process-v165] wait4 canonical status = 0
+test_fork: [process-v165] wait4 ret = 2
+test_fork: [K04b-process-trace] wait4-collected parent_pid=1 child_pid=2 ret=2
+test_clone: [K04a-task-trace] fork parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sepc=0x40001eec
+test_clone: [K04b-process-trace] clone parent_pid=1 child_pid=2 slot=0 flags=0x11 child_sp=0x40002470 child_sepc=0x40001eec
+test_clone: [process-v165] clone K04a context child pid = 2
+test_clone: [process-v69] wait4 pid = -1
+test_clone: [process-v69] wait4 status = 0x4001ff5c
+test_clone: [process-v69] wait4 options = 0x0
+test_clone: [process-v69] wait4 rusage = 0x0
+test_clone: [process-v165] wait4 canonical status = 0
+test_clone: [process-v165] wait4 ret = 0
+test_clone: [K04a-task-trace] parent-block reason=wait4_pending retry_sepc=0x40001de2
+test_clone: [K04a-task-trace] switch reason=wait4_pending to=child slot=0 pid=2 sepc=0x40001eec
+test_clone: [K04a-task-trace] child-exit slot=0 pid=2 code=0
+test_clone: [K04b-process-trace] child-exit slot=0 pid=2 code=0
+test_clone: [K04a-task-trace] switch reason=child_exit_parent to=parent pid=1 sepc=0x40001de2
+test_clone: [process-v69] wait4 pid = -1
+test_clone: [process-v69] wait4 status = 0x4001ff5c
+test_clone: [process-v69] wait4 options = 0x0
+test_clone: [process-v69] wait4 rusage = 0x0
+test_clone: [process-v165] wait4 canonical status = 0
+test_clone: [process-v165] wait4 ret = 2
+test_clone: [K04b-process-trace] wait4-collected parent_pid=1 child_pid=2 ret=2
+test_execve: [K04b-process-trace] execve pid=1 path=test_echo argc=1 envc=0

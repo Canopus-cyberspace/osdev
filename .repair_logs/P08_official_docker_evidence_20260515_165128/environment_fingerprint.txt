@@ -1,0 +1,10 @@
+autotest_HEAD 500e7edcfb875409a0babe125d273ab30771d5ec
+autotest_origin_main 500e7edcfb875409a0babe125d273ab30771d5ec
+docker_image sha256:85dec949df7cef41fd03d30c6ad69f952204540e18d2c62bced9d2e262fef12d zhouzhouyi/os-contest@sha256:85dec949df7cef41fd03d30c6ad69f952204540e18d2c62bced9d2e262fef12d
+e53f62cb7444b4bdb2cd84014931516ae7cfd5b91595d541dfe901d048f9fc52  /home/lenovo/oscomp-official-env/autotest-for-oskernel/kernel/judge/judge_basic-musl.py
+307c6d0325abe22e35c3c3cc27566b41f26598e1e690d7e2a504aadab678d03d  /home/lenovo/oscomp-official-env/autotest-for-oskernel/kernel/judge/judge_busybox-musl.py
+b07d38ab9bb12c67d1ef5c9adfcd9012671cdcb1c44f21498c9449f8e1b1634f  /home/lenovo/oscomp-official-env/autotest-for-oskernel/kernel/judge/judge_lua-musl.py
+8d5fed9b330a94ce9522608bfb3bf9c0df99e9e651b5293561c86af8dc2bbfbb  /home/lenovo/oscomp-official-env/autotest-for-oskernel/kernel/parse_output_2023.py
+5ffbf5c48cfe0b34f9e18bf97461785fd493b9866a941755b2736e09b54c340f  /home/lenovo/oscomp-official-env/autotest-for-oskernel/kernel/sdcardwork.py
+9a98993b3142f7a7c2ed00a248cd092ab013a29533d2d052c8904ec4430876d5  /home/lenovo/oscomp-official-env/testdata/sdcard-rv.img.gz
+59bacc01b33356123fd1ed9293dc839ec33f83b2b90f59ea79b52b2f91213db5  /home/lenovo/oscomp-official-env/testdata/sdcard-la.img.gz

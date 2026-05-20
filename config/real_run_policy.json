@@ -1,0 +1,126 @@
+{
+  "policy_version": "K01_REAL_RUN_POLICY_V1",
+  "purpose": "Prevent future official testcase success output from being claimed as real kernel capability unless it is backed by verified real U-mode execution.",
+  "one_sentence_rule": "A testcase success line may only be emitted from a verified RealRunResult produced by real U-mode execution. Content verification may locate and authenticate inputs, but it must not by itself justify a success line.",
+  "capability_labels": {
+    "REAL_RUN": {
+      "definition": "The official ELF/script/user program was loaded from the official sdcard/rootfs, entered real U-mode, ran through real traps/syscalls/page faults, produced real stdout/stderr and exit status, and the kernel collected those results.",
+      "may_claim_real_kernel_capability": true,
+      "may_emit_official_success": true
+    },
+    "CONTENT_BACKED": {
+      "definition": "The kernel verified official sdcard content, scripts, ELF hashes, or applet strings, but did not execute the target program end-to-end in U-mode.",
+      "may_claim_real_kernel_capability": false,
+      "may_emit_official_success": false
+    },
+    "PARSER_ONLY": {
+      "definition": "Output is shaped for the official judge parser without enough content authentication or real execution evidence.",
+      "may_claim_real_kernel_capability": false,
+      "may_emit_official_success": false,
+      "forbidden_for_new_batches": true
+    }
+  },
+  "required_real_run_result_fields": [
+    "program_path",
+    "source_image_or_rootfs",
+    "elf_sha256",
+    "elf_entry_pc",
+    "loaded_segments",
+    "user_stack_top",
+    "argv",
+    "envp",
+    "auxv",
+    "entered_umode",
+    "first_user_pc",
+    "syscall_trace",
+    "page_fault_trace",
+    "stdout",
+    "stderr",
+    "exit_code",
+    "final_task_state"
+  ],
+  "official_success_emission": {
+    "must_go_through_single_emitter": true,
+    "allowed_emitter_paths": [
+      "src/official/official_result_emitter.rs",
+      "src/fs/official_result_emitter.rs",
+      "src/fs/runtime.rs"
+    ],
+    "emitter_function_names": [
+      "emit_official_success_if_real",
+      "emit_group_success_from_real_run",
+      "emit_basic_musl_result_from_real_run"
+    ],
+    "rule": "The emitter must require a verified RealRunResult and must compare stdout/stderr/exit_code against the testcase expectation before emitting any official success line."
+  },
+  "forbidden_success_patterns_outside_allowlist": [
+    {
+      "regex": "testcase\\s+[^\\n]*\\s+success",
+      "reason": "Official testcase success line must not be hardcoded outside the real-run emitter."
+    },
+    {
+      "regex": "busybox\\s+[^\\n]*\\s+success",
+      "reason": "Busybox success must come from a verified real-run result, not from command inventory parsing."
+    },
+    {
+      "regex": "testcase\\s+lua\\s+[^\\n]*\\.lua\\s+success",
+      "reason": "Lua success must come from real execution of the Lua interpreter/script."
+    },
+    {
+      "regex": "==========\\s+START\\s+[^\\n]*==========",
+      "reason": "START blocks for official judges must not be manually emitted without real-run evidence."
+    },
+    {
+      "regex": "\\bPass!\\b",
+      "reason": "Pass markers must not be hardcoded as score claims."
+    }
+  ],
+  "allowed_content_verification_uses": [
+    "Locate official test inputs.",
+    "Authenticate official scripts and ELF files.",
+    "Record hashes and metadata.",
+    "Select a testcase to run.",
+    "Reject stale, missing, or mismatched test inputs."
+  ],
+  "disallowed_content_verification_uses": [
+    "Emitting testcase success only because a file exists.",
+    "Emitting testcase success only because a command line appears in a script.",
+    "Claiming real kernel capability based only on string or hash checks.",
+    "Mapping official commands to public judge keys without real execution and labeling that as REAL_RUN."
+  ],
+  "required_negative_tests_per_real_run_batch": [
+    "missing_target_file_must_not_emit_success",
+    "wrong_expected_stdout_must_not_emit_success",
+    "wrong_expected_exit_code_must_not_emit_success"
+  ],
+  "required_evidence_files_per_real_run_batch": [
+    "real_exec_program_path.txt",
+    "real_exec_source_image.txt",
+    "real_exec_elf_sha256.txt",
+    "real_exec_entry_pc.txt",
+    "real_exec_umode_entered.txt",
+    "real_exec_syscall_trace.txt",
+    "real_exec_page_fault_trace.txt",
+    "real_exec_stdout.txt",
+    "real_exec_stderr.txt",
+    "real_exec_exit_code.txt",
+    "real_exec_task_lifecycle.txt",
+    "negative_missing_file.log",
+    "negative_wrong_stdout.log",
+    "negative_wrong_exit_code.log",
+    "score_summary.txt",
+    "environment_fingerprint.txt"
+  ],
+  "non_regression_requirements": [
+    "cargo build --target riscv64gc-unknown-none-elf PASS",
+    "make all PASS",
+    "direct QEMU PASS",
+    "official Docker harness PASS",
+    "official score must remain >= current baseline unless explicitly authorized",
+    "LoongArch must not be faked"
+  ],
+  "large_file_policy": {
+    "max_copy_size_bytes": 52428800,
+    "rule": "Files larger than 50 MB must not be copied into .repair_logs; record path, size, sha256, and short metadata instead."
+  }
+}

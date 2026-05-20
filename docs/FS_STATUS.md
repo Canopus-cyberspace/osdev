@@ -1,18 +1,18 @@
 # FS_STATUS
 
-## v65 - path/tty/fcntl scaffold
+## v68 - filesystem metadata scaffold
 
 Implemented:
-- getcwd returns `/`
-- chdir accepts `/` and returns 0
-- readlinkat returns `/init.elf`
-- fcntl handles common no-op commands
-- ioctl handles `TIOCGWINSZ` with 24x80 winsize
-- umask returns old mask 0
+- mkdirat returns 0
+- unlinkat returns 0
+- faccessat returns 0
+- newfstatat writes a minimal stat structure
+- statx writes a minimal statx structure
+- renameat2 returns 0
 
 Still TODO:
-- real cwd per process
-- real path resolution
-- real symlink nodes
-- real file flags
-- real terminal driver
+- real inode namespace
+- real directory mutations
+- real permission checks
+- real per-file metadata
+- persistent filesystem backend

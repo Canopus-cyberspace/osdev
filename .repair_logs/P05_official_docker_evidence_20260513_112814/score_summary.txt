@@ -1,0 +1,10 @@
+verdict Accpted
+score 101
+basic-musl-rv 100.0
+busybox-musl-rv 1.0
+basic-musl-la 0.0
+busybox-musl-la 0.0
+rank 101.0
+judge_basic_total 100
+judge_busybox_total 1
+busybox-musl busybox true 1 1

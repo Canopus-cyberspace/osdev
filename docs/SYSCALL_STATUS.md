@@ -1,18 +1,59 @@
 # SYSCALL_STATUS
 
-## v65 - path/tty/fcntl scaffold
+## v70 - fs sync mount scaffold
 
 Runtime external init ELF now exercises:
-- prior fd/mm/time/proc syscalls
-- getcwd
-- fcntl
-- ioctl TIOCGWINSZ
-- readlinkat
-- umask
-- chdir
-- getpid/getppid/unsupported/exit
+- all previous fd/mm/time/proc/path/signal/event/fs syscalls
+- mount/umount2
+- statfs/fstatfs
+- truncate/ftruncate/fallocate
+- sync/fsync/fdatasync
+- utimensat
+- clone
+- wait4
+- execve
+- kill
+- tgkill
+- exit_group
 
 Implemented central dispatcher actions:
+- Mount
+- Umount2
+- Statfs
+- Fstatfs
+- Truncate
+- Ftruncate
+- Fallocate
+- Sync
+- Fsync
+- Fdatasync
+- Utimensat
+- Clone
+- Wait4
+- Execve
+- Kill
+- Tgkill
+- ExitGroup
+- Mkdirat
+- Unlinkat
+- Faccessat
+- Newfstatat
+- Renameat2
+- Statx
+- Eventfd2
+- EpollCreate1
+- EpollCtl
+- EpollPwait
+- Ppoll
+- Pselect6
+- Pipe2
+- Dup
+- Dup3
+- SchedYield
+- Nanosleep
+- Futex
+- RtSigaction
+- RtSigprocmask
 - Getcwd
 - Fcntl
 - Ioctl

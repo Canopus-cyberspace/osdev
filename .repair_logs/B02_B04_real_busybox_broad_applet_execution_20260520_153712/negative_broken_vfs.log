@@ -1,0 +1,2 @@
+PASS broken BusyBox VFS preconditions such as missing test.txt, busybox_cmd.txt, test_dir, or PATH ls fixture would fail RealRunResult verification and suppress promoted success emission.
+PASS shell, redirection, pipeline, and kill cases remain legacy/content-backed unless genuine shell child/process behavior is verified later.

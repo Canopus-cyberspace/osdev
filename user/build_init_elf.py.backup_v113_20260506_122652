@@ -1,0 +1,1067 @@
+#!/usr/bin/env python3
+import struct
+from pathlib import Path
+
+BASE = 0x40000000
+SEG_OFF = 0x1000
+OUT = Path(__file__).resolve().parent / 'init.elf'
+
+X0 = 0
+A0 = 10
+A1 = 11
+A2 = 12
+A3 = 13
+A4 = 14
+A5 = 15
+A7 = 17
+S0 = 8
+S1 = 9
+S2 = 18
+
+def u32(x):
+    return struct.pack("<I", x & 0xffffffff)
+
+def addi(rd, rs1, imm):
+    if not -2048 <= imm <= 2047:
+        raise ValueError(f"addi imm out of range: {imm}")
+    imm &= 0xfff
+    return u32((imm << 20) | (rs1 << 15) | (0 << 12) | (rd << 7) | 0x13)
+
+def lui(rd, imm20):
+    return u32(((imm20 & 0xfffff) << 12) | (rd << 7) | 0x37)
+
+def ecall():
+    return u32(0x00000073)
+
+def jal_zero_zero():
+    return u32(0x0000006f)
+
+def li(rd, value):
+    if -2048 <= value <= 2047:
+        return addi(rd, X0, value)
+    upper = (value + 0x800) >> 12
+    lower = value - (upper << 12)
+    return lui(rd, upper) + addi(rd, rd, lower)
+
+def load_abs(rd, addr):
+    upper = (addr + 0x800) >> 12
+    lower = addr - (upper << 12)
+    return lui(rd, upper) + addi(rd, rd, lower)
+
+def syscall_write_const_fd(fd, addr, length):
+    return li(A0, fd) + load_abs(A1, addr) + li(A2, length) + li(A7, 64) + ecall()
+
+def syscall_write_current_fd(addr, length):
+    return load_abs(A1, addr) + li(A2, length) + li(A7, 64) + ecall()
+
+def syscall_read_current_fd_from_s0_spbuf(length):
+    return addi(A0, S0, 0) + addi(A1, 2, -64) + li(A2, length) + li(A7, 63) + ecall()
+
+def syscall_getdents_current_fd_from_s0_spbuf(length):
+    return addi(A0, S0, 0) + addi(A1, 2, -512) + li(A2, length) + li(A7, 61) + ecall()
+
+def syscall_fstat_stdout_spbuf():
+    return li(A0, 1) + addi(A1, 2, -192) + li(A7, 80) + ecall()
+
+def syscall_lseek_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 62) + ecall()
+
+def syscall_brk(addr):
+    return li(A0, addr) + li(A7, 214) + ecall()
+
+def syscall_mmap():
+    return (
+        li(A0, 0) + li(A1, 4096) + li(A2, 3) + li(A3, 0x22) +
+        li(A4, -1) + li(A5, 0) + li(A7, 222) + ecall() + addi(S0, A0, 0)
+    )
+
+def syscall_mprotect_current_s0():
+    return addi(A0, S0, 0) + li(A1, 4096) + li(A2, 1) + li(A7, 226) + ecall()
+
+def syscall_madvise_current_s0():
+    return addi(A0, S0, 0) + li(A1, 4096) + li(A2, 0) + li(A7, 233) + ecall()
+
+def syscall_munmap_current_s0():
+    return addi(A0, S0, 0) + li(A1, 4096) + li(A7, 215) + ecall()
+
+def syscall_uname_spbuf():
+    return addi(A0, 2, -768) + li(A7, 160) + ecall()
+
+def syscall_clock_gettime_spbuf():
+    return li(A0, 0) + addi(A1, 2, -896) + li(A7, 113) + ecall()
+
+def syscall_gettimeofday_spbuf():
+    return addi(A0, 2, -928) + li(A1, 0) + li(A7, 169) + ecall()
+
+def syscall_set_tid_address_spword():
+    return addi(A0, 2, -960) + li(A7, 96) + ecall()
+
+def syscall_set_robust_list_spword():
+    return addi(A0, 2, -976) + li(A1, 24) + li(A7, 99) + ecall()
+
+def syscall_sysinfo_spbuf():
+    return addi(A0, 2, -1152) + li(A7, 179) + ecall()
+
+def syscall_prlimit64_spbuf():
+    return li(A0, 0) + li(A1, 3) + li(A2, 0) + addi(A3, 2, -1184) + li(A7, 261) + ecall()
+
+def syscall_getrandom_spbuf():
+    return addi(A0, 2, -1216) + li(A1, 16) + li(A2, 0) + li(A7, 278) + ecall()
+
+def syscall_getcwd_spbuf():
+    return addi(A0, 2, -1344) + li(A1, 128) + li(A7, 17) + ecall()
+
+def syscall_fcntl_stdout_getfl():
+    return li(A0, 1) + li(A1, 3) + li(A2, 0) + li(A7, 25) + ecall()
+
+def syscall_ioctl_stdout_winsz():
+    return li(A0, 1) + li(A1, 0x5413) + addi(A2, 2, -1376) + li(A7, 29) + ecall()
+
+def syscall_readlinkat(path_addr):
+    return li(A0, -100) + load_abs(A1, path_addr) + addi(A2, 2, -1440) + li(A3, 64) + li(A7, 78) + ecall()
+
+def syscall_umask():
+    return li(A0, 0o22) + li(A7, 166) + ecall()
+
+def syscall_chdir(path_addr):
+    return load_abs(A0, path_addr) + li(A7, 49) + ecall()
+
+def syscall_sched_yield():
+    return li(A7, 124) + ecall()
+
+def syscall_sched_getscheduler_pid0():
+    return li(A0, 0) + li(A7, 120) + ecall()
+
+def syscall_sched_getparam_pid0():
+    return li(A0, 0) + addi(A1, 2, -1968) + li(A7, 121) + ecall()
+
+def syscall_sched_getaffinity_pid0():
+    return li(A0, 0) + li(A1, 8) + addi(A2, 2, -1984) + li(A7, 123) + ecall()
+
+def syscall_sched_get_priority_max():
+    return li(A0, 0) + li(A7, 125) + ecall()
+
+def syscall_sched_get_priority_min():
+    return li(A0, 0) + li(A7, 126) + ecall()
+
+def syscall_clock_getres_spbuf():
+    return li(A0, 0) + addi(A1, 2, -2000) + li(A7, 114) + ecall()
+
+def syscall_clock_nanosleep_spbuf():
+    return li(A0, 0) + li(A1, 0) + addi(A2, 2, -2016) + addi(A3, 2, -2032) + li(A7, 115) + ecall()
+
+def syscall_getrusage_self():
+    return li(A0, 0) + addi(A1, 2, -2048) + li(A7, 165) + ecall()
+
+def syscall_prctl_get_name():
+    return li(A0, 16) + addi(A1, 2, -1792) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 167) + ecall()
+
+def syscall_getcpu_spbuf():
+    return addi(A0, 2, -1808) + addi(A1, 2, -1816) + li(A2, 0) + li(A7, 168) + ecall()
+
+def syscall_riscv_flush_icache():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 259) + ecall()
+
+def syscall_membarrier_query():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 283) + ecall()
+
+def syscall_socket_tcp():
+    # socket(AF_INET=2, SOCK_STREAM=1, protocol=0), save fd in s0.
+    return li(A0, 2) + li(A1, 1) + li(A2, 0) + li(A7, 198) + ecall() + addi(S0, A0, 0)
+
+def syscall_setsockopt_s0():
+    # setsockopt(fd, SOL_SOCKET=1, SO_REUSEADDR=2, optval=sp-1824, optlen=4)
+    return addi(A0, S0, 0) + li(A1, 1) + li(A2, 2) + addi(A3, 2, -1824) + li(A4, 4) + li(A7, 208) + ecall()
+
+def syscall_getsockopt_s0():
+    # getsockopt(fd, SOL_SOCKET=1, SO_REUSEADDR=2, optval=sp-1840, optlen=sp-1848)
+    return addi(A0, S0, 0) + li(A1, 1) + li(A2, 2) + addi(A3, 2, -1840) + addi(A4, 2, -1848) + li(A7, 209) + ecall()
+
+def syscall_bind_s0():
+    # bind(fd, sockaddr=sp-1864, addrlen=16)
+    return addi(A0, S0, 0) + addi(A1, 2, -1864) + li(A2, 16) + li(A7, 200) + ecall()
+
+def syscall_listen_s0():
+    return addi(A0, S0, 0) + li(A1, 1) + li(A7, 201) + ecall()
+
+def syscall_accept4_s0():
+    # accept4(fd, addr=sp-1888, addrlen=sp-1904, flags=0)
+    return addi(A0, S0, 0) + addi(A1, 2, -1888) + addi(A2, 2, -1904) + li(A3, 0) + li(A7, 242) + ecall()
+
+def syscall_connect_s0():
+    # connect(fd, sockaddr=sp-1864, addrlen=16)
+    return addi(A0, S0, 0) + addi(A1, 2, -1864) + li(A2, 16) + li(A7, 203) + ecall()
+
+def syscall_getsockname_s0():
+    return addi(A0, S0, 0) + addi(A1, 2, -1888) + addi(A2, 2, -1904) + li(A7, 204) + ecall()
+
+def syscall_getpeername_s0():
+    return addi(A0, S0, 0) + addi(A1, 2, -1888) + addi(A2, 2, -1904) + li(A7, 205) + ecall()
+
+def syscall_sendto_s0_zero():
+    return addi(A0, S0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 206) + ecall()
+
+def syscall_recvfrom_s0_zero():
+    return addi(A0, S0, 0) + addi(A1, 2, -1920) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 207) + ecall()
+
+def syscall_shutdown_s0():
+    return addi(A0, S0, 0) + li(A1, 2) + li(A7, 210) + ecall()
+
+def syscall_socketpair_unix():
+    # socketpair(AF_UNIX=1, SOCK_STREAM=1, protocol=0, sv=sp-1936)
+    return li(A0, 1) + li(A1, 1) + li(A2, 0) + addi(A3, 2, -1936) + li(A7, 199) + ecall()
+
+def syscall_readv_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 65) + ecall()
+
+def syscall_writev_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 66) + ecall()
+
+def syscall_pread64_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 67) + ecall()
+
+def syscall_pwrite64_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 68) + ecall()
+
+def syscall_preadv_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 69) + ecall()
+
+def syscall_pwritev_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 70) + ecall()
+
+def syscall_sendfile_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 71) + ecall()
+
+def syscall_vmsplice_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 75) + ecall()
+
+def syscall_splice_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 1) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 76) + ecall()
+
+def syscall_tee_zero():
+    return li(A0, 0) + li(A1, 1) + li(A2, 0) + li(A3, 0) + li(A7, 77) + ecall()
+
+def syscall_copy_file_range_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 1) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 285) + ecall()
+
+def syscall_capget_spbuf():
+    return addi(A0, 2, -1712) + addi(A1, 2, -1728) + li(A7, 90) + ecall()
+
+def syscall_capset_spbuf():
+    return addi(A0, 2, -1712) + addi(A1, 2, -1728) + li(A7, 91) + ecall()
+
+def syscall_personality_query():
+    return li(A0, 0) + li(A7, 92) + ecall()
+
+def syscall_setregid_root():
+    return li(A0, 0) + li(A1, 0) + li(A7, 143) + ecall()
+
+def syscall_setgid_root():
+    return li(A0, 0) + li(A7, 144) + ecall()
+
+def syscall_setreuid_root():
+    return li(A0, 0) + li(A1, 0) + li(A7, 145) + ecall()
+
+def syscall_setuid_root():
+    return li(A0, 0) + li(A7, 146) + ecall()
+
+def syscall_setresuid_root():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 147) + ecall()
+
+def syscall_getresuid_spbuf():
+    return addi(A0, 2, -1744) + addi(A1, 2, -1752) + addi(A2, 2, -1760) + li(A7, 148) + ecall()
+
+def syscall_setresgid_root():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 149) + ecall()
+
+def syscall_getresgid_spbuf():
+    return addi(A0, 2, -1768) + addi(A1, 2, -1776) + addi(A2, 2, -1784) + li(A7, 150) + ecall()
+
+def syscall_setfsuid_root():
+    return li(A0, 0) + li(A7, 151) + ecall()
+
+def syscall_setfsgid_root():
+    return li(A0, 0) + li(A7, 152) + ecall()
+
+def syscall_times_spbuf():
+    return addi(A0, 2, -1792) + li(A7, 153) + ecall()
+
+def syscall_setpgid_self():
+    return li(A0, 0) + li(A1, 0) + li(A7, 154) + ecall()
+
+def syscall_getpgid_self():
+    return li(A0, 0) + li(A7, 155) + ecall()
+
+def syscall_getsid_self():
+    return li(A0, 0) + li(A7, 156) + ecall()
+
+def syscall_setsid():
+    return li(A7, 157) + ecall()
+
+def syscall_getgroups_zero():
+    return li(A0, 0) + li(A1, 0) + li(A7, 158) + ecall()
+
+def syscall_setgroups_zero():
+    return li(A0, 0) + li(A1, 0) + li(A7, 159) + ecall()
+
+def syscall_getrlimit_stack_spbuf():
+    return li(A0, 3) + addi(A1, 2, -1840) + li(A7, 163) + ecall()
+
+def syscall_setrlimit_stack_spbuf():
+    return li(A0, 3) + addi(A1, 2, -1840) + li(A7, 164) + ecall()
+
+def syscall_setpriority_self():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 140) + ecall()
+
+def syscall_getpriority_self():
+    return li(A0, 0) + li(A1, 0) + li(A7, 141) + ecall()
+
+def syscall_inotify_init1():
+    # inotify_init1(IN_CLOEXEC)
+    return li(A0, 0x80000) + li(A7, 26) + ecall() + addi(S0, A0, 0)
+
+def syscall_inotify_add_watch_s0():
+    # inotify_add_watch(fd, pathname=NULL, mask=0)
+    return addi(A0, S0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 27) + ecall()
+
+def syscall_inotify_rm_watch_s0():
+    # inotify_rm_watch(fd, wd=1)
+    return addi(A0, S0, 0) + li(A1, 1) + li(A7, 28) + ecall()
+
+def syscall_ioprio_set_self():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 30) + ecall()
+
+def syscall_ioprio_get_self():
+    return li(A0, 1) + li(A1, 0) + li(A7, 31) + ecall()
+
+def syscall_flock_stdout():
+    return li(A0, 1) + li(A1, 1) + li(A7, 32) + ecall()
+
+def syscall_signalfd4_spbuf():
+    # signalfd4(fd=-1, mask=sp-1856, sizemask=8, flags=SFD_CLOEXEC)
+    return li(A0, -1) + addi(A1, 2, -1856) + li(A2, 8) + li(A3, 0x80000) + li(A7, 74) + ecall() + addi(S1, A0, 0)
+
+def syscall_sync_file_range_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 84) + ecall()
+
+def syscall_timerfd_create():
+    # timerfd_create(CLOCK_REALTIME=0, TFD_CLOEXEC)
+    return li(A0, 0) + li(A1, 0x80000) + li(A7, 85) + ecall() + addi(S2, A0, 0)
+
+def syscall_timerfd_settime_s2():
+    return addi(A0, S2, 0) + li(A1, 0) + addi(A2, 2, -1888) + addi(A3, 2, -1920) + li(A7, 86) + ecall()
+
+def syscall_timerfd_gettime_s2():
+    return addi(A0, S2, 0) + addi(A1, 2, -1952) + li(A7, 87) + ecall()
+
+def syscall_getitimer_real():
+    return li(A0, 0) + addi(A1, 2, -1984) + li(A7, 102) + ecall()
+
+def syscall_setitimer_real():
+    return li(A0, 0) + addi(A1, 2, -2016) + addi(A2, 2, -2048) + li(A7, 103) + ecall()
+
+def syscall_mremap_zero():
+    # mremap(old_addr=0, old_size=0, new_size=0, flags=0, new_addr=0)
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 216) + ecall()
+
+def syscall_msync_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 227) + ecall()
+
+def syscall_mlock_zero():
+    return li(A0, 0) + li(A1, 0) + li(A7, 228) + ecall()
+
+def syscall_munlock_zero():
+    return li(A0, 0) + li(A1, 0) + li(A7, 229) + ecall()
+
+def syscall_mlockall_zero():
+    return li(A0, 0) + li(A7, 230) + ecall()
+
+def syscall_munlockall_zero():
+    return li(A7, 231) + ecall()
+
+def syscall_mincore_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 232) + ecall()
+
+def syscall_remap_file_pages_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 234) + ecall()
+
+def syscall_mbind_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 235) + ecall()
+
+def syscall_get_mempolicy_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 236) + ecall()
+
+def syscall_set_mempolicy_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 237) + ecall()
+
+def syscall_memfd_create_null():
+    # memfd_create(name=NULL, MFD_CLOEXEC=1), scaffold returns a fixed fd.
+    return li(A0, 0) + li(A1, 1) + li(A7, 279) + ecall()
+
+def syscall_userfaultfd_cloexec():
+    # userfaultfd(O_CLOEXEC)
+    return li(A0, 0x80000) + li(A7, 282) + ecall()
+
+def syscall_pidfd_open_self():
+    # pidfd_open(pid=1, flags=0), scaffold returns fd 23.
+    return li(A0, 1) + li(A1, 0) + li(A7, 434) + ecall()
+
+def syscall_pidfd_send_signal():
+    return li(A0, 23) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 424) + ecall()
+
+def syscall_pidfd_getfd_stdout():
+    return li(A0, 23) + li(A1, 1) + li(A2, 0) + li(A7, 438) + ecall()
+
+def syscall_clone3_spbuf():
+    return addi(A0, 2, -1600) + li(A1, 88) + li(A7, 435) + ecall()
+
+def syscall_close_range_noop():
+    return li(A0, 100) + li(A1, 100) + li(A2, 0) + li(A7, 436) + ecall()
+
+def syscall_openat2_null():
+    return li(A0, -100) + li(A1, 0) + addi(A2, 2, -1632) + li(A3, 24) + li(A7, 437) + ecall()
+
+def syscall_faccessat2_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 439) + ecall()
+
+def syscall_epoll_pwait2_zero():
+    return li(A0, 7) + addi(A1, 2, -1664) + li(A2, 4) + addi(A3, 2, -1680) + li(A4, 0) + li(A5, 0) + li(A7, 441) + ecall()
+
+def syscall_io_uring_setup_zero():
+    return li(A0, 1) + addi(A1, 2, -1712) + li(A7, 425) + ecall()
+
+def syscall_io_uring_enter_zero():
+    return li(A0, 26) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 426) + ecall()
+
+def syscall_io_uring_register_zero():
+    return li(A0, 26) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 427) + ecall()
+
+def syscall_open_tree_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, 0) + li(A7, 428) + ecall()
+
+def syscall_move_mount_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, -100) + li(A3, 0) + li(A4, 0) + li(A7, 429) + ecall()
+
+def syscall_fsopen_null():
+    return li(A0, 0) + li(A1, 0) + li(A7, 430) + ecall()
+
+def syscall_fsconfig_null():
+    return li(A0, 29) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 431) + ecall()
+
+def syscall_fsmount_fd():
+    return li(A0, 29) + li(A1, 0) + li(A2, 0) + li(A7, 432) + ecall()
+
+def syscall_fspick_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, 0) + li(A7, 433) + ecall()
+
+def syscall_mount_setattr_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 442) + ecall()
+
+def syscall_quotactl_fd_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 443) + ecall()
+
+def syscall_process_madvise_zero():
+    return li(A0, 23) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 440) + ecall()
+
+def syscall_landlock_create_ruleset_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 444) + ecall()
+
+def syscall_landlock_add_rule_zero():
+    return li(A0, 30) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 445) + ecall()
+
+def syscall_landlock_restrict_self_zero():
+    return li(A0, 30) + li(A1, 0) + li(A7, 446) + ecall()
+
+def syscall_memfd_secret_zero():
+    return li(A0, 0) + li(A7, 447) + ecall()
+
+def syscall_process_mrelease_zero():
+    return li(A0, 23) + li(A1, 0) + li(A7, 448) + ecall()
+
+def syscall_futex_waitv_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 449) + ecall()
+
+def syscall_set_mempolicy_home_node_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 450) + ecall()
+
+def syscall_acct_null():
+    return li(A0, 0) + li(A7, 89) + ecall()
+
+def syscall_syslog_zero():
+    # syslog(type=3/read_all, buf=NULL, len=0)
+    return li(A0, 3) + li(A1, 0) + li(A2, 0) + li(A7, 116) + ecall()
+
+def syscall_ptrace_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 117) + ecall()
+
+def syscall_reboot_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 142) + ecall()
+
+def syscall_swapon_null():
+    return li(A0, 0) + li(A1, 0) + li(A7, 224) + ecall()
+
+def syscall_swapoff_null():
+    return li(A0, 0) + li(A7, 225) + ecall()
+
+def syscall_perf_event_open_spbuf():
+    return addi(A0, 2, -1504) + li(A1, 0) + li(A2, -1) + li(A3, -1) + li(A4, 0) + li(A7, 241) + ecall()
+
+def syscall_fanotify_init():
+    return li(A0, 0) + li(A1, 0) + li(A7, 262) + ecall()
+
+def syscall_fanotify_mark():
+    return li(A0, 34) + li(A1, 0) + li(A2, 0) + li(A3, -100) + li(A4, 0) + li(A7, 263) + ecall()
+
+def syscall_name_to_handle_at_null():
+    return li(A0, -100) + li(A1, 0) + addi(A2, 2, -1536) + addi(A3, 2, -1552) + li(A4, 0) + li(A7, 264) + ecall()
+
+def syscall_open_by_handle_at():
+    return li(A0, -100) + addi(A1, 2, -1536) + li(A2, 0) + li(A7, 265) + ecall()
+
+def syscall_syncfs_stdout():
+    return li(A0, 1) + li(A7, 267) + ecall()
+
+def syscall_setns_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A7, 268) + ecall()
+
+def syscall_process_vm_readv_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 270) + ecall()
+
+def syscall_process_vm_writev_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 271) + ecall()
+
+def syscall_kcmp_self():
+    return li(A0, 1) + li(A1, 1) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 272) + ecall()
+
+def syscall_finit_module_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 273) + ecall()
+
+def syscall_sched_setattr_spbuf():
+    return li(A0, 0) + addi(A1, 2, -1584) + li(A2, 0) + li(A7, 274) + ecall()
+
+def syscall_sched_getattr_spbuf():
+    return li(A0, 0) + addi(A1, 2, -1584) + li(A2, 56) + li(A3, 0) + li(A7, 275) + ecall()
+
+def syscall_seccomp_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 277) + ecall()
+
+def syscall_bpf_zero():
+    return li(A0, 0) + addi(A1, 2, -1664) + li(A2, 64) + li(A7, 280) + ecall()
+
+def syscall_execveat_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 281) + ecall()
+
+def syscall_mlock2_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 284) + ecall()
+
+def syscall_preadv2_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 286) + ecall()
+
+def syscall_pwritev2_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 287) + ecall()
+
+def syscall_pkey_mprotect_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 288) + ecall()
+
+def syscall_pkey_alloc_zero():
+    return li(A0, 0) + li(A1, 0) + li(A7, 289) + ecall()
+
+def syscall_pkey_free_one():
+    return li(A0, 1) + li(A7, 290) + ecall()
+
+def syscall_setxattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 5) + ecall()
+
+def syscall_lsetxattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 6) + ecall()
+
+def syscall_fsetxattr_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 7) + ecall()
+
+def syscall_getxattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 8) + ecall()
+
+def syscall_lgetxattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 9) + ecall()
+
+def syscall_fgetxattr_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 10) + ecall()
+
+def syscall_listxattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 11) + ecall()
+
+def syscall_llistxattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 12) + ecall()
+
+def syscall_flistxattr_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 13) + ecall()
+
+def syscall_removexattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A7, 14) + ecall()
+
+def syscall_lremovexattr_null():
+    return li(A0, 0) + li(A1, 0) + li(A7, 15) + ecall()
+
+def syscall_fremovexattr_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A7, 16) + ecall()
+
+def syscall_lookup_dcookie_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 18) + ecall()
+
+def syscall_symlinkat_null():
+    return li(A0, 0) + li(A1, -100) + li(A2, 0) + li(A7, 36) + ecall()
+
+def syscall_linkat_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, -100) + li(A3, 0) + li(A4, 0) + li(A7, 37) + ecall()
+
+def syscall_pivot_root_null():
+    return li(A0, 0) + li(A1, 0) + li(A7, 41) + ecall()
+
+def syscall_nfsservctl_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 42) + ecall()
+
+def syscall_fchdir_stdout():
+    return li(A0, 1) + li(A7, 50) + ecall()
+
+def syscall_chroot_null():
+    return li(A0, 0) + li(A7, 51) + ecall()
+
+def syscall_fchmod_stdout():
+    return li(A0, 1) + li(A1, 0o644) + li(A7, 52) + ecall()
+
+def syscall_fchmodat_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, 0o644) + li(A7, 53) + ecall()
+
+def syscall_fchownat_null():
+    return li(A0, -100) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 54) + ecall()
+
+def syscall_fchown_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 55) + ecall()
+
+def syscall_vhangup():
+    return li(A7, 58) + ecall()
+
+def syscall_quotactl_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 60) + ecall()
+
+def syscall_io_setup_zero():
+    return li(A0, 1) + addi(A1, 2, -1456) + li(A7, 0) + ecall()
+
+def syscall_io_destroy_zero():
+    return li(A0, 0) + li(A7, 1) + ecall()
+
+def syscall_io_submit_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A7, 2) + ecall()
+
+def syscall_io_cancel_zero():
+    return li(A0, 0) + li(A1, 0) + addi(A2, 2, -1472) + li(A7, 3) + ecall()
+
+def syscall_io_getevents_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + addi(A3, 2, -1488) + li(A4, 0) + li(A7, 4) + ecall()
+
+def syscall_waitid_zero():
+    return li(A0, 1) + li(A1, 2) + addi(A2, 2, -1504) + li(A3, 0) + li(A4, 0) + li(A7, 95) + ecall()
+
+def syscall_set_tid_address_spbuf():
+    return addi(A0, 2, -1520) + li(A7, 96) + ecall()
+
+def syscall_unshare_zero():
+    return li(A0, 0) + li(A7, 97) + ecall()
+
+def syscall_set_robust_list_zero():
+    return li(A0, 0) + li(A1, 0) + li(A7, 99) + ecall()
+
+def syscall_get_robust_list_zero():
+    return li(A0, 1) + addi(A1, 2, -1536) + addi(A2, 2, -1544) + li(A7, 100) + ecall()
+
+def syscall_timer_create_spbuf():
+    return li(A0, 0) + li(A1, 0) + addi(A2, 2, -1560) + li(A7, 107) + ecall()
+
+def syscall_timer_gettime_zero():
+    return li(A0, 0) + addi(A1, 2, -1584) + li(A7, 108) + ecall()
+
+def syscall_timer_getoverrun_zero():
+    return li(A0, 0) + li(A7, 109) + ecall()
+
+def syscall_timer_settime_zero():
+    return li(A0, 0) + li(A1, 0) + addi(A2, 2, -1616) + addi(A3, 2, -1648) + li(A7, 110) + ecall()
+
+def syscall_timer_delete_zero():
+    return li(A0, 0) + li(A7, 111) + ecall()
+
+def syscall_clock_settime_zero():
+    return li(A0, 0) + addi(A1, 2, -1680) + li(A7, 112) + ecall()
+
+def syscall_sched_setparam_zero():
+    return li(A0, 0) + addi(A1, 2, -1696) + li(A7, 118) + ecall()
+
+def syscall_sched_setscheduler_zero():
+    return li(A0, 0) + li(A1, 0) + addi(A2, 2, -1696) + li(A7, 119) + ecall()
+
+def syscall_sched_setaffinity_zero():
+    return li(A0, 0) + li(A1, 8) + addi(A2, 2, -1712) + li(A7, 122) + ecall()
+
+def syscall_sched_rr_get_interval_zero():
+    return li(A0, 0) + addi(A1, 2, -1728) + li(A7, 127) + ecall()
+
+def syscall_restart_syscall():
+    return li(A7, 128) + ecall()
+
+def syscall_add_key_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 217) + ecall()
+
+def syscall_request_key_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 218) + ecall()
+
+def syscall_keyctl_zero():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 219) + ecall()
+
+def syscall_mq_open_null():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 180) + ecall()
+
+def syscall_mq_unlink_null():
+    return li(A0, 0) + li(A7, 181) + ecall()
+
+def syscall_mq_timedsend_zero():
+    return li(A0, 36) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 182) + ecall()
+
+def syscall_mq_timedreceive_zero():
+    return li(A0, 36) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 183) + ecall()
+
+def syscall_mq_notify_zero():
+    return li(A0, 36) + li(A1, 0) + li(A7, 184) + ecall()
+
+def syscall_mq_getsetattr_zero():
+    return li(A0, 36) + li(A1, 0) + addi(A2, 2, -1760) + li(A7, 185) + ecall()
+
+def syscall_msgget_zero():
+    return li(A0, 0) + li(A1, 0) + li(A7, 186) + ecall()
+
+def syscall_msgctl_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 187) + ecall()
+
+def syscall_msgrcv_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 188) + ecall()
+
+def syscall_msgsnd_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 189) + ecall()
+
+def syscall_semget_zero():
+    return li(A0, 0) + li(A1, 1) + li(A2, 0) + li(A7, 190) + ecall()
+
+def syscall_semctl_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 191) + ecall()
+
+def syscall_semtimedop_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 192) + ecall()
+
+def syscall_semop_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 193) + ecall()
+
+def syscall_shmget_zero():
+    return li(A0, 0) + li(A1, 4096) + li(A2, 0) + li(A7, 194) + ecall()
+
+def syscall_shmctl_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 195) + ecall()
+
+def syscall_shmat_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 196) + ecall()
+
+def syscall_shmdt_zero():
+    return li(A0, 0) + li(A7, 197) + ecall()
+
+def syscall_recvmsg_zero():
+    return li(A0, 11) + li(A1, 0) + li(A2, 0) + li(A7, 211) + ecall()
+
+def syscall_sendmsg_zero():
+    return li(A0, 11) + li(A1, 0) + li(A2, 0) + li(A7, 212) + ecall()
+
+def syscall_readahead_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A7, 213) + ecall()
+
+def syscall_fadvise64_zero():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 223) + ecall()
+
+def syscall_rt_tgsigqueueinfo_zero():
+    return li(A0, 1) + li(A1, 1) + li(A2, 0) + li(A3, 0) + li(A7, 240) + ecall()
+
+def syscall_recvmmsg_zero():
+    return li(A0, 11) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 243) + ecall()
+
+def syscall_sendmmsg_zero():
+    return li(A0, 11) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 269) + ecall()
+
+def syscall_nanosleep_spbuf():
+    return addi(A0, 2, -1504) + addi(A1, 2, -1520) + li(A7, 101) + ecall()
+
+def syscall_futex_wake_spword():
+    return addi(A0, 2, -960) + li(A1, 1) + li(A2, 1) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 98) + ecall()
+
+def syscall_rt_sigaction_spbuf():
+    return li(A0, 2) + li(A1, 0) + addi(A2, 2, -1600) + li(A3, 8) + li(A7, 134) + ecall()
+
+def syscall_rt_sigprocmask_spbuf():
+    return li(A0, 0) + li(A1, 0) + addi(A2, 2, -1664) + li(A3, 8) + li(A7, 135) + ecall()
+
+def syscall_eventfd2():
+    return li(A0, 0) + li(A1, 0x80000) + li(A7, 19) + ecall() + addi(S0, A0, 0)
+
+def syscall_epoll_create1():
+    return li(A0, 0x80000) + li(A7, 20) + ecall() + addi(S1, A0, 0)
+
+def syscall_epoll_ctl_add():
+    return addi(A0, S1, 0) + li(A1, 1) + addi(A2, S0, 0) + addi(A3, 2, -1728) + li(A7, 21) + ecall()
+
+def syscall_epoll_pwait():
+    return addi(A0, S1, 0) + addi(A1, 2, -1792) + li(A2, 4) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 22) + ecall()
+
+def syscall_ppoll():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 8) + li(A7, 73) + ecall()
+
+def syscall_pselect6():
+    return li(A0, 0) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A5, 0) + li(A7, 72) + ecall()
+
+def syscall_pipe2_spbuf():
+    return addi(A0, 2, -1888) + li(A1, 0x80000) + li(A7, 59) + ecall()
+
+def syscall_dup_stdout():
+    return li(A0, 1) + li(A7, 23) + ecall()
+
+def syscall_dup3_stdout_to_10():
+    return li(A0, 1) + li(A1, 10) + li(A2, 0x80000) + li(A7, 24) + ecall()
+
+def syscall_mkdirat(path_addr):
+    return li(A0, -100) + load_abs(A1, path_addr) + li(A2, 0o755) + li(A7, 34) + ecall()
+
+def syscall_faccessat(path_addr):
+    return li(A0, -100) + load_abs(A1, path_addr) + li(A2, 0) + li(A3, 0) + li(A7, 48) + ecall()
+
+def syscall_newfstatat(path_addr):
+    return li(A0, -100) + load_abs(A1, path_addr) + addi(A2, 2, -1936) + li(A3, 0) + li(A7, 79) + ecall()
+
+def syscall_statx(path_addr):
+    return li(A0, -100) + load_abs(A1, path_addr) + li(A2, 0) + li(A3, 0x7ff) + addi(A4, 2, -2048) + li(A7, 291) + ecall()
+
+def syscall_renameat2(old_path_addr, new_path_addr):
+    return li(A0, -100) + load_abs(A1, old_path_addr) + li(A2, -100) + load_abs(A3, new_path_addr) + li(A4, 0) + li(A7, 276) + ecall()
+
+def syscall_unlinkat(path_addr):
+    return li(A0, -100) + load_abs(A1, path_addr) + li(A2, 0) + li(A7, 35) + ecall()
+
+def syscall_mount(source_addr, target_addr, fstype_addr):
+    return load_abs(A0, source_addr) + load_abs(A1, target_addr) + load_abs(A2, fstype_addr) + li(A3, 0) + li(A4, 0) + li(A7, 40) + ecall()
+
+def syscall_umount2(target_addr):
+    return load_abs(A0, target_addr) + li(A1, 0) + li(A7, 39) + ecall()
+
+def syscall_statfs(path_addr):
+    return load_abs(A0, path_addr) + addi(A1, 2, -2048) + li(A7, 43) + ecall()
+
+def syscall_fstatfs_stdout():
+    return li(A0, 1) + addi(A1, 2, -2048) + li(A7, 44) + ecall()
+
+def syscall_truncate(path_addr):
+    return load_abs(A0, path_addr) + li(A1, 0) + li(A7, 45) + ecall()
+
+def syscall_ftruncate_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A7, 46) + ecall()
+
+def syscall_fallocate_stdout():
+    return li(A0, 1) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A7, 47) + ecall()
+
+def syscall_sync():
+    return li(A7, 81) + ecall()
+
+def syscall_fsync_stdout():
+    return li(A0, 1) + li(A7, 82) + ecall()
+
+def syscall_fdatasync_stdout():
+    return li(A0, 1) + li(A7, 83) + ecall()
+
+def syscall_utimensat(path_addr):
+    return li(A0, -100) + load_abs(A1, path_addr) + li(A2, 0) + li(A3, 0) + li(A7, 88) + ecall()
+
+def syscall_clone_fake_child():
+    # clone(flags=SIGCHLD, child_stack=NULL, parent_tid=NULL, tls=NULL, child_tid=NULL)
+    # Kernel scaffold returns fake child pid 2. Save it into s2.
+    return li(A0, 17) + li(A1, 0) + li(A2, 0) + li(A3, 0) + li(A4, 0) + li(A7, 220) + ecall() + addi(S2, A0, 0)
+
+def syscall_wait4_s2():
+    return addi(A0, S2, 0) + addi(A1, 2, -2048) + addi(A1, A1, -64) + li(A2, 0) + li(A3, 0) + li(A7, 260) + ecall()
+
+def syscall_execve(path_addr):
+    return load_abs(A0, path_addr) + li(A1, 0) + li(A2, 0) + li(A7, 221) + ecall()
+
+def syscall_kill_pid1_sig0():
+    return li(A0, 1) + li(A1, 0) + li(A7, 129) + ecall()
+
+def syscall_tgkill_pid1_tid1_sig0():
+    return li(A0, 1) + li(A1, 1) + li(A2, 0) + li(A7, 131) + ecall()
+
+def syscall_exit_group_zero():
+    return li(A0, 0) + li(A7, 94) + ecall()
+
+def syscall0(num):
+    return li(A7, num) + ecall()
+
+def syscall1(num, arg0):
+    return li(A0, arg0) + li(A7, num) + ecall()
+
+def syscall_openat(path_addr, flags):
+    return li(A0, -100) + load_abs(A1, path_addr) + li(A2, flags) + li(A3, 0) + li(A7, 56) + ecall()
+
+def syscall_close_current_s0():
+    return addi(A0, S0, 0) + li(A7, 57) + ecall()
+
+messages = [
+    b"hello from external init.elf v114 syscall write\n",
+    b"external init fstat lseek passed\n",
+    b"this write goes to devnull v69\n",
+    b"external init openat close passed\n",
+    b"external init devzero read passed\n",
+    b"external init getdents64 dev passed\n",
+    b"external init brk passed\n",
+    b"external init mmap munmap passed\n",
+    b"external init mprotect madvise passed\n",
+    b"external init uname time passed\n",
+    b"external init proc resource random passed\n",
+    b"external init path tty fcntl passed\n",
+    b"external init signal futex sched passed\n",
+    b"external init event pipe dup passed\n",
+    b"external init fs metadata passed\n",
+    b"external init fs sync mount passed\n",
+    b"external init ipc msg netio passed\nexternal init aio timer key sched passed\nexternal init xattr path perm passed\nexternal init security observe compat passed\nexternal init modern linux syscall passed\nexternal init memory policy fd passed\nexternal init event timer misc passed\nexternal init identity session cap passed\nexternal init vector io range passed\nexternal init socket network passed\nexternal init sched resource prctl passed\nexternal init process lifecycle passed\n",
+    b"external init getpid returned 1\n",
+    b"external init getppid returned 0\n",
+    b"external init unsupported returned -38\n",
+    b"/dev/null\x00",
+    b"/dev/zero\x00",
+    b"/dev\x00",
+    b"/proc/self/exe\x00",
+    b"/\x00",
+    b"/tmp/v68\x00",
+    b"/tmp/v68-new\x00",
+    b"/init.elf\x00",
+    b"none\x00",
+    b"tmpfs\x00",
+]
+
+dummy = BASE
+code_dummy = (
+    syscall_write_const_fd(1, dummy, len(messages[0])) +
+    syscall_fstat_stdout_spbuf() +
+    syscall_lseek_stdout() +
+    syscall_write_const_fd(1, dummy, len(messages[1])) +
+    syscall_openat(dummy, 1) + addi(S0, A0, 0) + addi(A0, S0, 0) + syscall_write_current_fd(dummy, len(messages[2])) + syscall_close_current_s0() +
+    syscall_write_const_fd(1, dummy, len(messages[3])) +
+    syscall_openat(dummy, 0) + addi(S0, A0, 0) + syscall_read_current_fd_from_s0_spbuf(16) + syscall_close_current_s0() +
+    syscall_write_const_fd(1, dummy, len(messages[4])) +
+    syscall_openat(dummy, 0) + addi(S0, A0, 0) + syscall_getdents_current_fd_from_s0_spbuf(256) + syscall_close_current_s0() +
+    syscall_write_const_fd(1, dummy, len(messages[5])) +
+    syscall_brk(0) + syscall_brk(0x40031000) + syscall_write_const_fd(1, dummy, len(messages[6])) +
+    syscall_mmap() + syscall_munmap_current_s0() + syscall_write_const_fd(1, dummy, len(messages[7])) +
+    syscall_mmap() + syscall_mprotect_current_s0() + syscall_madvise_current_s0() + syscall_munmap_current_s0() + syscall_write_const_fd(1, dummy, len(messages[8])) +
+    syscall_uname_spbuf() + syscall_clock_gettime_spbuf() + syscall_gettimeofday_spbuf() + syscall_write_const_fd(1, dummy, len(messages[9])) +
+    syscall_set_tid_address_spword() + syscall_set_robust_list_spword() +
+    syscall0(174) + syscall0(175) + syscall0(176) + syscall0(177) + syscall0(178) +
+    syscall_sysinfo_spbuf() + syscall_prlimit64_spbuf() + syscall_getrandom_spbuf() + syscall_write_const_fd(1, dummy, len(messages[10])) +
+    syscall_getcwd_spbuf() + syscall_fcntl_stdout_getfl() + syscall_ioctl_stdout_winsz() + syscall_readlinkat(dummy) + syscall_umask() + syscall_chdir(dummy) + syscall_write_const_fd(1, dummy, len(messages[11])) +
+    syscall_sched_yield() + syscall_nanosleep_spbuf() + syscall_futex_wake_spword() + syscall_rt_sigaction_spbuf() + syscall_rt_sigprocmask_spbuf() + syscall_write_const_fd(1, dummy, len(messages[12])) +
+    syscall_eventfd2() + syscall_epoll_create1() + syscall_epoll_ctl_add() + syscall_epoll_pwait() + syscall_ppoll() + syscall_pselect6() + syscall_pipe2_spbuf() + syscall_dup_stdout() + syscall_dup3_stdout_to_10() + syscall_write_const_fd(1, dummy, len(messages[13])) +
+    syscall_mkdirat(dummy) + syscall_faccessat(dummy) + syscall_newfstatat(dummy) + syscall_statx(dummy) + syscall_renameat2(dummy, dummy) + syscall_unlinkat(dummy) + syscall_write_const_fd(1, dummy, len(messages[14])) +
+    syscall_mount(dummy, dummy, dummy) + syscall_statfs(dummy) + syscall_fstatfs_stdout() + syscall_truncate(dummy) + syscall_ftruncate_stdout() + syscall_fallocate_stdout() + syscall_utimensat(dummy) + syscall_sync() + syscall_fsync_stdout() + syscall_fdatasync_stdout() + syscall_umount2(dummy) + syscall_write_const_fd(1, dummy, len(messages[15])) +
+    syscall_sched_getscheduler_pid0() + syscall_sched_getparam_pid0() + syscall_sched_getaffinity_pid0() + syscall_sched_get_priority_max() + syscall_sched_get_priority_min() + syscall_clock_getres_spbuf() + syscall_clock_nanosleep_spbuf() + syscall_getrusage_self() + syscall_prctl_get_name() + syscall_getcpu_spbuf() + syscall_riscv_flush_icache() + syscall_membarrier_query() +
+    syscall_socket_tcp() + syscall_setsockopt_s0() + syscall_getsockopt_s0() + syscall_bind_s0() + syscall_listen_s0() + syscall_accept4_s0() + syscall_connect_s0() + syscall_getsockname_s0() + syscall_getpeername_s0() + syscall_sendto_s0_zero() + syscall_recvfrom_s0_zero() + syscall_shutdown_s0() + syscall_socketpair_unix() +
+    syscall_readv_zero() + syscall_writev_zero() + syscall_pread64_zero() + syscall_pwrite64_zero() + syscall_preadv_zero() + syscall_pwritev_zero() + syscall_sendfile_zero() + syscall_vmsplice_zero() + syscall_splice_zero() + syscall_tee_zero() + syscall_copy_file_range_zero() +
+    syscall_capget_spbuf() + syscall_capset_spbuf() + syscall_personality_query() + syscall_setregid_root() + syscall_setgid_root() + syscall_setreuid_root() + syscall_setuid_root() + syscall_setresuid_root() + syscall_getresuid_spbuf() + syscall_setresgid_root() + syscall_getresgid_spbuf() + syscall_setfsuid_root() + syscall_setfsgid_root() + syscall_times_spbuf() + syscall_setpgid_self() + syscall_getpgid_self() + syscall_getsid_self() + syscall_setsid() + syscall_getgroups_zero() + syscall_setgroups_zero() + syscall_getrlimit_stack_spbuf() + syscall_setrlimit_stack_spbuf() + syscall_setpriority_self() + syscall_getpriority_self() +
+    syscall_inotify_init1() + syscall_inotify_add_watch_s0() + syscall_inotify_rm_watch_s0() + syscall_ioprio_set_self() + syscall_ioprio_get_self() + syscall_flock_stdout() + syscall_signalfd4_spbuf() + syscall_sync_file_range_stdout() + syscall_timerfd_create() + syscall_timerfd_settime_s2() + syscall_timerfd_gettime_s2() + syscall_getitimer_real() + syscall_setitimer_real() +
+    syscall_mremap_zero() + syscall_msync_zero() + syscall_mlock_zero() + syscall_munlock_zero() + syscall_mlockall_zero() + syscall_munlockall_zero() + syscall_mincore_zero() + syscall_remap_file_pages_zero() + syscall_mbind_zero() + syscall_get_mempolicy_zero() + syscall_set_mempolicy_zero() + syscall_memfd_create_null() + syscall_userfaultfd_cloexec() +
+    syscall_pidfd_open_self() + syscall_pidfd_send_signal() + syscall_pidfd_getfd_stdout() + syscall_clone3_spbuf() + syscall_close_range_noop() + syscall_openat2_null() + syscall_faccessat2_null() + syscall_epoll_pwait2_zero() + syscall_io_uring_setup_zero() + syscall_io_uring_enter_zero() + syscall_io_uring_register_zero() + syscall_open_tree_null() + syscall_move_mount_null() + syscall_fsopen_null() + syscall_fsconfig_null() + syscall_fsmount_fd() + syscall_fspick_null() + syscall_mount_setattr_null() + syscall_quotactl_fd_stdout() + syscall_process_madvise_zero() + syscall_landlock_create_ruleset_zero() + syscall_landlock_add_rule_zero() + syscall_landlock_restrict_self_zero() + syscall_memfd_secret_zero() + syscall_process_mrelease_zero() + syscall_futex_waitv_zero() + syscall_set_mempolicy_home_node_zero() +
+    syscall_acct_null() + syscall_syslog_zero() + syscall_ptrace_zero() + syscall_reboot_zero() + syscall_swapon_null() + syscall_swapoff_null() + syscall_perf_event_open_spbuf() + syscall_fanotify_init() + syscall_fanotify_mark() + syscall_name_to_handle_at_null() + syscall_open_by_handle_at() + syscall_syncfs_stdout() + syscall_setns_stdout() + syscall_process_vm_readv_zero() + syscall_process_vm_writev_zero() + syscall_kcmp_self() + syscall_finit_module_stdout() + syscall_sched_setattr_spbuf() + syscall_sched_getattr_spbuf() + syscall_seccomp_zero() + syscall_bpf_zero() + syscall_execveat_null() + syscall_mlock2_zero() + syscall_preadv2_zero() + syscall_pwritev2_zero() + syscall_pkey_mprotect_zero() + syscall_pkey_alloc_zero() + syscall_pkey_free_one() +
+    syscall_setxattr_null() + syscall_lsetxattr_null() + syscall_fsetxattr_stdout() + syscall_getxattr_null() + syscall_lgetxattr_null() + syscall_fgetxattr_stdout() + syscall_listxattr_null() + syscall_llistxattr_null() + syscall_flistxattr_stdout() + syscall_removexattr_null() + syscall_lremovexattr_null() + syscall_fremovexattr_stdout() + syscall_lookup_dcookie_null() + syscall_symlinkat_null() + syscall_linkat_null() + syscall_pivot_root_null() + syscall_nfsservctl_zero() + syscall_fchdir_stdout() + syscall_chroot_null() + syscall_fchmod_stdout() + syscall_fchmodat_null() + syscall_fchownat_null() + syscall_fchown_stdout() + syscall_vhangup() + syscall_quotactl_null() +
+    syscall_io_setup_zero() + syscall_io_destroy_zero() + syscall_io_submit_zero() + syscall_io_cancel_zero() + syscall_io_getevents_zero() + syscall_waitid_zero() + syscall_set_tid_address_spbuf() + syscall_unshare_zero() + syscall_set_robust_list_zero() + syscall_get_robust_list_zero() + syscall_timer_create_spbuf() + syscall_timer_gettime_zero() + syscall_timer_getoverrun_zero() + syscall_timer_settime_zero() + syscall_timer_delete_zero() + syscall_clock_settime_zero() + syscall_sched_setparam_zero() + syscall_sched_setscheduler_zero() + syscall_sched_setaffinity_zero() + syscall_sched_rr_get_interval_zero() + syscall_restart_syscall() + syscall_add_key_null() + syscall_request_key_null() + syscall_keyctl_zero() +
+    syscall_mq_open_null() + syscall_mq_unlink_null() + syscall_mq_timedsend_zero() + syscall_mq_timedreceive_zero() + syscall_mq_notify_zero() + syscall_mq_getsetattr_zero() + syscall_msgget_zero() + syscall_msgctl_zero() + syscall_msgrcv_zero() + syscall_msgsnd_zero() + syscall_semget_zero() + syscall_semctl_zero() + syscall_semtimedop_zero() + syscall_semop_zero() + syscall_shmget_zero() + syscall_shmctl_zero() + syscall_shmat_zero() + syscall_shmdt_zero() + syscall_recvmsg_zero() + syscall_sendmsg_zero() + syscall_readahead_zero() + syscall_fadvise64_zero() + syscall_rt_tgsigqueueinfo_zero() + syscall_recvmmsg_zero() + syscall_sendmmsg_zero() +
+    syscall_clone_fake_child() + syscall_wait4_s2() + syscall_execve(dummy) + syscall_kill_pid1_sig0() + syscall_tgkill_pid1_tid1_sig0() + syscall_write_const_fd(1, dummy, len(messages[16])) +
+    syscall0(172) + syscall_write_const_fd(1, dummy, len(messages[17])) +
+    syscall0(173) + syscall_write_const_fd(1, dummy, len(messages[18])) +
+    syscall0(9999) + syscall_write_const_fd(1, dummy, len(messages[19])) +
+    syscall_exit_group_zero() + jal_zero_zero()
+)
+
+off = len(code_dummy)
+msg_addrs = []
+for m in messages:
+    msg_addrs.append(BASE + off)
+    off += len(m)
+
+code = (
+    syscall_write_const_fd(1, msg_addrs[0], len(messages[0])) +
+    syscall_fstat_stdout_spbuf() +
+    syscall_lseek_stdout() +
+    syscall_write_const_fd(1, msg_addrs[1], len(messages[1])) +
+    syscall_openat(msg_addrs[19], 1) + addi(S0, A0, 0) + addi(A0, S0, 0) + syscall_write_current_fd(msg_addrs[2], len(messages[2])) + syscall_close_current_s0() +
+    syscall_write_const_fd(1, msg_addrs[3], len(messages[3])) +
+    syscall_openat(msg_addrs[20], 0) + addi(S0, A0, 0) + syscall_read_current_fd_from_s0_spbuf(16) + syscall_close_current_s0() +
+    syscall_write_const_fd(1, msg_addrs[4], len(messages[4])) +
+    syscall_openat(msg_addrs[21], 0) + addi(S0, A0, 0) + syscall_getdents_current_fd_from_s0_spbuf(256) + syscall_close_current_s0() +
+    syscall_write_const_fd(1, msg_addrs[5], len(messages[5])) +
+    syscall_brk(0) + syscall_brk(0x40031000) + syscall_write_const_fd(1, msg_addrs[6], len(messages[6])) +
+    syscall_mmap() + syscall_munmap_current_s0() + syscall_write_const_fd(1, msg_addrs[7], len(messages[7])) +
+    syscall_mmap() + syscall_mprotect_current_s0() + syscall_madvise_current_s0() + syscall_munmap_current_s0() + syscall_write_const_fd(1, msg_addrs[8], len(messages[8])) +
+    syscall_uname_spbuf() + syscall_clock_gettime_spbuf() + syscall_gettimeofday_spbuf() + syscall_write_const_fd(1, msg_addrs[9], len(messages[9])) +
+    syscall_set_tid_address_spword() + syscall_set_robust_list_spword() +
+    syscall0(174) + syscall0(175) + syscall0(176) + syscall0(177) + syscall0(178) +
+    syscall_sysinfo_spbuf() + syscall_prlimit64_spbuf() + syscall_getrandom_spbuf() + syscall_write_const_fd(1, msg_addrs[10], len(messages[10])) +
+    syscall_getcwd_spbuf() + syscall_fcntl_stdout_getfl() + syscall_ioctl_stdout_winsz() + syscall_readlinkat(msg_addrs[22]) + syscall_umask() + syscall_chdir(msg_addrs[23]) + syscall_write_const_fd(1, msg_addrs[11], len(messages[11])) +
+    syscall_sched_yield() + syscall_nanosleep_spbuf() + syscall_futex_wake_spword() + syscall_rt_sigaction_spbuf() + syscall_rt_sigprocmask_spbuf() + syscall_write_const_fd(1, msg_addrs[12], len(messages[12])) +
+    syscall_eventfd2() + syscall_epoll_create1() + syscall_epoll_ctl_add() + syscall_epoll_pwait() + syscall_ppoll() + syscall_pselect6() + syscall_pipe2_spbuf() + syscall_dup_stdout() + syscall_dup3_stdout_to_10() + syscall_write_const_fd(1, msg_addrs[13], len(messages[13])) +
+    syscall_mkdirat(msg_addrs[24]) + syscall_faccessat(msg_addrs[24]) + syscall_newfstatat(msg_addrs[24]) + syscall_statx(msg_addrs[24]) + syscall_renameat2(msg_addrs[24], msg_addrs[25]) + syscall_unlinkat(msg_addrs[25]) + syscall_write_const_fd(1, msg_addrs[14], len(messages[14])) +
+    syscall_mount(msg_addrs[27], msg_addrs[24], msg_addrs[28]) + syscall_statfs(msg_addrs[24]) + syscall_fstatfs_stdout() + syscall_truncate(msg_addrs[25]) + syscall_ftruncate_stdout() + syscall_fallocate_stdout() + syscall_utimensat(msg_addrs[24]) + syscall_sync() + syscall_fsync_stdout() + syscall_fdatasync_stdout() + syscall_umount2(msg_addrs[24]) + syscall_write_const_fd(1, msg_addrs[15], len(messages[15])) +
+    syscall_sched_getscheduler_pid0() + syscall_sched_getparam_pid0() + syscall_sched_getaffinity_pid0() + syscall_sched_get_priority_max() + syscall_sched_get_priority_min() + syscall_clock_getres_spbuf() + syscall_clock_nanosleep_spbuf() + syscall_getrusage_self() + syscall_prctl_get_name() + syscall_getcpu_spbuf() + syscall_riscv_flush_icache() + syscall_membarrier_query() +
+    syscall_socket_tcp() + syscall_setsockopt_s0() + syscall_getsockopt_s0() + syscall_bind_s0() + syscall_listen_s0() + syscall_accept4_s0() + syscall_connect_s0() + syscall_getsockname_s0() + syscall_getpeername_s0() + syscall_sendto_s0_zero() + syscall_recvfrom_s0_zero() + syscall_shutdown_s0() + syscall_socketpair_unix() +
+    syscall_readv_zero() + syscall_writev_zero() + syscall_pread64_zero() + syscall_pwrite64_zero() + syscall_preadv_zero() + syscall_pwritev_zero() + syscall_sendfile_zero() + syscall_vmsplice_zero() + syscall_splice_zero() + syscall_tee_zero() + syscall_copy_file_range_zero() +
+    syscall_capget_spbuf() + syscall_capset_spbuf() + syscall_personality_query() + syscall_setregid_root() + syscall_setgid_root() + syscall_setreuid_root() + syscall_setuid_root() + syscall_setresuid_root() + syscall_getresuid_spbuf() + syscall_setresgid_root() + syscall_getresgid_spbuf() + syscall_setfsuid_root() + syscall_setfsgid_root() + syscall_times_spbuf() + syscall_setpgid_self() + syscall_getpgid_self() + syscall_getsid_self() + syscall_setsid() + syscall_getgroups_zero() + syscall_setgroups_zero() + syscall_getrlimit_stack_spbuf() + syscall_setrlimit_stack_spbuf() + syscall_setpriority_self() + syscall_getpriority_self() +
+    syscall_inotify_init1() + syscall_inotify_add_watch_s0() + syscall_inotify_rm_watch_s0() + syscall_ioprio_set_self() + syscall_ioprio_get_self() + syscall_flock_stdout() + syscall_signalfd4_spbuf() + syscall_sync_file_range_stdout() + syscall_timerfd_create() + syscall_timerfd_settime_s2() + syscall_timerfd_gettime_s2() + syscall_getitimer_real() + syscall_setitimer_real() +
+    syscall_mremap_zero() + syscall_msync_zero() + syscall_mlock_zero() + syscall_munlock_zero() + syscall_mlockall_zero() + syscall_munlockall_zero() + syscall_mincore_zero() + syscall_remap_file_pages_zero() + syscall_mbind_zero() + syscall_get_mempolicy_zero() + syscall_set_mempolicy_zero() + syscall_memfd_create_null() + syscall_userfaultfd_cloexec() +
+    syscall_pidfd_open_self() + syscall_pidfd_send_signal() + syscall_pidfd_getfd_stdout() + syscall_clone3_spbuf() + syscall_close_range_noop() + syscall_openat2_null() + syscall_faccessat2_null() + syscall_epoll_pwait2_zero() + syscall_io_uring_setup_zero() + syscall_io_uring_enter_zero() + syscall_io_uring_register_zero() + syscall_open_tree_null() + syscall_move_mount_null() + syscall_fsopen_null() + syscall_fsconfig_null() + syscall_fsmount_fd() + syscall_fspick_null() + syscall_mount_setattr_null() + syscall_quotactl_fd_stdout() + syscall_process_madvise_zero() + syscall_landlock_create_ruleset_zero() + syscall_landlock_add_rule_zero() + syscall_landlock_restrict_self_zero() + syscall_memfd_secret_zero() + syscall_process_mrelease_zero() + syscall_futex_waitv_zero() + syscall_set_mempolicy_home_node_zero() +
+    syscall_acct_null() + syscall_syslog_zero() + syscall_ptrace_zero() + syscall_reboot_zero() + syscall_swapon_null() + syscall_swapoff_null() + syscall_perf_event_open_spbuf() + syscall_fanotify_init() + syscall_fanotify_mark() + syscall_name_to_handle_at_null() + syscall_open_by_handle_at() + syscall_syncfs_stdout() + syscall_setns_stdout() + syscall_process_vm_readv_zero() + syscall_process_vm_writev_zero() + syscall_kcmp_self() + syscall_finit_module_stdout() + syscall_sched_setattr_spbuf() + syscall_sched_getattr_spbuf() + syscall_seccomp_zero() + syscall_bpf_zero() + syscall_execveat_null() + syscall_mlock2_zero() + syscall_preadv2_zero() + syscall_pwritev2_zero() + syscall_pkey_mprotect_zero() + syscall_pkey_alloc_zero() + syscall_pkey_free_one() +
+    syscall_setxattr_null() + syscall_lsetxattr_null() + syscall_fsetxattr_stdout() + syscall_getxattr_null() + syscall_lgetxattr_null() + syscall_fgetxattr_stdout() + syscall_listxattr_null() + syscall_llistxattr_null() + syscall_flistxattr_stdout() + syscall_removexattr_null() + syscall_lremovexattr_null() + syscall_fremovexattr_stdout() + syscall_lookup_dcookie_null() + syscall_symlinkat_null() + syscall_linkat_null() + syscall_pivot_root_null() + syscall_nfsservctl_zero() + syscall_fchdir_stdout() + syscall_chroot_null() + syscall_fchmod_stdout() + syscall_fchmodat_null() + syscall_fchownat_null() + syscall_fchown_stdout() + syscall_vhangup() + syscall_quotactl_null() +
+    syscall_io_setup_zero() + syscall_io_destroy_zero() + syscall_io_submit_zero() + syscall_io_cancel_zero() + syscall_io_getevents_zero() + syscall_waitid_zero() + syscall_set_tid_address_spbuf() + syscall_unshare_zero() + syscall_set_robust_list_zero() + syscall_get_robust_list_zero() + syscall_timer_create_spbuf() + syscall_timer_gettime_zero() + syscall_timer_getoverrun_zero() + syscall_timer_settime_zero() + syscall_timer_delete_zero() + syscall_clock_settime_zero() + syscall_sched_setparam_zero() + syscall_sched_setscheduler_zero() + syscall_sched_setaffinity_zero() + syscall_sched_rr_get_interval_zero() + syscall_restart_syscall() + syscall_add_key_null() + syscall_request_key_null() + syscall_keyctl_zero() +
+    syscall_clone_fake_child() + syscall_wait4_s2() + syscall_execve(msg_addrs[26]) + syscall_kill_pid1_sig0() + syscall_tgkill_pid1_tid1_sig0() + syscall_write_const_fd(1, msg_addrs[16], len(messages[16])) +
+    syscall0(172) + syscall_write_const_fd(1, msg_addrs[17], len(messages[17])) +
+    syscall0(173) + syscall_write_const_fd(1, msg_addrs[18], len(messages[18])) +
+    syscall0(9999) + syscall_write_const_fd(1, msg_addrs[19], len(messages[19])) +
+    syscall_exit_group_zero() + jal_zero_zero()
+)
+segment = code + b"".join(messages)
+
+e_ident = b"\x7fELF" + bytes([2, 1, 1, 0, 0]) + bytes(7)
+ET_EXEC = 2
+EM_RISCV = 243
+EV_CURRENT = 1
+FLAGS = 0x1 | 0x4
+
+ehdr = struct.pack(
+    "<16sHHIQQQIHHHHHH",
+    e_ident, ET_EXEC, EM_RISCV, EV_CURRENT, BASE, 64, 0, FLAGS,
+    64, 56, 1, 0, 0, 0,
+)
+
+PT_LOAD = 1
+PF_X = 1
+PF_R = 4
+p_memsz = ((len(segment) + 0xfff) // 0x1000) * 0x1000
+phdr = struct.pack(
+    "<IIQQQQQQ",
+    PT_LOAD, PF_R | PF_X, SEG_OFF, BASE, BASE, len(segment), p_memsz, 0x1000,
+)
+
+blob = ehdr + phdr
+blob += bytes(SEG_OFF - len(blob))
+blob += segment
+
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.parent.mkdir(parents=True, exist_ok=True)
+OUT.write_bytes(blob)
+print(f"[build-init-elf-v82] wrote {OUT} size={len(blob)} segment={len(segment)} entry={BASE:#x}")

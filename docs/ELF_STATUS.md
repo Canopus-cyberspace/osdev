@@ -16,11 +16,11 @@ Expected runtime markers:
 - `[stage] external init.elf Sv39 U-mode smoke v50b`
 - `[elf-loader-v50b] parser self-test passed`
 - `[init-image-v50b] external init image self-test passed`
-- `hello from external init.elf v50 syscall write`
+- `hello from external init.elf v108 syscall write fd-vfs syscall write`
 - `external init getpid returned 1`
 - `external init getppid returned 0`
 - `external init unsupported returned -38`
-- `[external-init-v50b] smoke passed`
+- `[external-init-v82] smoke passed`
 
 ## v51
 

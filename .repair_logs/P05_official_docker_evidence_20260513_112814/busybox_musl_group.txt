@@ -1,0 +1,3 @@
+#### OS COMP TEST GROUP START busybox-musl ####
+testcase busybox true success
+#### OS COMP TEST GROUP END busybox-musl ####

@@ -94,6 +94,61 @@ pub fn copy_to_user(dst: usize, src: &[u8]) -> Result<usize, UserCopyError> {
     Ok(ubuf.len())
 }
 
+pub fn copy_cstr_from_user(src: usize, dst: &mut [u8]) -> Result<usize, UserCopyError> {
+    if src == 0 {
+        return Err(UserCopyError::NullPointer);
+    }
+    if dst.is_empty() {
+        return Err(UserCopyError::BufferTooSmall);
+    }
+
+    let mut len = 0usize;
+    while len < dst.len() {
+        let ch = unsafe { core::ptr::read_volatile((src + len) as *const u8) };
+        if ch == 0 {
+            return Ok(len);
+        }
+        dst[len] = ch;
+        len += 1;
+    }
+
+    Err(UserCopyError::BufferTooSmall)
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct UserIovec {
+    pub base: usize,
+    pub len: usize,
+}
+
+impl UserIovec {
+    pub const fn empty() -> Self {
+        Self { base: 0, len: 0 }
+    }
+}
+
+pub fn read_iovec_array(src: usize, iovcnt: usize, dst: &mut [UserIovec]) -> Result<usize, UserCopyError> {
+    if iovcnt > dst.len() {
+        return Err(UserCopyError::BufferTooSmall);
+    }
+    if iovcnt == 0 {
+        return Ok(0);
+    }
+    UserBuffer::new(src, iovcnt * 16)?;
+
+    let mut i = 0usize;
+    while i < iovcnt {
+        let entry = src + i * 16;
+        let base = unsafe { core::ptr::read_volatile(entry as *const usize) };
+        let len = unsafe { core::ptr::read_volatile((entry + 8) as *const usize) };
+        UserBuffer::new(base, len)?;
+        dst[i] = UserIovec { base, len };
+        i += 1;
+    }
+
+    Ok(iovcnt)
+}
+
 pub fn test_direct_user_copy() {
     crate::println!("[mm::user_buffer] user-copy-v32e direct test begin");
 

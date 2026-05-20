@@ -1,0 +1,165 @@
+basic-musl-total 100
+busybox-musl-total 53
+combined-direct-total 153
+k01-real-basic-write verified
+k05-realrun test_write REAL-RUN exit=0 verified=1 syscalls=8
+k05-realrun test_getpid REAL-RUN exit=0 verified=1 syscalls=12
+k05-realrun test_getppid REAL-RUN exit=0 verified=1 syscalls=12
+k05-realrun test_uname REAL-RUN exit=0 verified=1 syscalls=27
+k05-realrun test_getcwd REAL-RUN exit=0 verified=1 syscalls=12
+k05-realrun test_brk REAL-RUN exit=0 verified=1 syscalls=24
+k05-realrun test_gettimeofday REAL-RUN exit=0 verified=1 syscalls=21
+k05-realrun test_times REAL-RUN exit=0 verified=1 syscalls=21
+k05-realrun test_sleep REAL-RUN exit=0 verified=1 syscalls=11
+k05-realrun test_close REAL-RUN exit=0 verified=1 syscalls=14
+k05-realrun test_dup REAL-RUN exit=0 verified=1 syscalls=12
+k05-realrun test_dup2 REAL-RUN exit=0 verified=1 syscalls=9
+k05-realrun test_open REAL-RUN exit=0 verified=1 syscalls=11
+k05-realrun test_read REAL-RUN exit=0 verified=1 syscalls=11
+k05-realrun test_openat REAL-RUN exit=0 verified=1 syscalls=19
+k05-realrun test_fstat REAL-RUN exit=0 verified=1 syscalls=38
+k05-realrun test_getdents REAL-RUN exit=0 verified=1 syscalls=23
+k05-realrun test_chdir REAL-RUN exit=0 verified=1 syscalls=18
+k05-realrun test_mkdir REAL-RUN exit=0 verified=1 syscalls=15
+k05-realrun test_unlink REAL-RUN exit=0 verified=1 syscalls=12
+k05-realrun test_pipe REAL-RUN exit=0 verified=1 syscalls=87
+k05-realrun test_yield REAL-RUN exit=0 verified=1 syscalls=152
+k05-realrun test_wait REAL-RUN exit=0 verified=1 syscalls=16
+k05-realrun test_waitpid REAL-RUN exit=0 verified=1 syscalls=17
+k05-realrun test_fork REAL-RUN exit=0 verified=1 syscalls=16
+k05-realrun test_clone REAL-RUN exit=0 verified=1 syscalls=16
+k05-realrun test_execve REAL-RUN exit=0 verified=1 syscalls=9
+k05-realrun test_mmap REAL-RUN exit=0 verified=1 syscalls=21
+k05-realrun test_mount REAL-RUN exit=0 verified=1 syscalls=25
+k05-realrun test_munmap REAL-RUN exit=0 verified=1 syscalls=22
+k05-realrun test_umount REAL-RUN exit=0 verified=1 syscalls=24
+b02-b04-realrun busybox_true REAL-RUN command=busybox true exit=0 verified=1 syscalls=3
+b02-b04-realrun busybox_echo_independent REAL-RUN command=busybox echo #### independent command test exit=0 verified=1 syscalls=6
+b02-b04-realrun busybox_pwd REAL-RUN command=busybox pwd exit=0 verified=1 syscalls=8
+b02-b04-realrun busybox_ls REAL-RUN command=busybox ls exit=0 verified=1 syscalls=20
+b02-b04-realrun busybox_cat_test_txt REAL-RUN command=busybox cat test.txt exit=0 verified=1 syscalls=7
+b02-b04-realrun busybox_touch_test_txt REAL-RUN command=busybox touch test.txt exit=0 verified=1 syscalls=4
+b02-b04-realrun busybox_rm_test_txt REAL-RUN command=busybox rm test.txt exit=0 verified=1 syscalls=6
+b02-b04-realrun busybox_mkdir_test_dir REAL-RUN command=busybox mkdir test_dir exit=0 verified=1 syscalls=4
+b02-b04-realrun busybox_rmdir_test REAL-RUN command=busybox rmdir test exit=0 verified=1 syscalls=4
+b02-b04-realrun busybox_mv_test_dir_test REAL-RUN command=busybox mv test_dir test exit=0 verified=1 syscalls=5
+b02-b04-realrun busybox_cp_busybox_cmd_bak REAL-RUN command=busybox cp busybox_cmd.txt busybox_cmd.bak exit=0 verified=1 syscalls=13
+b02-b04-realrun busybox_rm_busybox_cmd_bak REAL-RUN command=busybox rm busybox_cmd.bak exit=0 verified=1 syscalls=6
+b02-b04-realrun busybox_stat_test_txt REAL-RUN command=busybox stat test.txt exit=0 verified=1 syscalls=17
+b02-b04-realrun busybox_find_busybox_cmd REAL-RUN command=busybox find -name busybox_cmd.txt exit=0 verified=1 syscalls=16
+b02-b04-realrun busybox_wc_test_txt REAL-RUN command=busybox wc test.txt exit=0 verified=1 syscalls=11
+b02-b04-realrun busybox_head_test_txt REAL-RUN command=busybox head test.txt exit=0 verified=1 syscalls=11
+b02-b04-realrun busybox_tail_test_txt REAL-RUN command=busybox tail test.txt exit=0 verified=1 syscalls=12
+b02-b04-realrun busybox_sort_test_txt REAL-RUN command=busybox sort test.txt exit=0 verified=1 syscalls=11
+b02-b04-realrun busybox_uniq_test_txt REAL-RUN command=busybox uniq test.txt exit=0 verified=1 syscalls=11
+b02-b04-realrun busybox_grep_hello_cmd REAL-RUN command=busybox grep hello busybox_cmd.txt exit=0 verified=1 syscalls=12
+b02-b04-realrun busybox_cut_c3_test_txt REAL-RUN command=busybox cut -c 3 test.txt exit=0 verified=1 syscalls=11
+b02-b04-realrun busybox_od_test_txt REAL-RUN command=busybox od test.txt exit=0 verified=1 syscalls=13
+b02-b04-realrun busybox_hexdump_c_test_txt REAL-RUN command=busybox hexdump -C test.txt exit=0 verified=1 syscalls=13
+b02-b04-realrun busybox_md5sum_test_txt REAL-RUN command=busybox md5sum test.txt exit=0 verified=1 syscalls=11
+b02-b04-realrun busybox_strings_test_txt REAL-RUN command=busybox strings test.txt exit=0 verified=1 syscalls=11
+b02-b04-realrun busybox_basename_aaa_bbb REAL-RUN command=busybox basename /aaa/bbb exit=0 verified=1 syscalls=4
+b02-b04-realrun busybox_dirname_aaa_bbb REAL-RUN command=busybox dirname /aaa/bbb exit=0 verified=1 syscalls=5
+b02-b04-realrun busybox_date REAL-RUN command=busybox date exit=0 verified=1 syscalls=7
+b02-b04-realrun busybox_cal REAL-RUN command=busybox cal exit=0 verified=1 syscalls=16
+b02-b04-realrun busybox_df REAL-RUN command=busybox df exit=0 verified=1 syscalls=13
+b02-b04-realrun busybox_du REAL-RUN command=busybox du exit=0 verified=1 syscalls=17
+b02-b04-realrun busybox_dmesg REAL-RUN command=busybox dmesg exit=0 verified=1 syscalls=7
+b02-b04-realrun busybox_ps REAL-RUN command=busybox ps exit=0 verified=1 syscalls=16
+b02-b04-realrun busybox_free REAL-RUN command=busybox free exit=0 verified=1 syscalls=15
+b02-b04-realrun busybox_uptime REAL-RUN command=busybox uptime exit=0 verified=1 syscalls=8
+b02-b04-realrun busybox_uname REAL-RUN command=busybox uname exit=0 verified=1 syscalls=6
+b02-b04-realrun busybox_which_ls REAL-RUN command=busybox which ls exit=0 verified=1 syscalls=10
+b02-b04-realrun busybox_false REAL-RUN command=busybox false exit=1 verified=1 syscalls=3
+b02-b04-realrun busybox_sleep_1 REAL-RUN command=busybox sleep 1 exit=0 verified=1 syscalls=4
+basic-musl test_brk 3 3
+basic-musl test_chdir 3 3
+basic-musl test_clone 4 4
+basic-musl test_close 2 2
+basic-musl test_dup2 2 2
+basic-musl test_dup 2 2
+basic-musl test_execve 3 3
+basic-musl test_exit 0 0
+basic-musl test_fork 3 3
+basic-musl test_fstat 3 3
+basic-musl test_getcwd 2 2
+basic-musl test_getdents 5 5
+basic-musl test_getpid 3 3
+basic-musl test_getppid 2 2
+basic-musl test_gettimeofday 3 3
+basic-musl test_mkdir 3 3
+basic-musl test_mmap 3 3
+basic-musl test_mount 5 5
+basic-musl test_munmap 4 4
+basic-musl test_open 3 3
+basic-musl test_openat 4 4
+basic-musl test_pipe 4 4
+basic-musl test_read 3 3
+basic-musl test_sleep 2 2
+basic-musl test_times 6 6
+basic-musl test_umount 5 5
+basic-musl test_uname 2 2
+basic-musl test_unlink 2 2
+basic-musl test_wait 4 4
+basic-musl test_waitpid 4 4
+basic-musl test_write 2 2
+basic-musl test_yield 4 4
+busybox-musl busybox echo "#### independent command test" 1 1
+busybox-musl busybox ash -c exit 1 1
+busybox-musl busybox sh -c exit 1 1
+busybox-musl busybox basename /aaa/bbb 1 1
+busybox-musl busybox cal 1 1
+busybox-musl busybox clear 1 1
+busybox-musl busybox date 1 1
+busybox-musl busybox df 1 1
+busybox-musl busybox dirname /aaa/bbb 1 1
+busybox-musl busybox dmesg 1 1
+busybox-musl busybox du 1 1
+busybox-musl busybox expr 1 + 1 1 1
+busybox-musl busybox false 1 1
+busybox-musl busybox true 1 1
+busybox-musl busybox which ls 1 1
+busybox-musl busybox uname 1 1
+busybox-musl busybox uptime 1 1
+busybox-musl busybox ps 1 1
+busybox-musl busybox pwd 1 1
+busybox-musl busybox free 1 1
+busybox-musl busybox hwclock 1 1
+busybox-musl busybox kill 10 1 1
+busybox-musl busybox ls 1 1
+busybox-musl busybox sleep 1 1 1
+busybox-musl busybox echo "#### file opration test" 1 1
+busybox-musl busybox touch test.txt 1 1
+busybox-musl busybox echo "hello world" > test.txt 1 1
+busybox-musl busybox cat test.txt 1 1
+busybox-musl busybox cut -c 3 test.txt 1 1
+busybox-musl busybox od test.txt 1 1
+busybox-musl busybox head test.txt 1 1
+busybox-musl busybox tail test.txt 1 1
+busybox-musl busybox hexdump -C test.txt 1 1
+busybox-musl busybox md5sum test.txt 1 1
+busybox-musl busybox echo "ccccccc" >> test.txt 1 1
+busybox-musl busybox echo "bbbbbbb" >> test.txt 1 1
+busybox-musl busybox echo "aaaaaaa" >> test.txt 1 1
+busybox-musl busybox echo "2222222" >> test.txt 1 1
+busybox-musl busybox echo "1111111" >> test.txt 1 1
+busybox-musl busybox sort test.txt | ./busybox uniq 1 1
+busybox-musl busybox stat test.txt 1 1
+busybox-musl busybox strings test.txt 1 1
+busybox-musl busybox wc test.txt 1 1
+busybox-musl busybox [ -f test.txt ] 1 1
+busybox-musl busybox more test.txt 1 1
+busybox-musl busybox rm test.txt 1 1
+busybox-musl busybox mkdir test_dir 1 1
+busybox-musl busybox mv test_dir test 1 1
+busybox-musl busybox rmdir test 1 1
+busybox-musl busybox grep hello busybox_cmd.txt 1 1
+busybox-musl busybox cp busybox_cmd.txt busybox_cmd.bak 1 1
+busybox-musl busybox rm busybox_cmd.bak 1 1
+busybox-musl busybox find -name "busybox_cmd.txt" 1 1
+official-verdict Accpted
+official-score 153
+official-basic-musl-rv 100.0
+official-busybox-musl-rv 53.0
+official-basic-musl-la 0.0
+official-busybox-musl-la 0.0

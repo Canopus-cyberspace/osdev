@@ -1,0 +1,5 @@
+Large artifact manifest for project root after official Docker run
+/home/lenovo/projects/uestc-kernel/sdcard-rv.img size=4294967296 sha256=95973543db6b84a9a5e70f30da466ce292867aff5b689fb14c88dc9406e378b8 kind=Linux rev 1.0 ext4 filesystem data, UUID=362039d9-0839-44c2-a906-fb38bb1e9b25 (extents) (64bit) (large files) (huge files)
+/home/lenovo/projects/uestc-kernel/sdcard-la.img size=4294967296 sha256=1aa79d03cf41e2a80ae4ed43771101c1e67ec8db41c3c20b77792fe6b1b85b50 kind=Linux rev 1.0 ext4 filesystem data, UUID=7514f5e4-89e2-4223-b78f-70e718c9acf6 (extents) (64bit) (large files) (huge files)
+/home/lenovo/projects/uestc-kernel/kernel-rv size=2378944 sha256=5ddd2b4c5974e39a9c2085bd94afb5f40eccab9af118f5376cb6f4d70c9dfa8b kind=ELF 64-bit LSB executable, UCB RISC-V, RVC, double-float ABI, version 1 (SYSV), statically linked, not stripped
+/home/lenovo/projects/uestc-kernel/kernel-la size=2378944 sha256=5ddd2b4c5974e39a9c2085bd94afb5f40eccab9af118f5376cb6f4d70c9dfa8b kind=ELF 64-bit LSB executable, UCB RISC-V, RVC, double-float ABI, version 1 (SYSV), statically linked, not stripped

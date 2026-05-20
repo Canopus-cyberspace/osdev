@@ -1,0 +1,5 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-13T11:37:42+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/P05_busybox_musl_nonzero_20260513_104128

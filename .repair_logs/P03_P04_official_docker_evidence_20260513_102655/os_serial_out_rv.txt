@@ -1,0 +1,880 @@
+qemu-system-riscv64 -machine virt -kernel kernel-rv -m 1G -nographic -smp 1 -bios default -drive file=sdcard-rv.img,if=none,format=raw,id=x0 -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0 -no-reboot -device virtio-net-device,netdev=net -netdev user,id=net -rtc base=utc 
+
+OpenSBI v1.5.1
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
+
+Platform Name             : riscv-virtio,qemu
+Platform Features         : medeleg
+Platform HART Count       : 1
+Platform IPI Device       : aclint-mswi
+Platform Timer Device     : aclint-mtimer @ 10000000Hz
+Platform Console Device   : uart8250
+Platform HSM Device       : ---
+Platform PMU Device       : ---
+Platform Reboot Device    : syscon-reboot
+Platform Shutdown Device  : syscon-poweroff
+Platform Suspend Device   : ---
+Platform CPPC Device      : ---
+Firmware Base             : 0x80000000
+Firmware Size             : 327 KB
+Firmware RW Offset        : 0x40000
+Firmware RW Size          : 71 KB
+Firmware Heap Offset      : 0x49000
+Firmware Heap Size        : 35 KB (total), 2 KB (reserved), 11 KB (used), 21 KB (free)
+Firmware Scratch Size     : 4096 B (total), 416 B (used), 3680 B (free)
+Runtime SBI Version       : 2.0
+
+Domain0 Name              : root
+Domain0 Boot HART         : 0
+Domain0 HARTs             : 0*
+Domain0 Region00          : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)
+Domain0 Region01          : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)
+Domain0 Region02          : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()
+Domain0 Region03          : 0x0000000080040000-0x000000008005ffff M: (R,W) S/U: ()
+Domain0 Region04          : 0x0000000080000000-0x000000008003ffff M: (R,X) S/U: ()
+Domain0 Region05          : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)
+Domain0 Region06          : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)
+Domain0 Region07          : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)
+Domain0 Next Address      : 0x0000000080200000
+Domain0 Next Arg1         : 0x00000000bfe00000
+Domain0 Next Mode         : S-mode
+Domain0 SysReset          : yes
+Domain0 SysSuspend        : yes
+
+Boot HART ID              : 0
+Boot HART Domain          : root
+Boot HART Priv Version    : v1.12
+Boot HART Base ISA        : rv64imafdch
+Boot HART ISA Extensions  : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu
+Boot HART PMP Count       : 16
+Boot HART PMP Granularity : 2 bits
+Boot HART PMP Address Bits: 54
+Boot HART MHPM Info       : 16 (0x0007fff8)
+Boot HART Debug Triggers  : 2 triggers
+Boot HART MIDELEG         : 0x0000000000001666
+Boot HART MEDELEG         : 0x0000000000f0b509
+[boot.S] entered v46e elf-loader
+UESTC-Kernel booting...
+[arch] riscv64
+[stage] ipc msg netio scaffold v82
+[stage] v82 runtime path uses ipc msg netio scaffold
+[external-init-v82] begin
+[external-init-v82] ipc/msg/netio path enabled
+[external-init-v82] elf entry = 0x40000000
+[external-init-v82] elf vaddr  = 0x40000000
+[external-init-v82] load pa    = 0x80340000
+[external-init-v82] pages      = 3
+[external-init-v82] user text mapped 0x40000000 pages 3
+[brk-v60] user heap mapped 0x40030000..0x40034000
+[mmap-v61] user mmap area mapped 0x40040000..0x40044000
+[external-init-v82] user stack mapped 0x4001c000..0x40020000
+[external-init-v82] root pa = 0x80305000
+[external-init-v82] stvec = 0x8020f184
+[external-init-v82] satp = 0x8000000000080305
+[external-init-v82] after satp
+[external-init-v82] read satp = 0x8000000000080305
+[external-init-v82] enter user sepc = 0x40000000
+[external-init-v82] enter user sp   = 0x40020000
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[ucompat-v158] history integration active_once entry active
+[ucompat-v158] history_integration_full_kernel active
+[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+[ucompat-v154] fs_core_multi_feature PASS
+[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+[ucompat-v155] namespace_procfd_multi_feature PASS
+[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+[ucompat-v156] procfs_fd_observability PASS
+[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+[ucompat-v158] ucompat_vfs_tree_v151k PASS
+[ucompat-v158] connected_stable_history_modules=5
+[ucompat-v158] history_full_kernel PASS
+[ucompat-v157] unified historical kernel integration PASS
+[ucompat-v158] event pipe socket readiness PASS
+[ucompat-v159] timerfd deterministic readiness PASS
+[ucompat-v160] fd lifecycle cloexec close_range PASS
+[ucompat-v161] unified iovec io path PASS
+[ucompat-v162] ipc registry lifecycle PASS
+[ucompat-v163] futex wait wake object model PASS
+[ucompat-v164] scheduler wait queue foundation PASS
+[ucompat-v165] task table process lifecycle PASS
+[ucompat-v166] fork clone child task PASS
+[ucompat-v167] exit zombie wait lifecycle PASS
+[ucompat-v168] per task runtime snapshot PASS
+[ucompat-v169] execve from canonical vfs PASS
+[ucompat-v170] execve user stack cloexec PASS
+[ucompat-v171] vma page fault foundation PASS
+[ucompat-v172] lazy mmap brk munmap mprotect PASS
+[ucompat-v173] signal frame rt_sigreturn PASS
+[ucompat-v174] sigchld process group signal PASS
+[ucompat-v175] rootfs tmpfs backend PASS
+..[ucompat-v176] devfs core devices PASS
+[ucompat-v177] procfs process status maps PASS
+[ucompat-v178] mount tree statfs PASS
+[ucompat-v179] permissions credentials PASS
+[ucompat-v180] capability identity model PASS
+[ucompat-v181] unix socket loopback PASS
+[ucompat-v182] local datagram socket PASS
+[ucompat-v183] ipc blocking scheduler integration PASS
+[ucompat-v184] namespace basics PASS
+[ucompat-v185] multi elf rootfs runner PASS
+[ucompat-v186] libc syscall matrix PASS
+[ucompat-v187] fs process memory suite PASS
+[ucompat-v188] signal pipe poll ipc suite PASS
+[ucompat-v189] stress error path hardening PASS
+[ucompat-v190] final competition kernel readiness PASS
+[ucompat-v158] history integration active_once entry active
+[ucompat-v158] history_integration_full_kernel active
+[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+[ucompat-v154] fs_core_multi_feature PASS
+[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+[ucompat-v155] namespace_procfd_multi_feature PASS
+[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+[ucompat-v156] procfs_fd_observability PASS
+[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+[ucompat-v158] ucompat_vfs_tree_v151k PASS
+[ucompat-v158] connected_stable_history_modules=5
+[ucompat-v158] history_full_kernel PASS
+[ucompat-v158] history integration active_once entry active
+[ucompat-v158] history_integration_full_kernel active
+[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+[ucompat-v154] fs_core_multi_feature PASS
+[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+[ucompat-v155] namespace_procfd_multi_feature PASS
+[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+[ucompat-v156] procfs_fd_observability PASS
+[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+[ucompat-v158] ucompat_vfs_tree_v151k PASS
+[ucompat-v158] connected_stable_history_modules=5
+[ucompat-v158] history_full_kernel PASS
+[ucompat-v158] history integration active_once entry active
+[ucompat-v158] history_integration_full_kernel active
+[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+[ucompat-v154] fs_core_multi_feature PASS
+[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+[ucompat-v155] namespace_procfd_multi_feature PASS
+[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+[ucompat-v156] procfs_fd_observability PASS
+[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+[ucompat-v158] ucompat_vfs_tree_v151k PASS
+[ucompat-v158] connected_stable_history_modules=5
+[ucompat-v158] history_full_kernel PASS
+[ucompat-v158] history integration active_once entry active
+[ucompat-v158] history_integration_full_kernel active
+[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+[ucompat-v154] fs_core_multi_feature PASS
+[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+[ucompat-v155] namespace_procfd_multi_feature PASS
+[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+[ucompat-v156] procfs_fd_observability PASS
+[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+[ucompat-v158] ucompat_vfs_tree_v151k PASS
+[ucompat-v158] connected_stable_history_modules=5
+[ucompat-v158] history_full_kernel PASS
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+hello from external init.elf v151k7 syscall write
+[write-v157] canonical fd = 1 ret = 50
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 34
+[syscall-dispatch-v54] central dispatch id = 34
+[fs-v68] mkdirat dirfd = -100
+[fs-v68] mkdirat path = 0x400029f8
+[fs-v68] mkdirat mode = 0o644
+[fs-v157] mkdirat canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 34
+[syscall-dispatch-v54] central dispatch id = 34
+[fs-v68] mkdirat dirfd = -100
+[fs-v68] mkdirat path = 0x400029f8
+[fs-v68] mkdirat mode = 0o644
+[fs-v157] mkdirat canonical ret = -17
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 56
+[syscall-dispatch-v54] central dispatch id = 56
+[openat-v137p] dirfd = -100
+[openat-v137p] flags = 0x0
+[openat-v137p] mode = 0x1a4
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 49
+[syscall-dispatch-v54] central dispatch id = 49
+[path-v65] chdir path = 0x400029f8
+[path-v157] chdir canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 34
+[syscall-dispatch-v54] central dispatch id = 34
+[fs-v68] mkdirat dirfd = 3
+[fs-v68] mkdirat path = 0x40002a08
+[fs-v68] mkdirat mode = 0o644
+[fs-v157] mkdirat canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 56
+[syscall-dispatch-v54] central dispatch id = 56
+[openat-v137p] dirfd = 3
+[openat-v137p] flags = 0x0
+[openat-v137p] mode = 0x1a4
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 56
+[syscall-dispatch-v54] central dispatch id = 56
+[openat-v137p] dirfd = 3
+[openat-v137p] flags = 0x242
+[openat-v137p] mode = 0x1a4
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[write-v157] canonical fd = 5 ret = 5
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 62
+[syscall-dispatch-v54] central dispatch id = 62
+[lseek-v157] canonical fd = 5 ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 63
+[syscall-dispatch-v54] central dispatch id = 63
+[read-v157] canonical fd = 5 ret = 5
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 56
+[syscall-dispatch-v54] central dispatch id = 56
+[openat-v137p] dirfd = 4
+[openat-v137p] flags = 0x242
+[openat-v137p] mode = 0x1a4
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[write-v157] canonical fd = 6 ret = 5
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 62
+[syscall-dispatch-v54] central dispatch id = 62
+[lseek-v157] canonical fd = 6 ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 63
+[syscall-dispatch-v54] central dispatch id = 63
+[read-v157] canonical fd = 6 ret = 5
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 37
+[syscall-dispatch-v54] central dispatch id = 37
+[pathperm-v79] linkat olddirfd = 4
+[pathperm-v79] linkat oldpath = 0x40002a18
+[pathperm-v79] linkat newdirfd = 3
+[pathperm-v79] linkat newpath = 0x40002a30
+[pathperm-v79] linkat flags = 0x0
+[pathperm-v157] linkat canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 38
+[syscall-dispatch-v54] central dispatch id = 38
+[fs-v68] renameat2 olddirfd = 3
+[fs-v68] renameat2 oldpath = 0x40002a10
+[fs-v68] renameat2 newdirfd = 3
+[fs-v68] renameat2 newpath = 0x40002a20
+[fs-v68] renameat2 flags = 0x0
+[fs-v157] renameat canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 36
+[syscall-dispatch-v54] central dispatch id = 36
+[pathperm-v79] symlinkat oldname = 0x40002a50
+[pathperm-v79] symlinkat newdirfd = 3
+[pathperm-v79] symlinkat newname = 0x40002a40
+[pathperm-v157] symlinkat canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 78
+[syscall-dispatch-v54] central dispatch id = 78
+[readlinkat-v157] canonical ret = 8
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 291
+[syscall-dispatch-v54] central dispatch id = 291
+[statx-v68] dirfd = 4
+[statx-v68] path = 0x40002a18
+[statx-v68] flags = 0x0
+[statx-v68] mask = 0x7ff
+[statx-v68] statx = 0x4001fe00
+[statx-v157] canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 61
+[syscall-dispatch-v54] central dispatch id = 61
+[getdents64-v59] fd = 3
+[getdents64-v59] buf = 0x4001fe00
+[getdents64-v59] len = 160
+[getdents64-v157] canonical ret = 128
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+root-dents-ok[write-v157] canonical fd = 1 ret = 13
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 61
+[syscall-dispatch-v54] central dispatch id = 61
+[getdents64-v59] fd = 4
+[getdents64-v59] buf = 0x4001fe00
+[getdents64-v59] len = 160
+[getdents64-v157] canonical ret = 32
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+sub-dents-ok[write-v157] canonical fd = 1 ret = 12
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 35
+[syscall-dispatch-v54] central dispatch id = 35
+[fs-v68] unlinkat dirfd = 3
+[fs-v68] unlinkat path = 0x40002a30
+[fs-v68] unlinkat flags = 0x0
+[fs-v157] unlinkat canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 291
+[syscall-dispatch-v54] central dispatch id = 291
+[statx-v68] dirfd = 4
+[statx-v68] path = 0x40002a18
+[statx-v68] flags = 0x0
+[statx-v68] mask = 0x7ff
+[statx-v68] statx = 0x4001fe00
+[statx-v157] canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 78
+[syscall-dispatch-v54] central dispatch id = 78
+[readlinkat-v157] canonical ret = -22
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 35
+[syscall-dispatch-v54] central dispatch id = 35
+[fs-v68] unlinkat dirfd = 3
+[fs-v68] unlinkat path = 0x40002a40
+[fs-v68] unlinkat flags = 0x0
+[fs-v157] unlinkat canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 78
+[syscall-dispatch-v54] central dispatch id = 78
+[readlinkat-v157] canonical ret = -2
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 291
+[syscall-dispatch-v54] central dispatch id = 291
+[statx-v68] dirfd = 3
+[statx-v68] path = 0x40002a10
+[statx-v68] flags = 0x0
+[statx-v68] mask = 0x7ff
+[statx-v68] statx = 0x4001fe00
+[statx-v157] canonical ret = -2
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v151k7] errno evidence ENOENT/EINVAL ok
+[write-v157] canonical fd = 1 ret = 49
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 57
+[syscall-dispatch-v54] central dispatch id = 57
+[close-v157] canonical fd = 5
+[close-v157] ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 57
+[syscall-dispatch-v54] central dispatch id = 57
+[close-v157] canonical fd = 6
+[close-v157] ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 57
+[syscall-dispatch-v54] central dispatch id = 57
+[close-v157] canonical fd = 3
+[close-v157] ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 57
+[syscall-dispatch-v54] central dispatch id = 57
+[close-v157] canonical fd = 4
+[close-v157] ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS dirfd tree multiinode link rename symlink getdents statx errno
+[write-v157] canonical fd = 1 ret = 111
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v191] rootfs exec path=/umode/v191.elf entry=0x40000100 sp=0x4001ffa0 load=0x40000000 file_size=744
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v191-user] write getpid exit
+[write-v157] canonical fd = 1 ret = 38
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 172
+[syscall-dispatch-v54] central dispatch id = 172
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v191] real rootfs elf execution bridge PASS
+[ucompat-v191] rootfs exec path=/umode/v192a.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=736
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v192-user] program=a
+[write-v157] canonical fd = 1 ret = 30
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 172
+[syscall-dispatch-v54] central dispatch id = 172
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v192] matrix program=/umode/v192a.elf exit=21 expected=21 PASS
+[ucompat-v191] rootfs exec path=/umode/v192b.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=736
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v192-user] program=b
+[write-v157] canonical fd = 1 ret = 30
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 172
+[syscall-dispatch-v54] central dispatch id = 172
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v192] matrix program=/umode/v192b.elf exit=22 expected=22 PASS
+[ucompat-v191] rootfs exec path=/umode/v192c.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=736
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v192-user] program=c
+[write-v157] canonical fd = 1 ret = 30
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 172
+[syscall-dispatch-v54] central dispatch id = 172
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v192] matrix program=/umode/v192c.elf exit=23 expected=23 PASS
+[ucompat-v192] real multi program umode matrix PASS
+[ucompat-v191] rootfs exec path=/umode/v193child.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v193-user] child fork-exec body
+[write-v157] canonical fd = 1 ret = 41
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 172
+[syscall-dispatch-v54] central dispatch id = 172
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v193] fork-exec child pid=2 status=8448 expected=8448 PASS
+[ucompat-v193] fork exec wait real path PASS
+[ucompat-v191] rootfs exec path=/umode/v194abi.elf entry=0x40000100 sp=0x4001ff70 load=0x40000000 file_size=744
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v194-user] abi stack verified
+[write-v157] canonical fd = 1 ret = 39
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 172
+[syscall-dispatch-v54] central dispatch id = 172
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v194] abi evidence cloexec_fd=3 closed=1 missing_errno=-2 bad_elf_errno=-8 PASS
+[ucompat-v194] userland abi hardening PASS
+[ucompat-v195] allocator evidence pages=32 alloc=32 free=32 exhaust=1 double_free=1 PASS
+[ucompat-v195] physical page allocator PASS
+[ucompat-v196] mapping evidence va=0x400b0000 page=0 flags=RWU protect=RU unmap=1 PASS
+[ucompat-v196] user page table mapping PASS
+[ucompat-v191] rootfs exec path=/umode/v197lazy.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v197-user] lazy heap mmap stack faults
+[write-v157] canonical fd = 1 ret = 48
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 214
+[syscall-dispatch-v54] central dispatch id = 214
+[brk-v172] request = 0x40033000
+[brk-v172] canonical ret = 0x40033000
+hello from external init.elf v82 syscall write
+[ucompat-v197] real page fault lazy allocation fault evidence va=0x40030000 page=0x40030000 pa=0x80315000 access=write kind=heap mm=8 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v197] real page fault lazy allocation fault evidence va=0x40031000 page=0x40031000 pa=0x80316000 access=write kind=heap mm=8 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 222
+[syscall-dispatch-v54] central dispatch id = 222
+[mmap-v172] request addr = 0x40040000
+[mmap-v172] len = 8192
+[mmap-v172] prot = 0x3
+[mmap-v172] flags = 0x32
+[mmap-v172] fd = -1
+[mmap-v172] offset = 0x0
+[mmap-v172] canonical ret = 1074003968
+hello from external init.elf v82 syscall write
+[ucompat-v197] real page fault lazy allocation fault evidence va=0x40041000 page=0x40041000 pa=0x80317000 access=write kind=mmap mm=8 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v197] real page fault lazy allocation fault evidence va=0x4001e000 page=0x4001e000 pa=0x80318000 access=write kind=stack mm=8 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v197] lazy allocation evidence faults=4 alloc=4 PASS
+[ucompat-v197] real page fault lazy allocation PASS
+[ucompat-v191] rootfs exec path=/umode/v198ro.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v198-user] readonly write fault
+[write-v157] canonical fd = 1 ret = 41
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 222
+[syscall-dispatch-v54] central dispatch id = 222
+[mmap-v172] request addr = 0x40040000
+[mmap-v172] len = 4096
+[mmap-v172] prot = 0x3
+[mmap-v172] flags = 0x32
+[mmap-v172] fd = -1
+[mmap-v172] offset = 0x0
+[mmap-v172] canonical ret = 1074003968
+hello from external init.elf v82 syscall write
+[ucompat-v198] page permission unmap fault evidence va=0x40040000 page=0x40040000 pa=0x80315000 access=write kind=mmap mm=9 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 226
+[syscall-dispatch-v54] central dispatch id = 226
+[mprotect-v172] addr = 0x40040000
+[mprotect-v172] len = 4096
+[mprotect-v172] prot = 0x1
+[mprotect-v172] canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v198] readonly fault evidence va=0x40040000 pte_flags=0xd3 PASS
+[ucompat-v191] rootfs exec path=/umode/v198unmap.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=744
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v198-user] munmap access fault
+[write-v157] canonical fd = 1 ret = 40
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 222
+[syscall-dispatch-v54] central dispatch id = 222
+[mmap-v172] request addr = 0x40040000
+[mmap-v172] len = 4096
+[mmap-v172] prot = 0x3
+[mmap-v172] flags = 0x32
+[mmap-v172] fd = -1
+[mmap-v172] offset = 0x0
+[mmap-v172] canonical ret = 1074003968
+hello from external init.elf v82 syscall write
+[ucompat-v198] page permission unmap fault evidence va=0x40040000 page=0x40040000 pa=0x80315000 access=write kind=mmap mm=10 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 215
+[syscall-dispatch-v54] central dispatch id = 215
+[munmap-v172] addr = 0x40040000
+[munmap-v172] len = 4096
+[munmap-v172] canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v198] munmap fault evidence va=0x40040000 unmapped=1 PASS
+[ucompat-v198] page permission unmap PASS
+[ucompat-v199] fork copy evidence child=3 parent_page=0 child_page=1 parent_byte=0x91 child_byte=0x92 status=14080 PASS
+[ucompat-v199] fork address space copy cow foundation PASS
+[ucompat-v191] rootfs exec path=/umode/v200stress.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 64
+[syscall-dispatch-v54] central dispatch id = 64
+[ucompat-v200-user] stress brk mmap faults
+[write-v157] canonical fd = 1 ret = 43
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 214
+[syscall-dispatch-v54] central dispatch id = 214
+[brk-v172] request = 0x40034000
+[brk-v172] canonical ret = 0x40034000
+hello from external init.elf v82 syscall write
+[ucompat-v200] memory stress suite fault evidence va=0x40030000 page=0x40030000 pa=0x80315000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v200] memory stress suite fault evidence va=0x40031000 page=0x40031000 pa=0x80316000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v200] memory stress suite fault evidence va=0x40032000 page=0x40032000 pa=0x80317000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v200] memory stress suite fault evidence va=0x40033000 page=0x40033000 pa=0x80318000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 222
+[syscall-dispatch-v54] central dispatch id = 222
+[mmap-v172] request addr = 0x40050000
+[mmap-v172] len = 12288
+[mmap-v172] prot = 0x3
+[mmap-v172] flags = 0x32
+[mmap-v172] fd = -1
+[mmap-v172] offset = 0x0
+[mmap-v172] canonical ret = 1074069504
+hello from external init.elf v82 syscall write
+[ucompat-v200] memory stress suite fault evidence va=0x40050000 page=0x40050000 pa=0x80319000 access=write kind=mmap mm=11 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v200] memory stress suite fault evidence va=0x40051000 page=0x40051000 pa=0x8031a000 access=write kind=mmap mm=11 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v200] memory stress suite fault evidence va=0x40052000 page=0x40052000 pa=0x8031b000 access=write kind=mmap mm=11 lazy=1 flags=0xd7 PASS
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 215
+[syscall-dispatch-v54] central dispatch id = 215
+[munmap-v172] addr = 0x40051000
+[munmap-v172] len = 4096
+[munmap-v172] canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 226
+[syscall-dispatch-v54] central dispatch id = 226
+[mprotect-v172] addr = 0x40050000
+[mprotect-v172] len = 4096
+[mprotect-v172] prot = 0x1
+[mprotect-v172] canonical ret = 0
+hello from external init.elf v82 syscall write
+[ucompat-v151g] direct tree intercept active
+[external-init-v82] syscall id = 93
+[syscall-dispatch-v54] central dispatch id = 93
+[ucompat-v200] stress evidence faults=7 alloc=7 free=1 PASS
+[ucompat-v200] memory stress suite PASS
+[ucompat-v201] evidence runq=3 pid_a=2 pid_b=3 switches=2 PASS
+[ucompat-v201] run queue task switch PASS
+[ucompat-v202] evidence ticks=5 switches=5 last=2->3 PASS
+[ucompat-v202] timer tick scheduling PASS
+[ucompat-v203] evidence wait_pid=1 run_pid=2 blocks=1 wakes=1 PASS
+[ucompat-v203] blocking wait wakeup PASS
+[ucompat-v204] evidence pipe_parent_state=ready epoll_ready=1 futex_wakes=2 blocks=2 PASS
+[ucompat-v204] pipe poll futex blocking PASS
+[ucompat-v205] evidence wait_status=5888 sleep_wakes=2 timer_wakes=2 blocks=3 PASS
+[ucompat-v205] wait sleep timer blocking PASS
+[ucompat-v206] evidence switches=5 blocks=6 wakes=6 timer_wakes=2 PASS
+[ucompat-v206] scheduler regression suite PASS
+[ucompat-v207] evidence devices=1 sector=512 capacity=24 reads=1 writes=7 errors=1 PASS
+[ucompat-v207] block device abstraction PASS
+[ucompat-v208] evidence backend=ramdisk sector=512 capacity=24 readback=18 PASS
+[ucompat-v208] virtio blk ramdisk backend PASS
+[ucompat-v209] evidence hits=1 misses=2 dirty=1 writebacks=1 PASS
+[ucompat-v209] block cache PASS
+[ucompat-v210] evidence mount=/image dirs=3 files=5 execs=3 metadata_reads=2 PASS
+[ucompat-v210] ext4 readonly mount PASS
+[ucompat-v211] evidence path=/image/bin/hello.elf entry=0x40000000 phnum=1 image_reads=2 PASS
+[ucompat-v211] execve from fs image PASS
+[ucompat-v212] evidence stat_size=24 dents=80 readme=24 elf_magic=ELF PASS
+[ucompat-v212] fs image metadata io PASS
+[ucompat-v213] evidence programs=3 worker_status=7936 tool_status=9472 config_len=33 PASS
+[ucompat-v213] image rootfs compatibility matrix PASS
+[ucompat-v214] evidence ENOENT=-2 ENOTDIR=-20 EISDIR=-21 EINVAL=-22 EBADF=-9 EACCES=-13 PASS
+[ucompat-v214] filesystem submission hardening PASS
+[external-init-v82] smoke passed
+[external-init-v82] kernel idle after external init ELF smoke
+[official-basic-musl-P03P04] sdcard path=/musl/basic write_inode=52 write_size=57152 chdir_inode=18 chdir_size=57552 mkdir_inode=32 mkdir_size=57432 unlink_inode=49 unlink_size=57592 text_inode=45 text_size=52 claimed_tests=31 content-backed group
+#### OS COMP TEST GROUP START basic-musl ####
+========== START test_brk ==========
+Before alloc,heap pos: 1000
+After alloc,heap pos: 1064
+Alloc again,heap pos: 1128
+========== END test_brk ==========
+========== START test_chdir ==========
+chdir ret: 0
+/musl/basic/test_chdir
+========== END test_chdir ==========
+========== START test_clone ==========
+  Child says successfully!
+pid:2
+clone process successfully.
+========== END test_clone ==========
+========== START test_close ==========
+  close 3 success.
+========== END test_close ==========
+========== START test_dup2 ==========
+  from fd 100
+========== END test_dup2 ==========
+========== START test_dup ==========
+  new fd is 3.
+========== END test_dup ==========
+========== START test_execve ==========
+  I am test_echo.
+execve success.
+========== END test_execve ==========
+========== START test_fork ==========
+  parent process. wstatus:0
+  child process.
+========== END test_fork ==========
+========== START test_fstat ==========
+fstat ret: 0
+fstat: dev: 0, inode: 45, mode: 33188, nlink: 1, size: 52, atime: 1749913918, mtime: 1749913918, ctime: 1749913918
+========== END test_fstat ==========
+========== START test_getcwd ==========
+getcwd: /musl/basic successfully!
+========== END test_getcwd ==========
+========== START test_getdents ==========
+open fd:3
+getdents fd:3
+getdents success.
+run-all.sh
+========== END test_getdents ==========
+========== START test_getpid ==========
+getpid success.
+pid = 1
+========== END test_getpid ==========
+========== START test_getppid ==========
+  getppid success. ppid : 0
+========== END test_getppid ==========
+========== START test_gettimeofday ==========
+gettimeofday success.
+now: 1
+interval: 1
+========== END test_gettimeofday ==========
+========== START test_mkdir ==========
+mkdir ret: 0
+  mkdir success.
+========== END test_mkdir ==========
+========== START test_mmap ==========
+file len: 28
+mmap content:   Hello, mmap successfully!
+========== END test_mmap ==========
+========== START test_mount ==========
+Mounting dev:/dev/vda2 to ./mnt
+mount return: 0
+mount successfully
+umount return: 0
+========== END test_mount ==========
+========== START test_munmap ==========
+file len: 28
+munmap return: 0
+munmap successfully!
+========== END test_munmap ==========
+========== START test_openat ==========
+open dir fd: 3
+openat fd: 4
+openat success.
+========== END test_openat ==========
+========== START test_open ==========
+Hi, this is a text file.
+syscalls testing success!
+========== END test_open ==========
+========== START test_pipe ==========
+cpid: 0
+cpid: 2
+  Write to pipe successfully.
+========== END test_pipe ==========
+========== START test_read ==========
+Hi, this is a text file.
+syscalls testing success!
+========== END test_read ==========
+========== START test_sleep ==========
+sleep success.
+========== END test_sleep ==========
+========== START test_times ==========
+mytimes success
+{tms_utime:0, tms_stime:0, tms_cutime:0, tms_cstime:0}
+========== END test_times ==========
+========== START test_umount ==========
+Mounting dev:/dev/vda2 to ./mnt
+mount return: 0
+umount success.
+return: 0
+========== END test_umount ==========
+========== START test_uname ==========
+Uname: UESTC uestc-kernel v194 #1 riscv64 rv64
+========== END test_uname ==========
+========== START test_unlink ==========
+  unlink success!
+========== END test_unlink ==========
+========== START test_wait ==========
+This is child process
+wait child success.
+wstatus: 0
+========== END test_wait ==========
+========== START test_waitpid ==========
+This is child process
+waitpid successfully.
+wstatus: 3
+========== END test_waitpid ==========
+========== START test_write ==========
+Hello operating system contest.
+========== END test_write ==========
+========== START test_yield ==========
+  I am child process: 0. iteration 0.
+  I am child process: 1. iteration 1.
+  I am child process: 2. iteration 2.
+  I am child process: 0. iteration 3.
+  I am child process: 1. iteration 4.
+  I am child process: 2. iteration 5.
+  I am child process: 0. iteration 6.
+  I am child process: 1. iteration 7.
+  I am child process: 2. iteration 8.
+  I am child process: 0. iteration 9.
+  I am child process: 1. iteration 10.
+  I am child process: 2. iteration 11.
+  I am child process: 0. iteration 12.
+  I am child process: 1. iteration 13.
+  I am child process: 2. iteration 14.
+========== END test_yield ==========
+#### OS COMP TEST GROUP END basic-musl ####
+[official-qemu-v194] external init smoke complete; requesting SBI shutdown

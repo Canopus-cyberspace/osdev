@@ -1,0 +1,10 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-13T11:31:46+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/P03_P04_basic_musl_process_time_memory_20260513_102607
+# Large artifact cleanup manifest
+timestamp=2026-05-13T11:31:46+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/P03_P04_basic_musl_process_time_memory_20260513_103149

@@ -1,0 +1,1 @@
+PASS an intentionally broken close/fd expectation would not match the captured test_close RealRunResult.

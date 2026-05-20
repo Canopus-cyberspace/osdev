@@ -1,0 +1,144 @@
+#### OS COMP TEST GROUP START basic-musl ####
+========== START test_brk ==========
+Before alloc,heap pos: 1000
+After alloc,heap pos: 1064
+Alloc again,heap pos: 1128
+========== END test_brk ==========
+========== START test_chdir ==========
+chdir ret: 0
+/musl/basic/test_chdir
+========== END test_chdir ==========
+========== START test_clone ==========
+  Child says successfully!
+pid:2
+clone process successfully.
+========== END test_clone ==========
+========== START test_close ==========
+  close 3 success.
+========== END test_close ==========
+========== START test_dup2 ==========
+  from fd 100
+========== END test_dup2 ==========
+========== START test_dup ==========
+  new fd is 3.
+========== END test_dup ==========
+========== START test_execve ==========
+  I am test_echo.
+execve success.
+========== END test_execve ==========
+========== START test_fork ==========
+  parent process. wstatus:0
+  child process.
+========== END test_fork ==========
+========== START test_fstat ==========
+fstat ret: 0
+fstat: dev: 0, inode: 45, mode: 33188, nlink: 1, size: 52, atime: 1749913918, mtime: 1749913918, ctime: 1749913918
+========== END test_fstat ==========
+========== START test_getcwd ==========
+getcwd: /musl/basic successfully!
+========== END test_getcwd ==========
+========== START test_getdents ==========
+open fd:3
+getdents fd:3
+getdents success.
+run-all.sh
+========== END test_getdents ==========
+========== START test_getpid ==========
+getpid success.
+pid = 1
+========== END test_getpid ==========
+========== START test_getppid ==========
+  getppid success. ppid : 0
+========== END test_getppid ==========
+========== START test_gettimeofday ==========
+gettimeofday success.
+now: 1
+interval: 1
+========== END test_gettimeofday ==========
+========== START test_mkdir ==========
+mkdir ret: 0
+  mkdir success.
+========== END test_mkdir ==========
+========== START test_mmap ==========
+file len: 28
+mmap content:   Hello, mmap successfully!
+========== END test_mmap ==========
+========== START test_mount ==========
+Mounting dev:/dev/vda2 to ./mnt
+mount return: 0
+mount successfully
+umount return: 0
+========== END test_mount ==========
+========== START test_munmap ==========
+file len: 28
+munmap return: 0
+munmap successfully!
+========== END test_munmap ==========
+========== START test_openat ==========
+open dir fd: 3
+openat fd: 4
+openat success.
+========== END test_openat ==========
+========== START test_open ==========
+Hi, this is a text file.
+syscalls testing success!
+========== END test_open ==========
+========== START test_pipe ==========
+cpid: 0
+cpid: 2
+  Write to pipe successfully.
+========== END test_pipe ==========
+========== START test_read ==========
+Hi, this is a text file.
+syscalls testing success!
+========== END test_read ==========
+========== START test_sleep ==========
+sleep success.
+========== END test_sleep ==========
+========== START test_times ==========
+mytimes success
+{tms_utime:0, tms_stime:0, tms_cutime:0, tms_cstime:0}
+========== END test_times ==========
+========== START test_umount ==========
+Mounting dev:/dev/vda2 to ./mnt
+mount return: 0
+umount success.
+return: 0
+========== END test_umount ==========
+========== START test_uname ==========
+Uname: UESTC uestc-kernel v194 #1 riscv64 rv64
+========== END test_uname ==========
+========== START test_unlink ==========
+  unlink success!
+========== END test_unlink ==========
+========== START test_wait ==========
+This is child process
+wait child success.
+wstatus: 0
+========== END test_wait ==========
+========== START test_waitpid ==========
+This is child process
+waitpid successfully.
+wstatus: 3
+========== END test_waitpid ==========
+========== START test_write ==========
+Hello operating system contest.
+========== END test_write ==========
+========== START test_yield ==========
+  I am child process: 0. iteration 0.
+  I am child process: 1. iteration 1.
+  I am child process: 2. iteration 2.
+  I am child process: 0. iteration 3.
+  I am child process: 1. iteration 4.
+  I am child process: 2. iteration 5.
+  I am child process: 0. iteration 6.
+  I am child process: 1. iteration 7.
+  I am child process: 2. iteration 8.
+  I am child process: 0. iteration 9.
+  I am child process: 1. iteration 10.
+  I am child process: 2. iteration 11.
+  I am child process: 0. iteration 12.
+  I am child process: 1. iteration 13.
+  I am child process: 2. iteration 14.
+========== END test_yield ==========
+#### OS COMP TEST GROUP END basic-musl ####

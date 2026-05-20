@@ -1,0 +1,4 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdd       1007G   30G  927G   4% /
+/dev/sdd       1007G   30G  927G   4% /
+/dev/sdd       1007G   30G  927G   4% /

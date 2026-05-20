@@ -1,0 +1,2 @@
+test_execve: [K04b-process-trace] execve pid=1 path=test_echo argc=1 envc=0
+test_execve: [K04b-execve-trace] execve target=/musl/basic/test_echo argv0=test_echo inode=44 mode=0o100755 file_size=55416 entry=0x40001000 load_base=0x40000000 load_pages=3 elf_sha256=a290dd0987d8500b3affde391a27d7de35f97659b04c8e7c5f48b96e62a653aa ret=0

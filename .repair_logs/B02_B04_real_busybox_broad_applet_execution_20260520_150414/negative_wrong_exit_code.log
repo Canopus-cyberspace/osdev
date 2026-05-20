@@ -1,0 +1,1 @@
+PASS wrong expected BusyBox exit code does not match captured B02-B04 exit-code evidence.

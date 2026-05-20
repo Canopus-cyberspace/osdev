@@ -1,0 +1,30 @@
+test_mmap: [mmap-v172] request addr = 0x0
+test_mmap: [mmap-v172] len = 28
+test_mmap: [mmap-v172] prot = 0x3
+test_mmap: [mmap-v172] flags = 0x1
+test_mmap: [mmap-v172] fd = 3
+test_mmap: [mmap-v172] offset = 0x0
+test_mmap: [mmap-v172] canonical ret = 1074003968
+test_mmap: [K05-memory-trace] case=test_mmap op=mmap request=0x0 len=28 prot=0x3 flags=0x1 fd=3 offset=0x0 ret=1074003968
+test_mmap: [K05-vma-trace] case=test_mmap after=mmap mm=1 vmas=2 mmap_count=1 lazy_count=2 resident_pages=0 last_fault=0x0 last_fault_ok=0
+test_mmap: [ucompat-v196] user page table mapping fault evidence va=0x40040000 page=0x40040000 pa=0x80321000 access=read kind=mmap mm=1 lazy=1 flags=0xd7 PASS
+test_mmap: [K05-page-fault-trace] case=test_mmap va=0x40040000 page=0x40040000 access=read kind=mmap backing_bytes=28 ret_mm=1 resident_pages=1 fault_count=1
+test_mmap: [munmap-v172] addr = 0x40040000
+test_mmap: [munmap-v172] len = 28
+test_mmap: [munmap-v172] canonical ret = 0
+test_mmap: [K05-memory-trace] case=test_mmap op=munmap addr=0x40040000 len=28 ret=0
+test_mmap: [K05-vma-trace] case=test_mmap after=munmap mm=1 vmas=1 mmap_count=0 lazy_count=1 resident_pages=0 last_fault=0x40040000 last_fault_ok=1
+test_munmap: [mmap-v172] request addr = 0x0
+test_munmap: [mmap-v172] len = 28
+test_munmap: [mmap-v172] prot = 0x3
+test_munmap: [mmap-v172] flags = 0x1
+test_munmap: [mmap-v172] fd = 3
+test_munmap: [mmap-v172] offset = 0x0
+test_munmap: [mmap-v172] canonical ret = 1074003968
+test_munmap: [K05-memory-trace] case=test_munmap op=mmap request=0x0 len=28 prot=0x3 flags=0x1 fd=3 offset=0x0 ret=1074003968
+test_munmap: [K05-vma-trace] case=test_munmap after=mmap mm=1 vmas=2 mmap_count=1 lazy_count=2 resident_pages=0 last_fault=0x0 last_fault_ok=0
+test_munmap: [munmap-v172] addr = 0x40040000
+test_munmap: [munmap-v172] len = 28
+test_munmap: [munmap-v172] canonical ret = 0
+test_munmap: [K05-memory-trace] case=test_munmap op=munmap addr=0x40040000 len=28 ret=0
+test_munmap: [K05-vma-trace] case=test_munmap after=munmap mm=1 vmas=1 mmap_count=0 lazy_count=1 resident_pages=0 last_fault=0x0 last_fault_ok=0

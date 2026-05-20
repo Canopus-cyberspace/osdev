@@ -1,0 +1,652 @@
+test_write: ========== START [write-v157] canonical fd = 1 ret = 17
+test_write: test_write[write-v157] canonical fd = 1 ret = 10
+test_write: [write-v157] canonical fd = 1 ret = 12
+test_write: [write-v157] canonical fd = 1 ret = 32
+test_write: ========== END [write-v157] canonical fd = 1 ret = 15
+test_write: test_write[write-v157] canonical fd = 1 ret = 10
+test_write: [write-v157] canonical fd = 1 ret = 12
+test_getpid: ========== START [write-v157] canonical fd = 1 ret = 17
+test_getpid: test_getpid[write-v157] canonical fd = 1 ret = 11
+test_getpid: [write-v157] canonical fd = 1 ret = 12
+test_getpid: pid = [write-v157] canonical fd = 1 ret = 22
+test_getpid: [write-v157] canonical fd = 1 ret = 0
+test_getpid: 1[write-v157] canonical fd = 1 ret = 1
+test_getpid: [write-v157] canonical fd = 1 ret = 1
+test_getpid: ========== END [write-v157] canonical fd = 1 ret = 15
+test_getpid: test_getpid[write-v157] canonical fd = 1 ret = 11
+test_getpid: [write-v157] canonical fd = 1 ret = 12
+test_getppid: ========== START [write-v157] canonical fd = 1 ret = 17
+test_getppid: test_getppid[write-v157] canonical fd = 1 ret = 12
+test_getppid: [write-v157] canonical fd = 1 ret = 12
+test_getppid:   getppid success. ppid : [write-v157] canonical fd = 1 ret = 26
+test_getppid: [write-v157] canonical fd = 1 ret = 0
+test_getppid: 1[write-v157] canonical fd = 1 ret = 1
+test_getppid: [write-v157] canonical fd = 1 ret = 1
+test_getppid: ========== END [write-v157] canonical fd = 1 ret = 15
+test_getppid: test_getppid[write-v157] canonical fd = 1 ret = 12
+test_getppid: [write-v157] canonical fd = 1 ret = 12
+test_uname: ========== START [write-v157] canonical fd = 1 ret = 17
+test_uname: test_uname[write-v157] canonical fd = 1 ret = 10
+test_uname: [write-v157] canonical fd = 1 ret = 12
+test_uname: Uname: [write-v157] canonical fd = 1 ret = 7
+test_uname: [write-v157] canonical fd = 1 ret = 0
+test_uname: UESTC-Kernel[write-v157] canonical fd = 1 ret = 12
+test_uname:  [write-v157] canonical fd = 1 ret = 1
+test_uname: [write-v157] canonical fd = 1 ret = 0
+test_uname: qemu-riscv64[write-v157] canonical fd = 1 ret = 12
+test_uname:  [write-v157] canonical fd = 1 ret = 1
+test_uname: [write-v157] canonical fd = 1 ret = 0
+test_uname: 0.1-v63[write-v157] canonical fd = 1 ret = 7
+test_uname:  [write-v157] canonical fd = 1 ret = 1
+test_uname: [write-v157] canonical fd = 1 ret = 0
+test_uname: v63-time-uname[write-v157] canonical fd = 1 ret = 14
+test_uname:  [write-v157] canonical fd = 1 ret = 1
+test_uname: [write-v157] canonical fd = 1 ret = 0
+test_uname: riscv64[write-v157] canonical fd = 1 ret = 7
+test_uname:  [write-v157] canonical fd = 1 ret = 1
+test_uname: [write-v157] canonical fd = 1 ret = 0
+test_uname: uestc.local[write-v157] canonical fd = 1 ret = 11
+test_uname: [write-v157] canonical fd = 1 ret = 1
+test_uname: ========== END [write-v157] canonical fd = 1 ret = 15
+test_uname: test_uname[write-v157] canonical fd = 1 ret = 10
+test_uname: [write-v157] canonical fd = 1 ret = 12
+test_getcwd: ========== START [write-v157] canonical fd = 1 ret = 17
+test_getcwd: test_getcwd[write-v157] canonical fd = 1 ret = 11
+test_getcwd: [write-v157] canonical fd = 1 ret = 12
+test_getcwd: [path-v65] getcwd buf = 0x4001fee0
+test_getcwd: [path-v65] getcwd len = 128
+test_getcwd: [path-v157] getcwd canonical ret = 12
+test_getcwd: getcwd: [write-v157] canonical fd = 1 ret = 8
+test_getcwd: [write-v157] canonical fd = 1 ret = 0
+test_getcwd: /musl/basic[write-v157] canonical fd = 1 ret = 11
+test_getcwd: [write-v157] canonical fd = 1 ret = 15
+test_getcwd: ========== END [write-v157] canonical fd = 1 ret = 15
+test_getcwd: test_getcwd[write-v157] canonical fd = 1 ret = 11
+test_getcwd: [write-v157] canonical fd = 1 ret = 12
+test_brk: ========== START [write-v157] canonical fd = 1 ret = 17
+test_brk: test_brk[write-v157] canonical fd = 1 ret = 8
+test_brk: [write-v157] canonical fd = 1 ret = 12
+test_brk: Before alloc,heap pos: [write-v157] canonical fd = 1 ret = 23
+test_brk: [write-v157] canonical fd = 1 ret = 0
+test_brk: 1073938432[write-v157] canonical fd = 1 ret = 10
+test_brk: [write-v157] canonical fd = 1 ret = 1
+test_brk: After alloc,heap pos: [write-v157] canonical fd = 1 ret = 22
+test_brk: [write-v157] canonical fd = 1 ret = 0
+test_brk: 1073938496[write-v157] canonical fd = 1 ret = 10
+test_brk: [write-v157] canonical fd = 1 ret = 1
+test_brk: Alloc again,heap pos: [write-v157] canonical fd = 1 ret = 22
+test_brk: [write-v157] canonical fd = 1 ret = 0
+test_brk: 1073938560[write-v157] canonical fd = 1 ret = 10
+test_brk: [write-v157] canonical fd = 1 ret = 1
+test_brk: ========== END [write-v157] canonical fd = 1 ret = 15
+test_brk: test_brk[write-v157] canonical fd = 1 ret = 8
+test_brk: [write-v157] canonical fd = 1 ret = 12
+test_gettimeofday: ========== START [write-v157] canonical fd = 1 ret = 17
+test_gettimeofday: test_gettimeofday[write-v157] canonical fd = 1 ret = 17
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 12
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 22
+test_gettimeofday: start:[write-v157] canonical fd = 1 ret = 6
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 0
+test_gettimeofday: 1234[write-v157] canonical fd = 1 ret = 4
+test_gettimeofday: , end:[write-v157] canonical fd = 1 ret = 6
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 0
+test_gettimeofday: 2234[write-v157] canonical fd = 1 ret = 4
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 1
+test_gettimeofday: interval: [write-v157] canonical fd = 1 ret = 10
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 0
+test_gettimeofday: 1000[write-v157] canonical fd = 1 ret = 4
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 1
+test_gettimeofday: ========== END [write-v157] canonical fd = 1 ret = 15
+test_gettimeofday: test_gettimeofday[write-v157] canonical fd = 1 ret = 17
+test_gettimeofday: [write-v157] canonical fd = 1 ret = 12
+test_times: ========== START [write-v157] canonical fd = 1 ret = 17
+test_times: test_times[write-v157] canonical fd = 1 ret = 10
+test_times: [write-v157] canonical fd = 1 ret = 12
+test_times: {tms_utime:[write-v157] canonical fd = 1 ret = 27
+test_times: [write-v157] canonical fd = 1 ret = 0
+test_times: 0[write-v157] canonical fd = 1 ret = 1
+test_times: , tms_stime:[write-v157] canonical fd = 1 ret = 12
+test_times: [write-v157] canonical fd = 1 ret = 0
+test_times: 0[write-v157] canonical fd = 1 ret = 1
+test_times: , tms_cutime:[write-v157] canonical fd = 1 ret = 13
+test_times: [write-v157] canonical fd = 1 ret = 0
+test_times: 0[write-v157] canonical fd = 1 ret = 1
+test_times: , tms_cstime:[write-v157] canonical fd = 1 ret = 13
+test_times: [write-v157] canonical fd = 1 ret = 0
+test_times: 0[write-v157] canonical fd = 1 ret = 1
+test_times: [write-v157] canonical fd = 1 ret = 2
+test_times: ========== END [write-v157] canonical fd = 1 ret = 15
+test_times: test_times[write-v157] canonical fd = 1 ret = 10
+test_times: [write-v157] canonical fd = 1 ret = 12
+test_sleep: ========== START [write-v157] canonical fd = 1 ret = 17
+test_sleep: test_sleep[write-v157] canonical fd = 1 ret = 10
+test_sleep: [write-v157] canonical fd = 1 ret = 12
+test_sleep: [write-v157] canonical fd = 1 ret = 15
+test_sleep: ========== END [write-v157] canonical fd = 1 ret = 15
+test_sleep: test_sleep[write-v157] canonical fd = 1 ret = 10
+test_sleep: [write-v157] canonical fd = 1 ret = 12
+test_close: ========== START [write-v157] canonical fd = 1 ret = 17
+test_close: test_close[write-v157] canonical fd = 1 ret = 10
+test_close: [write-v157] canonical fd = 1 ret = 12
+test_close: [openat-v137p] dirfd = -100
+test_close: [openat-v137p] flags = 0x42
+test_close: [openat-v137p] mode = 0x2
+test_close: [write-v157] canonical fd = 3 ret = 15
+test_close:   close [write-v157] canonical fd = 1 ret = 8
+test_close: [write-v157] canonical fd = 1 ret = 0
+test_close: 3[write-v157] canonical fd = 1 ret = 1
+test_close: [write-v157] canonical fd = 1 ret = 10
+test_close: ========== END [write-v157] canonical fd = 1 ret = 15
+test_close: test_close[write-v157] canonical fd = 1 ret = 10
+test_close: [write-v157] canonical fd = 1 ret = 12
+test_dup: ========== START [write-v157] canonical fd = 1 ret = 17
+test_dup: test_dup[write-v157] canonical fd = 1 ret = 8
+test_dup: [write-v157] canonical fd = 1 ret = 12
+test_dup:   new fd is [write-v157] canonical fd = 1 ret = 12
+test_dup: [write-v157] canonical fd = 1 ret = 0
+test_dup: 3[write-v157] canonical fd = 1 ret = 1
+test_dup: [write-v157] canonical fd = 1 ret = 2
+test_dup: ========== END [write-v157] canonical fd = 1 ret = 15
+test_dup: test_dup[write-v157] canonical fd = 1 ret = 8
+test_dup: [write-v157] canonical fd = 1 ret = 12
+test_dup2: ========== START [write-v157] canonical fd = 1 ret = 17
+test_dup2: test_dup2[write-v157] canonical fd = 1 ret = 9
+test_dup2: [write-v157] canonical fd = 1 ret = 12
+test_dup2: [write-v157] canonical fd = 100 ret = 14
+test_dup2: ========== END [write-v157] canonical fd = 1 ret = 15
+test_dup2: test_dup2[write-v157] canonical fd = 1 ret = 9
+test_dup2: [write-v157] canonical fd = 1 ret = 12
+test_open: ========== START [write-v157] canonical fd = 1 ret = 17
+test_open: test_open[write-v157] canonical fd = 1 ret = 9
+test_open: [write-v157] canonical fd = 1 ret = 12
+test_open: [openat-v137p] dirfd = -100
+test_open: [openat-v137p] flags = 0x0
+test_open: [openat-v137p] mode = 0x2
+test_open: [read-v157] canonical fd = 3 ret = 52
+test_open: [write-v157] canonical fd = 1 ret = 52
+test_open: ========== END [write-v157] canonical fd = 1 ret = 15
+test_open: test_open[write-v157] canonical fd = 1 ret = 9
+test_open: [write-v157] canonical fd = 1 ret = 12
+test_read: ========== START [write-v157] canonical fd = 1 ret = 17
+test_read: test_read[write-v157] canonical fd = 1 ret = 9
+test_read: [write-v157] canonical fd = 1 ret = 12
+test_read: [openat-v137p] dirfd = -100
+test_read: [openat-v137p] flags = 0x0
+test_read: [openat-v137p] mode = 0x2
+test_read: [read-v157] canonical fd = 3 ret = 52
+test_read: [write-v157] canonical fd = 1 ret = 52
+test_read: ========== END [write-v157] canonical fd = 1 ret = 15
+test_read: test_read[write-v157] canonical fd = 1 ret = 9
+test_read: [write-v157] canonical fd = 1 ret = 12
+test_openat: ========== START [write-v157] canonical fd = 1 ret = 17
+test_openat: test_openat[write-v157] canonical fd = 1 ret = 11
+test_openat: [write-v157] canonical fd = 1 ret = 12
+test_openat: [openat-v137p] dirfd = -100
+test_openat: [openat-v137p] flags = 0x10000
+test_openat: [openat-v137p] mode = 0x2
+test_openat: open dir fd: [write-v157] canonical fd = 1 ret = 13
+test_openat: [write-v157] canonical fd = 1 ret = 0
+test_openat: 3[write-v157] canonical fd = 1 ret = 1
+test_openat: [write-v157] canonical fd = 1 ret = 1
+test_openat: [openat-v137p] dirfd = 3
+test_openat: [openat-v137p] flags = 0x42
+test_openat: [openat-v137p] mode = 0x180
+test_openat: openat fd: [write-v157] canonical fd = 1 ret = 11
+test_openat: [write-v157] canonical fd = 1 ret = 0
+test_openat: 4[write-v157] canonical fd = 1 ret = 1
+test_openat: [write-v157] canonical fd = 1 ret = 1
+test_openat: [write-v157] canonical fd = 1 ret = 16
+test_openat: ========== END [write-v157] canonical fd = 1 ret = 15
+test_openat: test_openat[write-v157] canonical fd = 1 ret = 11
+test_openat: [write-v157] canonical fd = 1 ret = 12
+test_fstat: ========== START [write-v157] canonical fd = 1 ret = 17
+test_fstat: test_fstat[write-v157] canonical fd = 1 ret = 10
+test_fstat: [write-v157] canonical fd = 1 ret = 12
+test_fstat: [openat-v137p] dirfd = -100
+test_fstat: [openat-v137p] flags = 0x0
+test_fstat: [openat-v137p] mode = 0x2
+test_fstat: [fstat-v58] fd = 3
+test_fstat: [fstat-v58] user stat = 0x40002078
+test_fstat: [fstat-v157] canonical fd stat ret = 0
+test_fstat: fstat ret: [write-v157] canonical fd = 1 ret = 11
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 0[write-v157] canonical fd = 1 ret = 1
+test_fstat: [write-v157] canonical fd = 1 ret = 1
+test_fstat: fstat: dev: [write-v157] canonical fd = 1 ret = 12
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 10017[write-v157] canonical fd = 1 ret = 5
+test_fstat: , inode: [write-v157] canonical fd = 1 ret = 9
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 10017[write-v157] canonical fd = 1 ret = 5
+test_fstat: , mode: [write-v157] canonical fd = 1 ret = 8
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 33188[write-v157] canonical fd = 1 ret = 5
+test_fstat: , nlink: [write-v157] canonical fd = 1 ret = 9
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 1[write-v157] canonical fd = 1 ret = 1
+test_fstat: , size: [write-v157] canonical fd = 1 ret = 8
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 52[write-v157] canonical fd = 1 ret = 2
+test_fstat: , atime: [write-v157] canonical fd = 1 ret = 9
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 0[write-v157] canonical fd = 1 ret = 1
+test_fstat: , mtime: [write-v157] canonical fd = 1 ret = 9
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 0[write-v157] canonical fd = 1 ret = 1
+test_fstat: , ctime: [write-v157] canonical fd = 1 ret = 9
+test_fstat: [write-v157] canonical fd = 1 ret = 0
+test_fstat: 0[write-v157] canonical fd = 1 ret = 1
+test_fstat: [write-v157] canonical fd = 1 ret = 1
+test_fstat: ========== END [write-v157] canonical fd = 1 ret = 15
+test_fstat: test_fstat[write-v157] canonical fd = 1 ret = 10
+test_fstat: [write-v157] canonical fd = 1 ret = 12
+test_getdents: ========== START [write-v157] canonical fd = 1 ret = 17
+test_getdents: test_getdents[write-v157] canonical fd = 1 ret = 13
+test_getdents: [write-v157] canonical fd = 1 ret = 12
+test_getdents: [openat-v137p] dirfd = -100
+test_getdents: [openat-v137p] flags = 0x0
+test_getdents: [openat-v137p] mode = 0x2
+test_getdents: open fd:[write-v157] canonical fd = 1 ret = 8
+test_getdents: [write-v157] canonical fd = 1 ret = 0
+test_getdents: 3[write-v157] canonical fd = 1 ret = 1
+test_getdents: [write-v157] canonical fd = 1 ret = 1
+test_getdents: [getdents64-v59] fd = 3
+test_getdents: [getdents64-v59] buf = 0x40002050
+test_getdents: [getdents64-v59] len = 512
+test_getdents: [getdents64-v157] canonical ret = 232
+test_getdents: getdents fd:[write-v157] canonical fd = 1 ret = 12
+test_getdents: [write-v157] canonical fd = 1 ret = 0
+test_getdents: 232[write-v157] canonical fd = 1 ret = 3
+test_getdents: [write-v157] canonical fd = 1 ret = 1
+test_getdents: [write-v157] canonical fd = 1 ret = 18
+test_getdents: [write-v157] canonical fd = 1 ret = 0
+test_getdents: text.txt[write-v157] canonical fd = 1 ret = 8
+test_getdents: [write-v157] canonical fd = 1 ret = 1
+test_getdents: [write-v157] canonical fd = 1 ret = 1
+test_getdents: ========== END [write-v157] canonical fd = 1 ret = 15
+test_getdents: test_getdents[write-v157] canonical fd = 1 ret = 13
+test_getdents: [write-v157] canonical fd = 1 ret = 12
+test_chdir: ========== START [write-v157] canonical fd = 1 ret = 17
+test_chdir: test_chdir[write-v157] canonical fd = 1 ret = 10
+test_chdir: [write-v157] canonical fd = 1 ret = 12
+test_chdir: [fs-v68] mkdirat dirfd = -100
+test_chdir: [fs-v68] mkdirat path = 0x40001f00
+test_chdir: [fs-v68] mkdirat mode = 0o666
+test_chdir: [fs-v157] mkdirat canonical ret = -17
+test_chdir: [path-v65] chdir path = 0x40001f00
+test_chdir: [path-v157] chdir canonical ret = 0
+test_chdir: chdir ret: [write-v157] canonical fd = 1 ret = 11
+test_chdir: [write-v157] canonical fd = 1 ret = 0
+test_chdir: 0[write-v157] canonical fd = 1 ret = 1
+test_chdir: [write-v157] canonical fd = 1 ret = 1
+test_chdir: [path-v65] getcwd buf = 0x40002030
+test_chdir: [path-v65] getcwd len = 30
+test_chdir: [path-v157] getcwd canonical ret = 23
+test_chdir:   current working dir : [write-v157] canonical fd = 1 ret = 24
+test_chdir: [write-v157] canonical fd = 1 ret = 0
+test_chdir: /musl/basic/test_chdir[write-v157] canonical fd = 1 ret = 22
+test_chdir: [write-v157] canonical fd = 1 ret = 1
+test_chdir: ========== END [write-v157] canonical fd = 1 ret = 15
+test_chdir: test_chdir[write-v157] canonical fd = 1 ret = 10
+test_chdir: [write-v157] canonical fd = 1 ret = 12
+test_mkdir: ========== START [write-v157] canonical fd = 1 ret = 17
+test_mkdir: test_mkdir[write-v157] canonical fd = 1 ret = 10
+test_mkdir: [write-v157] canonical fd = 1 ret = 12
+test_mkdir: [fs-v68] mkdirat dirfd = -100
+test_mkdir: [fs-v68] mkdirat path = 0x40001f08
+test_mkdir: [fs-v68] mkdirat mode = 0o666
+test_mkdir: [fs-v157] mkdirat canonical ret = 0
+test_mkdir: mkdir ret: [write-v157] canonical fd = 1 ret = 11
+test_mkdir: [write-v157] canonical fd = 1 ret = 0
+test_mkdir: 0[write-v157] canonical fd = 1 ret = 1
+test_mkdir: [write-v157] canonical fd = 1 ret = 1
+test_mkdir: [openat-v137p] dirfd = -100
+test_mkdir: [openat-v137p] flags = 0x10000
+test_mkdir: [openat-v137p] mode = 0x2
+test_mkdir: [write-v157] canonical fd = 1 ret = 17
+test_mkdir: ========== END [write-v157] canonical fd = 1 ret = 15
+test_mkdir: test_mkdir[write-v157] canonical fd = 1 ret = 10
+test_mkdir: [write-v157] canonical fd = 1 ret = 12
+test_unlink: ========== START [write-v157] canonical fd = 1 ret = 17
+test_unlink: test_unlink[write-v157] canonical fd = 1 ret = 11
+test_unlink: [write-v157] canonical fd = 1 ret = 12
+test_unlink: [openat-v137p] dirfd = -100
+test_unlink: [openat-v137p] flags = 0x41
+test_unlink: [openat-v137p] mode = 0x2
+test_unlink: [fs-v68] unlinkat dirfd = -100
+test_unlink: [fs-v68] unlinkat path = 0x40001f18
+test_unlink: [fs-v68] unlinkat flags = 0x0
+test_unlink: [fs-v157] unlinkat canonical ret = 0
+test_unlink: [openat-v137p] dirfd = -100
+test_unlink: [openat-v137p] flags = 0x0
+test_unlink: [openat-v137p] mode = 0x2
+test_unlink: [write-v157] canonical fd = 1 ret = 18
+test_unlink: ========== END [write-v157] canonical fd = 1 ret = 15
+test_unlink: test_unlink[write-v157] canonical fd = 1 ret = 11
+test_unlink: [write-v157] canonical fd = 1 ret = 12
+test_pipe: ========== START [write-v157] canonical fd = 1 ret = 17
+test_pipe: test_pipe[write-v157] canonical fd = 1 ret = 9
+test_pipe: [write-v157] canonical fd = 1 ret = 12
+test_pipe: cpid: [write-v157] canonical fd = 1 ret = 6
+test_pipe: [write-v157] canonical fd = 1 ret = 0
+test_pipe: 2[write-v157] canonical fd = 1 ret = 1
+test_pipe: [write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 0
+test_pipe: cpid: [write-v157] canonical fd = 1 ret = 6
+test_pipe: [write-v157] canonical fd = 1 ret = 0
+test_pipe: 0[write-v157] canonical fd = 1 ret = 1
+test_pipe: [write-v157] canonical fd = 1 ret = 1
+test_pipe: [write-v157] canonical fd = 4 ret = 30
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe:  [write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe:  [write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: W[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: r[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: i[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: t[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: e[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe:  [write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: t[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: o[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe:  [write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: p[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: i[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: p[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: e[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe:  [write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: s[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: u[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: c[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: c[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: e[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: s[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: s[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: f[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: u[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: l[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: l[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: y[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: .[write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 1
+test_pipe: [write-v157] canonical fd = 1 ret = 1
+test_pipe: [read-v157] canonical fd = 3 ret = 0
+test_pipe: [write-v157] canonical fd = 1 ret = 1
+test_pipe: ========== END [write-v157] canonical fd = 1 ret = 15
+test_pipe: test_pipe[write-v157] canonical fd = 1 ret = 9
+test_pipe: [write-v157] canonical fd = 1 ret = 12
+test_yield: ========== START [write-v157] canonical fd = 1 ret = 17
+test_yield: test_yield[write-v157] canonical fd = 1 ret = 10
+test_yield: [write-v157] canonical fd = 1 ret = 12
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 0[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 3[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 1[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 4[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 0[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 3[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 1[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 4[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 0[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 3[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 1[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 4[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 0[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 3[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 1[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 4[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 0[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 3[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 1[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield:   I am child process: [write-v157] canonical fd = 1 ret = 22
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 4[write-v157] canonical fd = 1 ret = 1
+test_yield: . iteration [write-v157] canonical fd = 1 ret = 12
+test_yield: [write-v157] canonical fd = 1 ret = 0
+test_yield: 2[write-v157] canonical fd = 1 ret = 1
+test_yield: [write-v157] canonical fd = 1 ret = 2
+test_yield: ========== END [write-v157] canonical fd = 1 ret = 15
+test_yield: test_yield[write-v157] canonical fd = 1 ret = 10
+test_yield: [write-v157] canonical fd = 1 ret = 12
+test_wait: ========== START [write-v157] canonical fd = 1 ret = 17
+test_wait: test_wait[write-v157] canonical fd = 1 ret = 9
+test_wait: [write-v157] canonical fd = 1 ret = 12
+test_wait: [write-v157] canonical fd = 1 ret = 22
+test_wait: wstatus: [write-v157] canonical fd = 1 ret = 29
+test_wait: [write-v157] canonical fd = 1 ret = 0
+test_wait: 0[write-v157] canonical fd = 1 ret = 1
+test_wait: [write-v157] canonical fd = 1 ret = 1
+test_wait: ========== END [write-v157] canonical fd = 1 ret = 15
+test_wait: test_wait[write-v157] canonical fd = 1 ret = 9
+test_wait: [write-v157] canonical fd = 1 ret = 12
+test_waitpid: ========== START [write-v157] canonical fd = 1 ret = 17
+test_waitpid: test_waitpid[write-v157] canonical fd = 1 ret = 12
+test_waitpid: [write-v157] canonical fd = 1 ret = 12
+test_waitpid: [write-v157] canonical fd = 1 ret = 22
+test_waitpid: wstatus: [write-v157] canonical fd = 1 ret = 31
+test_waitpid: [write-v157] canonical fd = 1 ret = 0
+test_waitpid: 3[write-v157] canonical fd = 1 ret = 1
+test_waitpid: [write-v157] canonical fd = 1 ret = 1
+test_waitpid: ========== END [write-v157] canonical fd = 1 ret = 15
+test_waitpid: test_waitpid[write-v157] canonical fd = 1 ret = 12
+test_waitpid: [write-v157] canonical fd = 1 ret = 12
+test_fork: ========== START [write-v157] canonical fd = 1 ret = 17
+test_fork: test_fork[write-v157] canonical fd = 1 ret = 9
+test_fork: [write-v157] canonical fd = 1 ret = 12
+test_fork: [write-v157] canonical fd = 1 ret = 17
+test_fork:   parent process. wstatus:[write-v157] canonical fd = 1 ret = 26
+test_fork: [write-v157] canonical fd = 1 ret = 0
+test_fork: 0[write-v157] canonical fd = 1 ret = 1
+test_fork: [write-v157] canonical fd = 1 ret = 1
+test_fork: ========== END [write-v157] canonical fd = 1 ret = 15
+test_fork: test_fork[write-v157] canonical fd = 1 ret = 9
+test_fork: [write-v157] canonical fd = 1 ret = 12
+test_clone: ========== START [write-v157] canonical fd = 1 ret = 17
+test_clone: test_clone[write-v157] canonical fd = 1 ret = 10
+test_clone: [write-v157] canonical fd = 1 ret = 12
+test_clone: [write-v157] canonical fd = 1 ret = 27
+test_clone: pid:[write-v157] canonical fd = 1 ret = 32
+test_clone: [write-v157] canonical fd = 1 ret = 0
+test_clone: 2[write-v157] canonical fd = 1 ret = 1
+test_clone: [write-v157] canonical fd = 1 ret = 1
+test_clone: ========== END [write-v157] canonical fd = 1 ret = 15
+test_clone: test_clone[write-v157] canonical fd = 1 ret = 10
+test_clone: [write-v157] canonical fd = 1 ret = 12
+test_execve: ========== START [write-v157] canonical fd = 1 ret = 17
+test_execve: test_execve[write-v157] canonical fd = 1 ret = 11
+test_execve: [write-v157] canonical fd = 1 ret = 12
+test_execve: [write-v157] canonical fd = 1 ret = 34
+test_execve: ========== END [write-v157] canonical fd = 1 ret = 15
+test_execve: main[write-v157] canonical fd = 1 ret = 4
+test_execve: [write-v157] canonical fd = 1 ret = 12
+test_mmap: ========== START [write-v157] canonical fd = 1 ret = 17
+test_mmap: test_mmap[write-v157] canonical fd = 1 ret = 9
+test_mmap: [write-v157] canonical fd = 1 ret = 12
+test_mmap: [openat-v137p] dirfd = -100
+test_mmap: [openat-v137p] flags = 0x42
+test_mmap: [openat-v137p] mode = 0x2
+test_mmap: [write-v157] canonical fd = 3 ret = 27
+test_mmap: [fstat-v58] fd = 3
+test_mmap: [fstat-v58] user stat = 0x40002060
+test_mmap: [fstat-v157] canonical fd stat ret = 0
+test_mmap: file len: [write-v157] canonical fd = 1 ret = 10
+test_mmap: [write-v157] canonical fd = 1 ret = 0
+test_mmap: 28[write-v157] canonical fd = 1 ret = 2
+test_mmap: [write-v157] canonical fd = 1 ret = 1
+test_mmap: mmap content: [write-v157] canonical fd = 1 ret = 14
+test_mmap: [write-v157] canonical fd = 1 ret = 0
+test_mmap: [write-v157] canonical fd = 1 ret = 28
+test_mmap: [write-v157] canonical fd = 1 ret = 1
+test_mmap: ========== END [write-v157] canonical fd = 1 ret = 15
+test_mmap: test_mmap[write-v157] canonical fd = 1 ret = 9
+test_mmap: [write-v157] canonical fd = 1 ret = 12
+test_mount: ========== START [write-v157] canonical fd = 1 ret = 17
+test_mount: test_mount[write-v157] canonical fd = 1 ret = 10
+test_mount: [write-v157] canonical fd = 1 ret = 12
+test_mount: Mounting dev:[write-v157] canonical fd = 1 ret = 13
+test_mount: [write-v157] canonical fd = 1 ret = 0
+test_mount: /dev/vda2[write-v157] canonical fd = 1 ret = 9
+test_mount:  to [write-v157] canonical fd = 1 ret = 4
+test_mount: [write-v157] canonical fd = 1 ret = 0
+test_mount: ./mnt[write-v157] canonical fd = 1 ret = 5
+test_mount: [write-v157] canonical fd = 1 ret = 1
+test_mount: mount return: [write-v157] canonical fd = 1 ret = 14
+test_mount: [write-v157] canonical fd = 1 ret = 0
+test_mount: 0[write-v157] canonical fd = 1 ret = 1
+test_mount: [write-v157] canonical fd = 1 ret = 1
+test_mount: [write-v157] canonical fd = 1 ret = 19
+test_mount: umount return: [write-v157] canonical fd = 1 ret = 15
+test_mount: [write-v157] canonical fd = 1 ret = 0
+test_mount: 0[write-v157] canonical fd = 1 ret = 1
+test_mount: [write-v157] canonical fd = 1 ret = 1
+test_mount: ========== END [write-v157] canonical fd = 1 ret = 15
+test_mount: test_mount[write-v157] canonical fd = 1 ret = 10
+test_mount: [write-v157] canonical fd = 1 ret = 12
+test_munmap: ========== START [write-v157] canonical fd = 1 ret = 17
+test_munmap: test_munmap[write-v157] canonical fd = 1 ret = 11
+test_munmap: [write-v157] canonical fd = 1 ret = 12
+test_munmap: [openat-v137p] dirfd = -100
+test_munmap: [openat-v137p] flags = 0x42
+test_munmap: [openat-v137p] mode = 0x2
+test_munmap: [write-v157] canonical fd = 3 ret = 27
+test_munmap: [fstat-v58] fd = 3
+test_munmap: [fstat-v58] user stat = 0x400020c0
+test_munmap: [fstat-v157] canonical fd stat ret = 0
+test_munmap: file len: [write-v157] canonical fd = 1 ret = 10
+test_munmap: [write-v157] canonical fd = 1 ret = 0
+test_munmap: 28[write-v157] canonical fd = 1 ret = 2
+test_munmap: [write-v157] canonical fd = 1 ret = 1
+test_munmap: munmap return: [write-v157] canonical fd = 1 ret = 15
+test_munmap: [write-v157] canonical fd = 1 ret = 0
+test_munmap: 0[write-v157] canonical fd = 1 ret = 1
+test_munmap: [write-v157] canonical fd = 1 ret = 1
+test_munmap: [write-v157] canonical fd = 1 ret = 21
+test_munmap: ========== END [write-v157] canonical fd = 1 ret = 15
+test_munmap: test_munmap[write-v157] canonical fd = 1 ret = 11
+test_munmap: [write-v157] canonical fd = 1 ret = 12
+test_umount: ========== START [write-v157] canonical fd = 1 ret = 17
+test_umount: test_umount[write-v157] canonical fd = 1 ret = 11
+test_umount: [write-v157] canonical fd = 1 ret = 12
+test_umount: Mounting dev:[write-v157] canonical fd = 1 ret = 13
+test_umount: [write-v157] canonical fd = 1 ret = 0
+test_umount: /dev/vda2[write-v157] canonical fd = 1 ret = 9
+test_umount:  to [write-v157] canonical fd = 1 ret = 4
+test_umount: [write-v157] canonical fd = 1 ret = 0
+test_umount: ./mnt[write-v157] canonical fd = 1 ret = 5
+test_umount: [write-v157] canonical fd = 1 ret = 1
+test_umount: mount return: [write-v157] canonical fd = 1 ret = 14
+test_umount: [write-v157] canonical fd = 1 ret = 0
+test_umount: 0[write-v157] canonical fd = 1 ret = 1
+test_umount: [write-v157] canonical fd = 1 ret = 1
+test_umount: return: [write-v157] canonical fd = 1 ret = 24
+test_umount: [write-v157] canonical fd = 1 ret = 0
+test_umount: 0[write-v157] canonical fd = 1 ret = 1
+test_umount: [write-v157] canonical fd = 1 ret = 1
+test_umount: ========== END [write-v157] canonical fd = 1 ret = 15
+test_umount: test_umount[write-v157] canonical fd = 1 ret = 11
+test_umount: [write-v157] canonical fd = 1 ret = 12

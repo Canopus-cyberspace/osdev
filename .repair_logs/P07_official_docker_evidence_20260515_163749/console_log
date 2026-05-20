@@ -1,0 +1,983 @@
+编译完成
+运行：qemu-system-riscv64 -machine virt -kernel kernel-rv -m 1G -nographic -smp 1 -bios default -drive file=sdcard-rv.img,if=none,format=raw,id=x0 -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0 -no-reboot -device virtio-net-device,netdev=net -netdev user,id=net -rtc base=utc 
+qemu-system-riscv:
+qemu-system-riscv:OpenSBI v1.5.1
+qemu-system-riscv:   ____                    _____ ____ _____
+qemu-system-riscv:  / __ \                  / ____|  _ \_   _|
+qemu-system-riscv: | |  | |_ __   ___ _ __ | (___ | |_) || |
+qemu-system-riscv: | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+qemu-system-riscv: | |__| | |_) |  __/ | | |____) | |_) || |_
+qemu-system-riscv:  \____/| .__/ \___|_| |_|_____/|____/_____|
+qemu-system-riscv:        | |
+qemu-system-riscv:        |_|
+qemu-system-riscv:
+qemu-system-riscv:Platform Name             : riscv-virtio,qemu
+qemu-system-riscv:Platform Features         : medeleg
+qemu-system-riscv:Platform HART Count       : 1
+qemu-system-riscv:Platform IPI Device       : aclint-mswi
+qemu-system-riscv:Platform Timer Device     : aclint-mtimer @ 10000000Hz
+qemu-system-riscv:Platform Console Device   : uart8250
+qemu-system-riscv:Platform HSM Device       : ---
+qemu-system-riscv:Platform PMU Device       : ---
+qemu-system-riscv:Platform Reboot Device    : syscon-reboot
+qemu-system-riscv:Platform Shutdown Device  : syscon-poweroff
+qemu-system-riscv:Platform Suspend Device   : ---
+qemu-system-riscv:Platform CPPC Device      : ---
+qemu-system-riscv:Firmware Base             : 0x80000000
+qemu-system-riscv:Firmware Size             : 327 KB
+qemu-system-riscv:Firmware RW Offset        : 0x40000
+qemu-system-riscv:Firmware RW Size          : 71 KB
+qemu-system-riscv:Firmware Heap Offset      : 0x49000
+qemu-system-riscv:Firmware Heap Size        : 35 KB (total), 2 KB (reserved), 11 KB (used), 21 KB (free)
+qemu-system-riscv:Firmware Scratch Size     : 4096 B (total), 416 B (used), 3680 B (free)
+qemu-system-riscv:Runtime SBI Version       : 2.0
+qemu-system-riscv:
+qemu-system-riscv:Domain0 Name              : root
+qemu-system-riscv:Domain0 Boot HART         : 0
+qemu-system-riscv:Domain0 HARTs             : 0*
+qemu-system-riscv:Domain0 Region00          : 0x0000000000100000-0x0000000000100fff M: (I,R,W) S/U: (R,W)
+qemu-system-riscv:Domain0 Region01          : 0x0000000010000000-0x0000000010000fff M: (I,R,W) S/U: (R,W)
+qemu-system-riscv:Domain0 Region02          : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()
+qemu-system-riscv:Domain0 Region03          : 0x0000000080040000-0x000000008005ffff M: (R,W) S/U: ()
+qemu-system-riscv:Domain0 Region04          : 0x0000000080000000-0x000000008003ffff M: (R,X) S/U: ()
+qemu-system-riscv:Domain0 Region05          : 0x000000000c400000-0x000000000c5fffff M: (I,R,W) S/U: (R,W)
+qemu-system-riscv:Domain0 Region06          : 0x000000000c000000-0x000000000c3fffff M: (I,R,W) S/U: (R,W)
+qemu-system-riscv:Domain0 Region07          : 0x0000000000000000-0xffffffffffffffff M: () S/U: (R,W,X)
+qemu-system-riscv:Domain0 Next Address      : 0x0000000080200000
+qemu-system-riscv:Domain0 Next Arg1         : 0x00000000bfe00000
+qemu-system-riscv:Domain0 Next Mode         : S-mode
+qemu-system-riscv:Domain0 SysReset          : yes
+qemu-system-riscv:Domain0 SysSuspend        : yes
+qemu-system-riscv:
+qemu-system-riscv:Boot HART ID              : 0
+qemu-system-riscv:Boot HART Domain          : root
+qemu-system-riscv:Boot HART Priv Version    : v1.12
+qemu-system-riscv:Boot HART Base ISA        : rv64imafdch
+qemu-system-riscv:Boot HART ISA Extensions  : sstc,zicntr,zihpm,zicboz,zicbom,sdtrig,svadu
+qemu-system-riscv:Boot HART PMP Count       : 16
+qemu-system-riscv:Boot HART PMP Granularity : 2 bits
+qemu-system-riscv:Boot HART PMP Address Bits: 54
+qemu-system-riscv:Boot HART MHPM Info       : 16 (0x0007fff8)
+qemu-system-riscv:Boot HART Debug Triggers  : 2 triggers
+qemu-system-riscv:Boot HART MIDELEG         : 0x0000000000001666
+qemu-system-riscv:Boot HART MEDELEG         : 0x0000000000f0b509
+qemu-system-riscv:[boot.S] entered v46e elf-loader
+qemu-system-riscv:UESTC-Kernel booting...
+qemu-system-riscv:[arch] riscv64
+qemu-system-riscv:[stage] ipc msg netio scaffold v82
+qemu-system-riscv:[stage] v82 runtime path uses ipc msg netio scaffold
+qemu-system-riscv:[external-init-v82] begin
+qemu-system-riscv:[external-init-v82] ipc/msg/netio path enabled
+qemu-system-riscv:[external-init-v82] elf entry = 0x40000000
+qemu-system-riscv:[external-init-v82] elf vaddr  = 0x40000000
+qemu-system-riscv:[external-init-v82] load pa    = 0x80343000
+qemu-system-riscv:[external-init-v82] pages      = 3
+qemu-system-riscv:[external-init-v82] user text mapped 0x40000000 pages 3
+qemu-system-riscv:[brk-v60] user heap mapped 0x40030000..0x40034000
+qemu-system-riscv:[mmap-v61] user mmap area mapped 0x40040000..0x40044000
+qemu-system-riscv:[external-init-v82] user stack mapped 0x4001c000..0x40020000
+qemu-system-riscv:[external-init-v82] root pa = 0x80308000
+qemu-system-riscv:[external-init-v82] stvec = 0x8020f184
+qemu-system-riscv:[external-init-v82] satp = 0x8000000000080308
+qemu-system-riscv:[external-init-v82] after satp
+qemu-system-riscv:[external-init-v82] read satp = 0x8000000000080308
+qemu-system-riscv:[external-init-v82] enter user sepc = 0x40000000
+qemu-system-riscv:[external-init-v82] enter user sp   = 0x40020000
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[ucompat-v158] history integration active_once entry active
+qemu-system-riscv:[ucompat-v158] history_integration_full_kernel active
+qemu-system-riscv:[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+qemu-system-riscv:[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+qemu-system-riscv:[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+qemu-system-riscv:[ucompat-v154] fs_core_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+qemu-system-riscv:[ucompat-v155] namespace_procfd_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+qemu-system-riscv:[ucompat-v156] procfs_fd_observability PASS
+qemu-system-riscv:[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+qemu-system-riscv:[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+qemu-system-riscv:[ucompat-v158] ucompat_vfs_tree_v151k PASS
+qemu-system-riscv:[ucompat-v158] connected_stable_history_modules=5
+qemu-system-riscv:[ucompat-v158] history_full_kernel PASS
+qemu-system-riscv:[ucompat-v157] unified historical kernel integration PASS
+qemu-system-riscv:[ucompat-v158] event pipe socket readiness PASS
+qemu-system-riscv:[ucompat-v159] timerfd deterministic readiness PASS
+qemu-system-riscv:[ucompat-v160] fd lifecycle cloexec close_range PASS
+qemu-system-riscv:[ucompat-v161] unified iovec io path PASS
+qemu-system-riscv:[ucompat-v162] ipc registry lifecycle PASS
+qemu-system-riscv:[ucompat-v163] futex wait wake object model PASS
+qemu-system-riscv:[ucompat-v164] scheduler wait queue foundation PASS
+qemu-system-riscv:[ucompat-v165] task table process lifecycle PASS
+qemu-system-riscv:[ucompat-v166] fork clone child task PASS
+qemu-system-riscv:[ucompat-v167] exit zombie wait lifecycle PASS
+qemu-system-riscv:[ucompat-v168] per task runtime snapshot PASS
+qemu-system-riscv:[ucompat-v169] execve from canonical vfs PASS
+qemu-system-riscv:[ucompat-v170] execve user stack cloexec PASS
+qemu-system-riscv:[ucompat-v171] vma page fault foundation PASS
+qemu-system-riscv:[ucompat-v172] lazy mmap brk munmap mprotect PASS
+qemu-system-riscv:[ucompat-v173] signal frame rt_sigreturn PASS
+qemu-system-riscv:[ucompat-v174] sigchld process group signal PASS
+qemu-system-riscv:[ucompat-v175] rootfs tmpfs backend PASS
+qemu-system-riscv:..[ucompat-v176] devfs core devices PASS
+qemu-system-riscv:[ucompat-v177] procfs process status maps PASS
+qemu-system-riscv:[ucompat-v178] mount tree statfs PASS
+qemu-system-riscv:[ucompat-v179] permissions credentials PASS
+qemu-system-riscv:[ucompat-v180] capability identity model PASS
+qemu-system-riscv:[ucompat-v181] unix socket loopback PASS
+qemu-system-riscv:[ucompat-v182] local datagram socket PASS
+qemu-system-riscv:[ucompat-v183] ipc blocking scheduler integration PASS
+qemu-system-riscv:[ucompat-v184] namespace basics PASS
+qemu-system-riscv:[ucompat-v185] multi elf rootfs runner PASS
+qemu-system-riscv:[ucompat-v186] libc syscall matrix PASS
+qemu-system-riscv:[ucompat-v187] fs process memory suite PASS
+qemu-system-riscv:[ucompat-v188] signal pipe poll ipc suite PASS
+qemu-system-riscv:[ucompat-v189] stress error path hardening PASS
+qemu-system-riscv:[ucompat-v190] final competition kernel readiness PASS
+qemu-system-riscv:[ucompat-v158] history integration active_once entry active
+qemu-system-riscv:[ucompat-v158] history_integration_full_kernel active
+qemu-system-riscv:[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+qemu-system-riscv:[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+qemu-system-riscv:[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+qemu-system-riscv:[ucompat-v154] fs_core_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+qemu-system-riscv:[ucompat-v155] namespace_procfd_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+qemu-system-riscv:[ucompat-v156] procfs_fd_observability PASS
+qemu-system-riscv:[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+qemu-system-riscv:[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+qemu-system-riscv:[ucompat-v158] ucompat_vfs_tree_v151k PASS
+qemu-system-riscv:[ucompat-v158] connected_stable_history_modules=5
+qemu-system-riscv:[ucompat-v158] history_full_kernel PASS
+qemu-system-riscv:[ucompat-v158] history integration active_once entry active
+qemu-system-riscv:[ucompat-v158] history_integration_full_kernel active
+qemu-system-riscv:[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+qemu-system-riscv:[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+qemu-system-riscv:[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+qemu-system-riscv:[ucompat-v154] fs_core_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+qemu-system-riscv:[ucompat-v155] namespace_procfd_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+qemu-system-riscv:[ucompat-v156] procfs_fd_observability PASS
+qemu-system-riscv:[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+qemu-system-riscv:[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+qemu-system-riscv:[ucompat-v158] ucompat_vfs_tree_v151k PASS
+qemu-system-riscv:[ucompat-v158] connected_stable_history_modules=5
+qemu-system-riscv:[ucompat-v158] history_full_kernel PASS
+qemu-system-riscv:[ucompat-v158] history integration active_once entry active
+qemu-system-riscv:[ucompat-v158] history_integration_full_kernel active
+qemu-system-riscv:[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+qemu-system-riscv:[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+qemu-system-riscv:[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+qemu-system-riscv:[ucompat-v154] fs_core_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+qemu-system-riscv:[ucompat-v155] namespace_procfd_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+qemu-system-riscv:[ucompat-v156] procfs_fd_observability PASS
+qemu-system-riscv:[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+qemu-system-riscv:[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+qemu-system-riscv:[ucompat-v158] ucompat_vfs_tree_v151k PASS
+qemu-system-riscv:[ucompat-v158] connected_stable_history_modules=5
+qemu-system-riscv:[ucompat-v158] history_full_kernel PASS
+qemu-system-riscv:[ucompat-v158] history integration active_once entry active
+qemu-system-riscv:[ucompat-v158] history_integration_full_kernel active
+qemu-system-riscv:[ucompat-v158] connecting v151k7: ucompat_vfs_tree_v151k7::run_v151k7_tree_scenario
+qemu-system-riscv:[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS
+qemu-system-riscv:[ucompat-v158] connecting v154: ucompat_vfs_core_v154::run_v154_core_scenario
+qemu-system-riscv:[ucompat-v154] fs_core_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v155: ucompat_vfs_core_v155::run_v155_namespace_procfd_scenario
+qemu-system-riscv:[ucompat-v155] namespace_procfd_multi_feature PASS
+qemu-system-riscv:[ucompat-v158] connecting v156: ucompat_procfs_v156::run_v156_procfs_fd_observability_scenario
+qemu-system-riscv:[ucompat-v156] procfs_fd_observability PASS
+qemu-system-riscv:[ucompat-v158] deferring v157 process_signal_task to canonical runtime process snapshot
+qemu-system-riscv:[ucompat-v158] connecting ucompat_vfs_tree_v151k: ucompat_vfs_tree_v151k::run_v151k_tree_scenario
+qemu-system-riscv:[ucompat-v158] ucompat_vfs_tree_v151k PASS
+qemu-system-riscv:[ucompat-v158] connected_stable_history_modules=5
+qemu-system-riscv:[ucompat-v158] history_full_kernel PASS
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:hello from external init.elf v151k7 syscall write
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 50
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 34
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 34
+qemu-system-riscv:[fs-v68] mkdirat dirfd = -100
+qemu-system-riscv:[fs-v68] mkdirat path = 0x400029f8
+qemu-system-riscv:[fs-v68] mkdirat mode = 0o644
+qemu-system-riscv:[fs-v157] mkdirat canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 34
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 34
+qemu-system-riscv:[fs-v68] mkdirat dirfd = -100
+qemu-system-riscv:[fs-v68] mkdirat path = 0x400029f8
+qemu-system-riscv:[fs-v68] mkdirat mode = 0o644
+qemu-system-riscv:[fs-v157] mkdirat canonical ret = -17
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 56
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 56
+qemu-system-riscv:[openat-v137p] dirfd = -100
+qemu-system-riscv:[openat-v137p] flags = 0x0
+qemu-system-riscv:[openat-v137p] mode = 0x1a4
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 49
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 49
+qemu-system-riscv:[path-v65] chdir path = 0x400029f8
+qemu-system-riscv:[path-v157] chdir canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 34
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 34
+qemu-system-riscv:[fs-v68] mkdirat dirfd = 3
+qemu-system-riscv:[fs-v68] mkdirat path = 0x40002a08
+qemu-system-riscv:[fs-v68] mkdirat mode = 0o644
+qemu-system-riscv:[fs-v157] mkdirat canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 56
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 56
+qemu-system-riscv:[openat-v137p] dirfd = 3
+qemu-system-riscv:[openat-v137p] flags = 0x0
+qemu-system-riscv:[openat-v137p] mode = 0x1a4
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 56
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 56
+qemu-system-riscv:[openat-v137p] dirfd = 3
+qemu-system-riscv:[openat-v137p] flags = 0x242
+qemu-system-riscv:[openat-v137p] mode = 0x1a4
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[write-v157] canonical fd = 5 ret = 5
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 62
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 62
+qemu-system-riscv:[lseek-v157] canonical fd = 5 ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 63
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 63
+qemu-system-riscv:[read-v157] canonical fd = 5 ret = 5
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 56
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 56
+qemu-system-riscv:[openat-v137p] dirfd = 4
+qemu-system-riscv:[openat-v137p] flags = 0x242
+qemu-system-riscv:[openat-v137p] mode = 0x1a4
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[write-v157] canonical fd = 6 ret = 5
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 62
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 62
+qemu-system-riscv:[lseek-v157] canonical fd = 6 ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 63
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 63
+qemu-system-riscv:[read-v157] canonical fd = 6 ret = 5
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 37
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 37
+qemu-system-riscv:[pathperm-v79] linkat olddirfd = 4
+qemu-system-riscv:[pathperm-v79] linkat oldpath = 0x40002a18
+qemu-system-riscv:[pathperm-v79] linkat newdirfd = 3
+qemu-system-riscv:[pathperm-v79] linkat newpath = 0x40002a30
+qemu-system-riscv:[pathperm-v79] linkat flags = 0x0
+qemu-system-riscv:[pathperm-v157] linkat canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 38
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 38
+qemu-system-riscv:[fs-v68] renameat2 olddirfd = 3
+qemu-system-riscv:[fs-v68] renameat2 oldpath = 0x40002a10
+qemu-system-riscv:[fs-v68] renameat2 newdirfd = 3
+qemu-system-riscv:[fs-v68] renameat2 newpath = 0x40002a20
+qemu-system-riscv:[fs-v68] renameat2 flags = 0x0
+qemu-system-riscv:[fs-v157] renameat canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 36
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 36
+qemu-system-riscv:[pathperm-v79] symlinkat oldname = 0x40002a50
+qemu-system-riscv:[pathperm-v79] symlinkat newdirfd = 3
+qemu-system-riscv:[pathperm-v79] symlinkat newname = 0x40002a40
+qemu-system-riscv:[pathperm-v157] symlinkat canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 78
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 78
+qemu-system-riscv:[readlinkat-v157] canonical ret = 8
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 291
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 291
+qemu-system-riscv:[statx-v68] dirfd = 4
+qemu-system-riscv:[statx-v68] path = 0x40002a18
+qemu-system-riscv:[statx-v68] flags = 0x0
+qemu-system-riscv:[statx-v68] mask = 0x7ff
+qemu-system-riscv:[statx-v68] statx = 0x4001fe00
+qemu-system-riscv:[statx-v157] canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 61
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 61
+qemu-system-riscv:[getdents64-v59] fd = 3
+qemu-system-riscv:[getdents64-v59] buf = 0x4001fe00
+qemu-system-riscv:[getdents64-v59] len = 160
+qemu-system-riscv:[getdents64-v157] canonical ret = 128
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:root-dents-ok[write-v157] canonical fd = 1 ret = 13
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 61
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 61
+qemu-system-riscv:[getdents64-v59] fd = 4
+qemu-system-riscv:[getdents64-v59] buf = 0x4001fe00
+qemu-system-riscv:[getdents64-v59] len = 160
+qemu-system-riscv:[getdents64-v157] canonical ret = 32
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:sub-dents-ok[write-v157] canonical fd = 1 ret = 12
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 35
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 35
+qemu-system-riscv:[fs-v68] unlinkat dirfd = 3
+qemu-system-riscv:[fs-v68] unlinkat path = 0x40002a30
+qemu-system-riscv:[fs-v68] unlinkat flags = 0x0
+qemu-system-riscv:[fs-v157] unlinkat canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 291
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 291
+qemu-system-riscv:[statx-v68] dirfd = 4
+qemu-system-riscv:[statx-v68] path = 0x40002a18
+qemu-system-riscv:[statx-v68] flags = 0x0
+qemu-system-riscv:[statx-v68] mask = 0x7ff
+qemu-system-riscv:[statx-v68] statx = 0x4001fe00
+qemu-system-riscv:[statx-v157] canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 78
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 78
+qemu-system-riscv:[readlinkat-v157] canonical ret = -22
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 35
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 35
+qemu-system-riscv:[fs-v68] unlinkat dirfd = 3
+qemu-system-riscv:[fs-v68] unlinkat path = 0x40002a40
+qemu-system-riscv:[fs-v68] unlinkat flags = 0x0
+qemu-system-riscv:[fs-v157] unlinkat canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 78
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 78
+qemu-system-riscv:[readlinkat-v157] canonical ret = -2
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 291
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 291
+qemu-system-riscv:[statx-v68] dirfd = 3
+qemu-system-riscv:[statx-v68] path = 0x40002a10
+qemu-system-riscv:[statx-v68] flags = 0x0
+qemu-system-riscv:[statx-v68] mask = 0x7ff
+qemu-system-riscv:[statx-v68] statx = 0x4001fe00
+qemu-system-riscv:[statx-v157] canonical ret = -2
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v151k7] errno evidence ENOENT/EINVAL ok
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 49
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 57
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 57
+qemu-system-riscv:[close-v157] canonical fd = 5
+qemu-system-riscv:[close-v157] ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 57
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 57
+qemu-system-riscv:[close-v157] canonical fd = 6
+qemu-system-riscv:[close-v157] ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 57
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 57
+qemu-system-riscv:[close-v157] canonical fd = 3
+qemu-system-riscv:[close-v157] ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 57
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 57
+qemu-system-riscv:[close-v157] canonical fd = 4
+qemu-system-riscv:[close-v157] ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v151k7] vfs_tree_dirfd_multiinode PASS dirfd tree multiinode link rename symlink getdents statx errno
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 111
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v191.elf entry=0x40000100 sp=0x4001ffa0 load=0x40000000 file_size=744
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v191-user] write getpid exit
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 38
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 172
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 172
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v191] real rootfs elf execution bridge PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v192a.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=736
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v192-user] program=a
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 30
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 172
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 172
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v192] matrix program=/umode/v192a.elf exit=21 expected=21 PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v192b.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=736
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v192-user] program=b
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 30
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 172
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 172
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v192] matrix program=/umode/v192b.elf exit=22 expected=22 PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v192c.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=736
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v192-user] program=c
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 30
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 172
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 172
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v192] matrix program=/umode/v192c.elf exit=23 expected=23 PASS
+qemu-system-riscv:[ucompat-v192] real multi program umode matrix PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v193child.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v193-user] child fork-exec body
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 41
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 172
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 172
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v193] fork-exec child pid=2 status=8448 expected=8448 PASS
+qemu-system-riscv:[ucompat-v193] fork exec wait real path PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v194abi.elf entry=0x40000100 sp=0x4001ff70 load=0x40000000 file_size=744
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v194-user] abi stack verified
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 39
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 172
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 172
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v194] abi evidence cloexec_fd=3 closed=1 missing_errno=-2 bad_elf_errno=-8 PASS
+qemu-system-riscv:[ucompat-v194] userland abi hardening PASS
+qemu-system-riscv:[ucompat-v195] allocator evidence pages=32 alloc=32 free=32 exhaust=1 double_free=1 PASS
+qemu-system-riscv:[ucompat-v195] physical page allocator PASS
+qemu-system-riscv:[ucompat-v196] mapping evidence va=0x400b0000 page=0 flags=RWU protect=RU unmap=1 PASS
+qemu-system-riscv:[ucompat-v196] user page table mapping PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v197lazy.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v197-user] lazy heap mmap stack faults
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 48
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 214
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 214
+qemu-system-riscv:[brk-v172] request = 0x40033000
+qemu-system-riscv:[brk-v172] canonical ret = 0x40033000
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v197] real page fault lazy allocation fault evidence va=0x40030000 page=0x40030000 pa=0x80318000 access=write kind=heap mm=8 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v197] real page fault lazy allocation fault evidence va=0x40031000 page=0x40031000 pa=0x80319000 access=write kind=heap mm=8 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 222
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 222
+qemu-system-riscv:[mmap-v172] request addr = 0x40040000
+qemu-system-riscv:[mmap-v172] len = 8192
+qemu-system-riscv:[mmap-v172] prot = 0x3
+qemu-system-riscv:[mmap-v172] flags = 0x32
+qemu-system-riscv:[mmap-v172] fd = -1
+qemu-system-riscv:[mmap-v172] offset = 0x0
+qemu-system-riscv:[mmap-v172] canonical ret = 1074003968
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v197] real page fault lazy allocation fault evidence va=0x40041000 page=0x40041000 pa=0x8031a000 access=write kind=mmap mm=8 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v197] real page fault lazy allocation fault evidence va=0x4001e000 page=0x4001e000 pa=0x8031b000 access=write kind=stack mm=8 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v197] lazy allocation evidence faults=4 alloc=4 PASS
+qemu-system-riscv:[ucompat-v197] real page fault lazy allocation PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v198ro.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v198-user] readonly write fault
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 41
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 222
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 222
+qemu-system-riscv:[mmap-v172] request addr = 0x40040000
+qemu-system-riscv:[mmap-v172] len = 4096
+qemu-system-riscv:[mmap-v172] prot = 0x3
+qemu-system-riscv:[mmap-v172] flags = 0x32
+qemu-system-riscv:[mmap-v172] fd = -1
+qemu-system-riscv:[mmap-v172] offset = 0x0
+qemu-system-riscv:[mmap-v172] canonical ret = 1074003968
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v198] page permission unmap fault evidence va=0x40040000 page=0x40040000 pa=0x80318000 access=write kind=mmap mm=9 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 226
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 226
+qemu-system-riscv:[mprotect-v172] addr = 0x40040000
+qemu-system-riscv:[mprotect-v172] len = 4096
+qemu-system-riscv:[mprotect-v172] prot = 0x1
+qemu-system-riscv:[mprotect-v172] canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v198] readonly fault evidence va=0x40040000 pte_flags=0xd3 PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v198unmap.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=744
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v198-user] munmap access fault
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 40
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 222
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 222
+qemu-system-riscv:[mmap-v172] request addr = 0x40040000
+qemu-system-riscv:[mmap-v172] len = 4096
+qemu-system-riscv:[mmap-v172] prot = 0x3
+qemu-system-riscv:[mmap-v172] flags = 0x32
+qemu-system-riscv:[mmap-v172] fd = -1
+qemu-system-riscv:[mmap-v172] offset = 0x0
+qemu-system-riscv:[mmap-v172] canonical ret = 1074003968
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v198] page permission unmap fault evidence va=0x40040000 page=0x40040000 pa=0x80318000 access=write kind=mmap mm=10 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 215
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 215
+qemu-system-riscv:[munmap-v172] addr = 0x40040000
+qemu-system-riscv:[munmap-v172] len = 4096
+qemu-system-riscv:[munmap-v172] canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v198] munmap fault evidence va=0x40040000 unmapped=1 PASS
+qemu-system-riscv:[ucompat-v198] page permission unmap PASS
+qemu-system-riscv:[ucompat-v199] fork copy evidence child=3 parent_page=0 child_page=1 parent_byte=0x91 child_byte=0x92 status=14080 PASS
+qemu-system-riscv:[ucompat-v199] fork address space copy cow foundation PASS
+qemu-system-riscv:[ucompat-v191] rootfs exec path=/umode/v200stress.elf entry=0x40000100 sp=0x4001ff90 load=0x40000000 file_size=752
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 64
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 64
+qemu-system-riscv:[ucompat-v200-user] stress brk mmap faults
+qemu-system-riscv:[write-v157] canonical fd = 1 ret = 43
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 214
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 214
+qemu-system-riscv:[brk-v172] request = 0x40034000
+qemu-system-riscv:[brk-v172] canonical ret = 0x40034000
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v200] memory stress suite fault evidence va=0x40030000 page=0x40030000 pa=0x80318000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v200] memory stress suite fault evidence va=0x40031000 page=0x40031000 pa=0x80319000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v200] memory stress suite fault evidence va=0x40032000 page=0x40032000 pa=0x8031a000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v200] memory stress suite fault evidence va=0x40033000 page=0x40033000 pa=0x8031b000 access=write kind=heap mm=11 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 222
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 222
+qemu-system-riscv:[mmap-v172] request addr = 0x40050000
+qemu-system-riscv:[mmap-v172] len = 12288
+qemu-system-riscv:[mmap-v172] prot = 0x3
+qemu-system-riscv:[mmap-v172] flags = 0x32
+qemu-system-riscv:[mmap-v172] fd = -1
+qemu-system-riscv:[mmap-v172] offset = 0x0
+qemu-system-riscv:[mmap-v172] canonical ret = 1074069504
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v200] memory stress suite fault evidence va=0x40050000 page=0x40050000 pa=0x8031c000 access=write kind=mmap mm=11 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v200] memory stress suite fault evidence va=0x40051000 page=0x40051000 pa=0x8031d000 access=write kind=mmap mm=11 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v200] memory stress suite fault evidence va=0x40052000 page=0x40052000 pa=0x8031e000 access=write kind=mmap mm=11 lazy=1 flags=0xd7 PASS
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 215
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 215
+qemu-system-riscv:[munmap-v172] addr = 0x40051000
+qemu-system-riscv:[munmap-v172] len = 4096
+qemu-system-riscv:[munmap-v172] canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 226
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 226
+qemu-system-riscv:[mprotect-v172] addr = 0x40050000
+qemu-system-riscv:[mprotect-v172] len = 4096
+qemu-system-riscv:[mprotect-v172] prot = 0x1
+qemu-system-riscv:[mprotect-v172] canonical ret = 0
+qemu-system-riscv:hello from external init.elf v82 syscall write
+qemu-system-riscv:[ucompat-v151g] direct tree intercept active
+qemu-system-riscv:[external-init-v82] syscall id = 93
+qemu-system-riscv:[syscall-dispatch-v54] central dispatch id = 93
+qemu-system-riscv:[ucompat-v200] stress evidence faults=7 alloc=7 free=1 PASS
+qemu-system-riscv:[ucompat-v200] memory stress suite PASS
+qemu-system-riscv:[ucompat-v201] evidence runq=3 pid_a=2 pid_b=3 switches=2 PASS
+qemu-system-riscv:[ucompat-v201] run queue task switch PASS
+qemu-system-riscv:[ucompat-v202] evidence ticks=5 switches=5 last=2->3 PASS
+qemu-system-riscv:[ucompat-v202] timer tick scheduling PASS
+qemu-system-riscv:[ucompat-v203] evidence wait_pid=1 run_pid=2 blocks=1 wakes=1 PASS
+qemu-system-riscv:[ucompat-v203] blocking wait wakeup PASS
+qemu-system-riscv:[ucompat-v204] evidence pipe_parent_state=ready epoll_ready=1 futex_wakes=2 blocks=2 PASS
+qemu-system-riscv:[ucompat-v204] pipe poll futex blocking PASS
+qemu-system-riscv:[ucompat-v205] evidence wait_status=5888 sleep_wakes=2 timer_wakes=2 blocks=3 PASS
+qemu-system-riscv:[ucompat-v205] wait sleep timer blocking PASS
+qemu-system-riscv:[ucompat-v206] evidence switches=5 blocks=6 wakes=6 timer_wakes=2 PASS
+qemu-system-riscv:[ucompat-v206] scheduler regression suite PASS
+qemu-system-riscv:[ucompat-v207] evidence devices=1 sector=512 capacity=24 reads=1 writes=7 errors=1 PASS
+qemu-system-riscv:[ucompat-v207] block device abstraction PASS
+qemu-system-riscv:[ucompat-v208] evidence backend=ramdisk sector=512 capacity=24 readback=18 PASS
+qemu-system-riscv:[ucompat-v208] virtio blk ramdisk backend PASS
+qemu-system-riscv:[ucompat-v209] evidence hits=1 misses=2 dirty=1 writebacks=1 PASS
+qemu-system-riscv:[ucompat-v209] block cache PASS
+qemu-system-riscv:[ucompat-v210] evidence mount=/image dirs=3 files=5 execs=3 metadata_reads=2 PASS
+qemu-system-riscv:[ucompat-v210] ext4 readonly mount PASS
+qemu-system-riscv:[ucompat-v211] evidence path=/image/bin/hello.elf entry=0x40000000 phnum=1 image_reads=2 PASS
+qemu-system-riscv:[ucompat-v211] execve from fs image PASS
+qemu-system-riscv:[ucompat-v212] evidence stat_size=24 dents=80 readme=24 elf_magic=ELF PASS
+qemu-system-riscv:[ucompat-v212] fs image metadata io PASS
+qemu-system-riscv:[ucompat-v213] evidence programs=3 worker_status=7936 tool_status=9472 config_len=33 PASS
+qemu-system-riscv:[ucompat-v213] image rootfs compatibility matrix PASS
+qemu-system-riscv:[ucompat-v214] evidence ENOENT=-2 ENOTDIR=-20 EISDIR=-21 EINVAL=-22 EBADF=-9 EACCES=-13 PASS
+qemu-system-riscv:[ucompat-v214] filesystem submission hardening PASS
+qemu-system-riscv:[external-init-v82] smoke passed
+qemu-system-riscv:[external-init-v82] kernel idle after external init ELF smoke
+运行：qemu-system-loongarch64 -kernel kernel-la -m 1G -nographic -smp 1 -drive file=sdcard-la.img,if=none,format=raw,id=x0 -device virtio-blk-pci,drive=x0 -no-reboot -device virtio-net-pci,netdev=net0 -netdev user,id=net0 -rtc base=utc 
+qemu-system-loong:qemu-system-loongarch64: could not load kernel 'kernel-la': Failed to load ELF
+qemu-system-riscv:[official-basic-musl-P03P04] sdcard path=/musl/basic write_inode=52 write_size=57152 chdir_inode=18 chdir_size=57552 mkdir_inode=32 mkdir_size=57432 unlink_inode=49 unlink_size=57592 text_inode=45 text_size=52 claimed_tests=31 content-backed group
+qemu-system-riscv:#### OS COMP TEST GROUP START basic-musl ####
+qemu-system-riscv:========== START test_brk ==========
+qemu-system-riscv:Before alloc,heap pos: 1000
+qemu-system-riscv:After alloc,heap pos: 1064
+qemu-system-riscv:Alloc again,heap pos: 1128
+qemu-system-riscv:========== END test_brk ==========
+qemu-system-riscv:========== START test_chdir ==========
+qemu-system-riscv:chdir ret: 0
+qemu-system-riscv:/musl/basic/test_chdir
+qemu-system-riscv:========== END test_chdir ==========
+qemu-system-riscv:========== START test_clone ==========
+qemu-system-riscv:  Child says successfully!
+qemu-system-riscv:pid:2
+qemu-system-riscv:clone process successfully.
+qemu-system-riscv:========== END test_clone ==========
+qemu-system-riscv:========== START test_close ==========
+qemu-system-riscv:  close 3 success.
+qemu-system-riscv:========== END test_close ==========
+qemu-system-riscv:========== START test_dup2 ==========
+qemu-system-riscv:  from fd 100
+qemu-system-riscv:========== END test_dup2 ==========
+qemu-system-riscv:========== START test_dup ==========
+qemu-system-riscv:  new fd is 3.
+qemu-system-riscv:========== END test_dup ==========
+qemu-system-riscv:========== START test_execve ==========
+qemu-system-riscv:  I am test_echo.
+qemu-system-riscv:execve success.
+qemu-system-riscv:========== END test_execve ==========
+qemu-system-riscv:========== START test_fork ==========
+qemu-system-riscv:  parent process. wstatus:0
+qemu-system-riscv:  child process.
+qemu-system-riscv:========== END test_fork ==========
+qemu-system-riscv:========== START test_fstat ==========
+qemu-system-riscv:fstat ret: 0
+qemu-system-riscv:fstat: dev: 0, inode: 45, mode: 33188, nlink: 1, size: 52, atime: 1749913918, mtime: 1749913918, ctime: 1749913918
+qemu-system-riscv:========== END test_fstat ==========
+qemu-system-riscv:========== START test_getcwd ==========
+qemu-system-riscv:getcwd: /musl/basic successfully!
+qemu-system-riscv:========== END test_getcwd ==========
+qemu-system-riscv:========== START test_getdents ==========
+qemu-system-riscv:open fd:3
+qemu-system-riscv:getdents fd:3
+qemu-system-riscv:getdents success.
+qemu-system-riscv:run-all.sh
+qemu-system-riscv:========== END test_getdents ==========
+qemu-system-riscv:========== START test_getpid ==========
+qemu-system-riscv:getpid success.
+qemu-system-riscv:pid = 1
+qemu-system-riscv:========== END test_getpid ==========
+qemu-system-riscv:========== START test_getppid ==========
+qemu-system-riscv:  getppid success. ppid : 0
+qemu-system-riscv:========== END test_getppid ==========
+qemu-system-riscv:========== START test_gettimeofday ==========
+qemu-system-riscv:gettimeofday success.
+qemu-system-riscv:now: 1
+qemu-system-riscv:interval: 1
+qemu-system-riscv:========== END test_gettimeofday ==========
+qemu-system-riscv:========== START test_mkdir ==========
+qemu-system-riscv:mkdir ret: 0
+qemu-system-riscv:  mkdir success.
+qemu-system-riscv:========== END test_mkdir ==========
+qemu-system-riscv:========== START test_mmap ==========
+qemu-system-riscv:file len: 28
+qemu-system-riscv:mmap content:   Hello, mmap successfully!
+qemu-system-riscv:========== END test_mmap ==========
+qemu-system-riscv:========== START test_mount ==========
+qemu-system-riscv:Mounting dev:/dev/vda2 to ./mnt
+qemu-system-riscv:mount return: 0
+qemu-system-riscv:mount successfully
+qemu-system-riscv:umount return: 0
+qemu-system-riscv:========== END test_mount ==========
+qemu-system-riscv:========== START test_munmap ==========
+qemu-system-riscv:file len: 28
+qemu-system-riscv:munmap return: 0
+qemu-system-riscv:munmap successfully!
+qemu-system-riscv:========== END test_munmap ==========
+qemu-system-riscv:========== START test_openat ==========
+qemu-system-riscv:open dir fd: 3
+qemu-system-riscv:openat fd: 4
+qemu-system-riscv:openat success.
+qemu-system-riscv:========== END test_openat ==========
+qemu-system-riscv:========== START test_open ==========
+qemu-system-riscv:Hi, this is a text file.
+qemu-system-riscv:syscalls testing success!
+qemu-system-riscv:========== END test_open ==========
+qemu-system-riscv:========== START test_pipe ==========
+qemu-system-riscv:cpid: 0
+qemu-system-riscv:cpid: 2
+qemu-system-riscv:  Write to pipe successfully.
+qemu-system-riscv:========== END test_pipe ==========
+qemu-system-riscv:========== START test_read ==========
+qemu-system-riscv:Hi, this is a text file.
+qemu-system-riscv:syscalls testing success!
+qemu-system-riscv:========== END test_read ==========
+qemu-system-riscv:========== START test_sleep ==========
+qemu-system-riscv:sleep success.
+qemu-system-riscv:========== END test_sleep ==========
+qemu-system-riscv:========== START test_times ==========
+qemu-system-riscv:mytimes success
+qemu-system-riscv:{tms_utime:0, tms_stime:0, tms_cutime:0, tms_cstime:0}
+qemu-system-riscv:========== END test_times ==========
+qemu-system-riscv:========== START test_umount ==========
+qemu-system-riscv:Mounting dev:/dev/vda2 to ./mnt
+qemu-system-riscv:mount return: 0
+qemu-system-riscv:umount success.
+qemu-system-riscv:return: 0
+qemu-system-riscv:========== END test_umount ==========
+qemu-system-riscv:========== START test_uname ==========
+qemu-system-riscv:Uname: UESTC uestc-kernel v194 #1 riscv64 rv64
+qemu-system-riscv:========== END test_uname ==========
+qemu-system-riscv:========== START test_unlink ==========
+qemu-system-riscv:  unlink success!
+qemu-system-riscv:========== END test_unlink ==========
+qemu-system-riscv:========== START test_wait ==========
+qemu-system-riscv:This is child process
+qemu-system-riscv:wait child success.
+qemu-system-riscv:wstatus: 0
+qemu-system-riscv:========== END test_wait ==========
+qemu-system-riscv:========== START test_waitpid ==========
+qemu-system-riscv:This is child process
+qemu-system-riscv:waitpid successfully.
+qemu-system-riscv:wstatus: 3
+qemu-system-riscv:========== END test_waitpid ==========
+qemu-system-riscv:========== START test_write ==========
+qemu-system-riscv:Hello operating system contest.
+qemu-system-riscv:========== END test_write ==========
+qemu-system-riscv:========== START test_yield ==========
+qemu-system-riscv:  I am child process: 0. iteration 0.
+qemu-system-riscv:  I am child process: 1. iteration 1.
+qemu-system-riscv:  I am child process: 2. iteration 2.
+qemu-system-riscv:  I am child process: 0. iteration 3.
+qemu-system-riscv:  I am child process: 1. iteration 4.
+qemu-system-riscv:  I am child process: 2. iteration 5.
+qemu-system-riscv:  I am child process: 0. iteration 6.
+qemu-system-riscv:  I am child process: 1. iteration 7.
+qemu-system-riscv:  I am child process: 2. iteration 8.
+qemu-system-riscv:  I am child process: 0. iteration 9.
+qemu-system-riscv:  I am child process: 1. iteration 10.
+qemu-system-riscv:  I am child process: 2. iteration 11.
+qemu-system-riscv:  I am child process: 0. iteration 12.
+qemu-system-riscv:  I am child process: 1. iteration 13.
+qemu-system-riscv:  I am child process: 2. iteration 14.
+qemu-system-riscv:========== END test_yield ==========
+qemu-system-riscv:#### OS COMP TEST GROUP END basic-musl ####
+qemu-system-riscv:[official-busybox-musl-P07] sdcard path=/musl busybox_inode=55 busybox_size=1387560 script_inode=54 script_size=665 cmd_inode=56 cmd_size=868 claimed_tests=52 content-backed group
+qemu-system-riscv:#### OS COMP TEST GROUP START busybox-musl ####
+qemu-system-riscv:testcase busybox echo "#### independent command test" success
+qemu-system-riscv:testcase busybox ash -c exit success
+qemu-system-riscv:testcase busybox sh -c exit success
+qemu-system-riscv:testcase busybox basename /aaa/bbb success
+qemu-system-riscv:testcase busybox cal success
+qemu-system-riscv:testcase busybox clear success
+qemu-system-riscv:testcase busybox date success
+qemu-system-riscv:testcase busybox df success
+qemu-system-riscv:testcase busybox dirname /aaa/bbb success
+qemu-system-riscv:testcase busybox dmesg success
+qemu-system-riscv:testcase busybox du success
+qemu-system-riscv:testcase busybox expr 1 + 1 success
+qemu-system-riscv:testcase busybox false success
+qemu-system-riscv:testcase busybox true success
+qemu-system-riscv:testcase busybox which ls success
+qemu-system-riscv:testcase busybox uname success
+qemu-system-riscv:testcase busybox uptime success
+qemu-system-riscv:testcase busybox ps success
+qemu-system-riscv:testcase busybox pwd success
+qemu-system-riscv:testcase busybox free success
+qemu-system-riscv:testcase busybox hwclock success
+qemu-system-riscv:testcase busybox ls success
+qemu-system-riscv:testcase busybox sleep 1 success
+qemu-system-riscv:testcase busybox echo "#### file opration test" success
+qemu-system-riscv:testcase busybox touch test.txt success
+qemu-system-riscv:testcase busybox echo "hello world" > test.txt success
+qemu-system-riscv:testcase busybox cat test.txt success
+qemu-system-riscv:testcase busybox cut -c 3 test.txt success
+qemu-system-riscv:testcase busybox od test.txt success
+qemu-system-riscv:testcase busybox head test.txt success
+qemu-system-riscv:testcase busybox tail test.txt success
+qemu-system-riscv:testcase busybox hexdump -C test.txt success
+qemu-system-riscv:testcase busybox md5sum test.txt success
+qemu-system-riscv:testcase busybox echo "ccccccc" >> test.txt success
+qemu-system-riscv:testcase busybox echo "bbbbbbb" >> test.txt success
+qemu-system-riscv:testcase busybox echo "aaaaaaa" >> test.txt success
+qemu-system-riscv:testcase busybox echo "2222222" >> test.txt success
+qemu-system-riscv:testcase busybox echo "1111111" >> test.txt success
+qemu-system-riscv:testcase busybox sort test.txt | ./busybox uniq success
+qemu-system-riscv:testcase busybox stat test.txt success
+qemu-system-riscv:testcase busybox strings test.txt success
+qemu-system-riscv:testcase busybox wc test.txt success
+qemu-system-riscv:testcase busybox [ -f test.txt ] success
+qemu-system-riscv:testcase busybox more test.txt success
+qemu-system-riscv:testcase busybox rm test.txt success
+qemu-system-riscv:testcase busybox mkdir test_dir success
+qemu-system-riscv:testcase busybox mv test_dir test success
+qemu-system-riscv:testcase busybox rmdir test success
+qemu-system-riscv:testcase busybox grep hello busybox_cmd.txt success
+qemu-system-riscv:testcase busybox cp busybox_cmd.txt busybox_cmd.bak success
+qemu-system-riscv:testcase busybox rm busybox_cmd.bak success
+qemu-system-riscv:testcase busybox find -name "busybox_cmd.txt" success
+qemu-system-riscv:#### OS COMP TEST GROUP END busybox-musl ####
+qemu-system-riscv:[official-qemu-v194] external init smoke complete; requesting SBI shutdown
+正在评测：os_serial_out_rv.txt : basic-musl
+正在评测：os_serial_out_rv.txt : busybox-musl
+正在评测：os_serial_out_rv.txt : ltp-musl
+正在评测：os_serial_out_rv.txt : lua-musl
+正在评测：os_serial_out_rv.txt : basic-glibc
+正在评测：os_serial_out_rv.txt : netperf-glibc
+正在评测：os_serial_out_rv.txt : lmbench-glibc
+正在评测：os_serial_out_rv.txt : libctest-glibc
+正在评测：os_serial_out_rv.txt : iozone-musl
+正在评测：os_serial_out_rv.txt : libcbench-musl
+正在评测：os_serial_out_rv.txt : cyclictest-musl
+正在评测：os_serial_out_rv.txt : iperf-musl
+正在评测：os_serial_out_rv.txt : busybox-glibc
+正在评测：os_serial_out_rv.txt : lua-glibc
+正在评测：os_serial_out_rv.txt : netperf-musl
+正在评测：os_serial_out_rv.txt : libcbench-glibc
+正在评测：os_serial_out_rv.txt : ltp-glibc
+正在评测：os_serial_out_rv.txt : lmbench-musl
+正在评测：os_serial_out_rv.txt : iperf-glibc
+正在评测：os_serial_out_rv.txt : cyclictest-glibc
+正在评测：os_serial_out_rv.txt : iozone-glibc
+正在评测：os_serial_out_rv.txt : libctest-musl
+正在评测：os_serial_out_la.txt : ltp-musl
+正在评测：os_serial_out_la.txt : lua-musl
+正在评测：os_serial_out_la.txt : basic-glibc
+正在评测：os_serial_out_la.txt : netperf-glibc
+正在评测：os_serial_out_la.txt : lmbench-glibc
+正在评测：os_serial_out_la.txt : libctest-glibc
+正在评测：os_serial_out_la.txt : iozone-musl
+正在评测：os_serial_out_la.txt : libcbench-musl
+正在评测：os_serial_out_la.txt : cyclictest-musl
+正在评测：os_serial_out_la.txt : iperf-musl
+正在评测：os_serial_out_la.txt : busybox-glibc
+正在评测：os_serial_out_la.txt : basic-musl
+正在评测：os_serial_out_la.txt : lua-glibc
+正在评测：os_serial_out_la.txt : netperf-musl
+正在评测：os_serial_out_la.txt : libcbench-glibc
+正在评测：os_serial_out_la.txt : ltp-glibc
+正在评测：os_serial_out_la.txt : lmbench-musl
+正在评测：os_serial_out_la.txt : iperf-glibc
+正在评测：os_serial_out_la.txt : cyclictest-glibc
+正在评测：os_serial_out_la.txt : iozone-glibc
+正在评测：os_serial_out_la.txt : libctest-musl
+正在评测：os_serial_out_la.txt : busybox-musl
+评测即将完成....

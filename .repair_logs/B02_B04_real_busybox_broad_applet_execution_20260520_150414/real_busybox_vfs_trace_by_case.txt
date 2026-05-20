@@ -1,0 +1,376 @@
+busybox_echo_independent: [B01-busybox-fd-trace] case=busybox_echo_independent fd=1 stream=stdout bytes=30
+busybox_echo_independent: [write-v157] canonical fd = 1 ret = 30
+busybox_pwd: [path-v65] getcwd buf = 0x40030020
+busybox_pwd: [path-v65] getcwd len = 192
+busybox_pwd: [path-v157] getcwd canonical ret = 6
+busybox_pwd: [B01-busybox-fd-trace] case=busybox_pwd fd=1 stream=stdout bytes=5
+busybox_pwd: [B01-busybox-fd-trace] case=busybox_pwd fd=1 stream=stdout bytes=1
+busybox_ls: [fs-v68] newfstatat dirfd = -100
+busybox_ls: [fs-v68] newfstatat path = 0x12c508
+busybox_ls: [fs-v68] newfstatat stat = 0x4001fbd0
+busybox_ls: [fs-v68] newfstatat flags = 0x0
+busybox_ls: [fs-v157] newfstatat canonical ret = 0
+busybox_ls: [openat-v137p] dirfd = -100
+busybox_ls: [openat-v137p] flags = 0x98000
+busybox_ls: [openat-v137p] mode = 0x0
+busybox_ls: [getdents64-v59] fd = 3
+busybox_ls: [getdents64-v59] buf = 0x400300f8
+busybox_ls: [getdents64-v59] len = 2048
+busybox_ls: [getdents64-v157] canonical ret = 104
+busybox_ls: [fs-v68] newfstatat dirfd = -100
+busybox_ls: [fs-v68] newfstatat path = 0x40030920
+busybox_ls: [fs-v68] newfstatat stat = 0x4001fb50
+busybox_ls: [fs-v68] newfstatat flags = 0x100
+busybox_ls: [fs-v157] newfstatat canonical ret = 0
+busybox_ls: [fs-v68] newfstatat dirfd = -100
+busybox_ls: [fs-v68] newfstatat path = 0x400309c0
+busybox_ls: [fs-v68] newfstatat stat = 0x4001fb50
+busybox_ls: [fs-v68] newfstatat flags = 0x100
+busybox_ls: [fs-v157] newfstatat canonical ret = 0
+busybox_ls: [fs-v68] newfstatat dirfd = -100
+busybox_ls: [fs-v68] newfstatat path = 0x40030a80
+busybox_ls: [fs-v68] newfstatat stat = 0x4001fb50
+busybox_ls: [fs-v68] newfstatat flags = 0x100
+busybox_ls: [fs-v157] newfstatat canonical ret = 0
+busybox_ls: [getdents64-v59] fd = 3
+busybox_ls: [getdents64-v59] buf = 0x400300f8
+busybox_ls: [getdents64-v59] len = 2048
+busybox_ls: [getdents64-v157] canonical ret = 0
+busybox_ls: [B01-busybox-fd-trace] case=busybox_ls fd=1 stream=stdout bytes=69
+busybox_ls: [B01-busybox-fd-trace] case=busybox_ls fd=1 stream=stdout bytes=1
+busybox_cat_test_txt: [openat-v137p] dirfd = -100
+busybox_cat_test_txt: [openat-v137p] flags = 0x8000
+busybox_cat_test_txt: [openat-v137p] mode = 0x0
+busybox_cat_test_txt: [B01-busybox-fd-trace] case=busybox_cat_test_txt fd=1 stream=stdout bytes=12
+busybox_rm_test_txt: [fs-v68] newfstatat dirfd = -100
+busybox_rm_test_txt: [fs-v68] newfstatat path = 0x4001ffd1
+busybox_rm_test_txt: [fs-v68] newfstatat stat = 0x4001fbf0
+busybox_rm_test_txt: [fs-v68] newfstatat flags = 0x100
+busybox_rm_test_txt: [fs-v157] newfstatat canonical ret = 0
+busybox_rm_test_txt: [fs-v68] faccessat dirfd = -100
+busybox_rm_test_txt: [fs-v68] faccessat path = 0x4001ffd1
+busybox_rm_test_txt: [fs-v68] faccessat mode = 0x2
+busybox_rm_test_txt: [fs-v68] faccessat flags = 0x0
+busybox_rm_test_txt: [fs-v157] faccessat canonical ret = 0
+busybox_rm_test_txt: [fs-v68] unlinkat dirfd = -100
+busybox_rm_test_txt: [fs-v68] unlinkat path = 0x4001ffd1
+busybox_rm_test_txt: [fs-v68] unlinkat flags = 0x0
+busybox_rm_test_txt: [fs-v157] unlinkat canonical ret = 0
+busybox_mkdir_test_dir: [fs-v68] mkdirat dirfd = -100
+busybox_mkdir_test_dir: [fs-v68] mkdirat path = 0x4001ffd1
+busybox_mkdir_test_dir: [fs-v68] mkdirat mode = 0o777
+busybox_mkdir_test_dir: [fs-v157] mkdirat canonical ret = 0
+busybox_rmdir_test: [fs-v68] unlinkat dirfd = -100
+busybox_rmdir_test: [fs-v68] unlinkat path = 0x4001ffd5
+busybox_rmdir_test: [fs-v68] unlinkat flags = 0x200
+busybox_rmdir_test: [fs-v157] unlinkat canonical ret = 0
+busybox_mv_test_dir_test: [fs-v68] newfstatat dirfd = -100
+busybox_mv_test_dir_test: [fs-v68] newfstatat path = 0x4001ffd5
+busybox_mv_test_dir_test: [fs-v68] newfstatat stat = 0x4001fb50
+busybox_mv_test_dir_test: [fs-v68] newfstatat flags = 0x0
+busybox_mv_test_dir_test: [fs-v157] newfstatat canonical ret = -2
+busybox_mv_test_dir_test: [fs-v68] renameat2 olddirfd = -100
+busybox_mv_test_dir_test: [fs-v68] renameat2 oldpath = 0x4001ffcc
+busybox_mv_test_dir_test: [fs-v68] renameat2 newdirfd = -100
+busybox_mv_test_dir_test: [fs-v68] renameat2 newpath = 0x4001ffd5
+busybox_mv_test_dir_test: [fs-v68] renameat2 flags = 0x0
+busybox_mv_test_dir_test: [fs-v157] renameat canonical ret = 0
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat dirfd = -100
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat path = 0x4001ffba
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat stat = 0x4001fb30
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat flags = 0x0
+busybox_cp_busybox_cmd_bak: [fs-v157] newfstatat canonical ret = 0
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat dirfd = -100
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat path = 0x4001ffca
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat stat = 0x4001fb30
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat flags = 0x0
+busybox_cp_busybox_cmd_bak: [fs-v157] newfstatat canonical ret = -2
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat dirfd = -100
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat path = 0x4001ffba
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat stat = 0x4001f9c0
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat flags = 0x0
+busybox_cp_busybox_cmd_bak: [fs-v157] newfstatat canonical ret = 0
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat dirfd = -100
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat path = 0x4001ffca
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat stat = 0x4001f9c0
+busybox_cp_busybox_cmd_bak: [fs-v68] newfstatat flags = 0x100
+busybox_cp_busybox_cmd_bak: [fs-v157] newfstatat canonical ret = -2
+busybox_cp_busybox_cmd_bak: [openat-v137p] dirfd = -100
+busybox_cp_busybox_cmd_bak: [openat-v137p] flags = 0x8000
+busybox_cp_busybox_cmd_bak: [openat-v137p] mode = 0x0
+busybox_cp_busybox_cmd_bak: [openat-v137p] dirfd = -100
+busybox_cp_busybox_cmd_bak: [openat-v137p] flags = 0x80c1
+busybox_cp_busybox_cmd_bak: [openat-v137p] mode = 0x81a4
+busybox_rm_busybox_cmd_bak: [fs-v68] newfstatat dirfd = -100
+busybox_rm_busybox_cmd_bak: [fs-v68] newfstatat path = 0x4001ffca
+busybox_rm_busybox_cmd_bak: [fs-v68] newfstatat stat = 0x4001fbe0
+busybox_rm_busybox_cmd_bak: [fs-v68] newfstatat flags = 0x100
+busybox_rm_busybox_cmd_bak: [fs-v157] newfstatat canonical ret = 0
+busybox_rm_busybox_cmd_bak: [fs-v68] faccessat dirfd = -100
+busybox_rm_busybox_cmd_bak: [fs-v68] faccessat path = 0x4001ffca
+busybox_rm_busybox_cmd_bak: [fs-v68] faccessat mode = 0x2
+busybox_rm_busybox_cmd_bak: [fs-v68] faccessat flags = 0x0
+busybox_rm_busybox_cmd_bak: [fs-v157] faccessat canonical ret = 0
+busybox_rm_busybox_cmd_bak: [fs-v68] unlinkat dirfd = -100
+busybox_rm_busybox_cmd_bak: [fs-v68] unlinkat path = 0x4001ffca
+busybox_rm_busybox_cmd_bak: [fs-v68] unlinkat flags = 0x0
+busybox_rm_busybox_cmd_bak: [fs-v157] unlinkat canonical ret = 0
+busybox_stat_test_txt: [fs-v68] newfstatat dirfd = -100
+busybox_stat_test_txt: [fs-v68] newfstatat path = 0x4001ffd1
+busybox_stat_test_txt: [fs-v68] newfstatat stat = 0x4001fbf0
+busybox_stat_test_txt: [fs-v68] newfstatat flags = 0x100
+busybox_stat_test_txt: [fs-v157] newfstatat canonical ret = 0
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=16
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=1
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=67
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=1
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=48
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=1
+busybox_stat_test_txt: [openat-v137p] dirfd = -100
+busybox_stat_test_txt: [openat-v137p] flags = 0x8000
+busybox_stat_test_txt: [openat-v137p] mode = 0x1b6
+busybox_stat_test_txt: [openat-v137p] dirfd = -100
+busybox_stat_test_txt: [openat-v137p] flags = 0x8000
+busybox_stat_test_txt: [openat-v137p] mode = 0x1b6
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=71
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=2
+busybox_stat_test_txt: [openat-v137p] dirfd = -100
+busybox_stat_test_txt: [openat-v137p] flags = 0x88800
+busybox_stat_test_txt: [openat-v137p] mode = 0x2f
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=43
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=1
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=43
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=1
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=43
+busybox_stat_test_txt: [B01-busybox-fd-trace] case=busybox_stat_test_txt fd=1 stream=stdout bytes=1
+busybox_find_busybox_cmd: [fs-v68] newfstatat dirfd = -100
+busybox_find_busybox_cmd: [fs-v68] newfstatat path = 0x12c508
+busybox_find_busybox_cmd: [fs-v68] newfstatat stat = 0x4001fb10
+busybox_find_busybox_cmd: [fs-v68] newfstatat flags = 0x100
+busybox_find_busybox_cmd: [fs-v157] newfstatat canonical ret = 0
+busybox_find_busybox_cmd: [openat-v137p] dirfd = -100
+busybox_find_busybox_cmd: [openat-v137p] flags = 0x98000
+busybox_find_busybox_cmd: [openat-v137p] mode = 0x0
+busybox_find_busybox_cmd: [getdents64-v59] fd = 3
+busybox_find_busybox_cmd: [getdents64-v59] buf = 0x400300b8
+busybox_find_busybox_cmd: [getdents64-v59] len = 2048
+busybox_find_busybox_cmd: [getdents64-v157] canonical ret = 104
+busybox_find_busybox_cmd: [fs-v68] newfstatat dirfd = -100
+busybox_find_busybox_cmd: [fs-v68] newfstatat path = 0x400308e0
+busybox_find_busybox_cmd: [fs-v68] newfstatat stat = 0x4001fa60
+busybox_find_busybox_cmd: [fs-v68] newfstatat flags = 0x100
+busybox_find_busybox_cmd: [fs-v157] newfstatat canonical ret = 0
+busybox_find_busybox_cmd: [fs-v68] newfstatat dirfd = -100
+busybox_find_busybox_cmd: [fs-v68] newfstatat path = 0x400308e0
+busybox_find_busybox_cmd: [fs-v68] newfstatat stat = 0x4001fa60
+busybox_find_busybox_cmd: [fs-v68] newfstatat flags = 0x100
+busybox_find_busybox_cmd: [fs-v157] newfstatat canonical ret = 0
+busybox_find_busybox_cmd: [B01-busybox-fd-trace] case=busybox_find_busybox_cmd fd=1 stream=stdout bytes=17
+busybox_find_busybox_cmd: [B01-busybox-fd-trace] case=busybox_find_busybox_cmd fd=1 stream=stdout bytes=1
+busybox_find_busybox_cmd: [fs-v68] newfstatat dirfd = -100
+busybox_find_busybox_cmd: [fs-v68] newfstatat path = 0x400308e0
+busybox_find_busybox_cmd: [fs-v68] newfstatat stat = 0x4001fa60
+busybox_find_busybox_cmd: [fs-v68] newfstatat flags = 0x100
+busybox_find_busybox_cmd: [fs-v157] newfstatat canonical ret = 0
+busybox_find_busybox_cmd: [getdents64-v59] fd = 3
+busybox_find_busybox_cmd: [getdents64-v59] buf = 0x400300b8
+busybox_find_busybox_cmd: [getdents64-v59] len = 2048
+busybox_find_busybox_cmd: [getdents64-v157] canonical ret = 0
+busybox_wc_test_txt: [openat-v137p] dirfd = -100
+busybox_wc_test_txt: [openat-v137p] flags = 0x8000
+busybox_wc_test_txt: [openat-v137p] mode = 0x1b6
+busybox_wc_test_txt: [read-v157] canonical fd = 3 ret = 12
+busybox_wc_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_wc_test_txt: [B01-busybox-fd-trace] case=busybox_wc_test_txt fd=1 stream=stdout bytes=38
+busybox_wc_test_txt: [B01-busybox-fd-trace] case=busybox_wc_test_txt fd=1 stream=stdout bytes=1
+busybox_head_test_txt: [openat-v137p] dirfd = -100
+busybox_head_test_txt: [openat-v137p] flags = 0x8000
+busybox_head_test_txt: [openat-v137p] mode = 0x1b6
+busybox_head_test_txt: [read-v157] canonical fd = 3 ret = 12
+busybox_head_test_txt: [B01-busybox-fd-trace] case=busybox_head_test_txt fd=1 stream=stdout bytes=11
+busybox_head_test_txt: [B01-busybox-fd-trace] case=busybox_head_test_txt fd=1 stream=stdout bytes=1
+busybox_head_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_tail_test_txt: [openat-v137p] dirfd = -100
+busybox_tail_test_txt: [openat-v137p] flags = 0x8000
+busybox_tail_test_txt: [openat-v137p] mode = 0x0
+busybox_tail_test_txt: [read-v157] canonical fd = 3 ret = 12
+busybox_tail_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_tail_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_tail_test_txt: [B01-busybox-fd-trace] case=busybox_tail_test_txt fd=1 stream=stdout bytes=12
+busybox_tail_test_txt: [write-v157] canonical fd = 1 ret = 12
+busybox_sort_test_txt: [openat-v137p] dirfd = -100
+busybox_sort_test_txt: [openat-v137p] flags = 0x8000
+busybox_sort_test_txt: [openat-v137p] mode = 0x1b6
+busybox_sort_test_txt: [read-v157] canonical fd = 3 ret = 12
+busybox_sort_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_sort_test_txt: [B01-busybox-fd-trace] case=busybox_sort_test_txt fd=1 stream=stdout bytes=11
+busybox_sort_test_txt: [B01-busybox-fd-trace] case=busybox_sort_test_txt fd=1 stream=stdout bytes=1
+busybox_uniq_test_txt: [openat-v137p] dirfd = -100
+busybox_uniq_test_txt: [openat-v137p] flags = 0x8000
+busybox_uniq_test_txt: [openat-v137p] mode = 0x0
+busybox_uniq_test_txt: [read-v157] canonical fd = 0 ret = 12
+busybox_uniq_test_txt: [read-v157] canonical fd = 0 ret = 0
+busybox_uniq_test_txt: [B01-busybox-fd-trace] case=busybox_uniq_test_txt fd=1 stream=stdout bytes=11
+busybox_uniq_test_txt: [B01-busybox-fd-trace] case=busybox_uniq_test_txt fd=1 stream=stdout bytes=1
+busybox_grep_hello_cmd: [openat-v137p] dirfd = -100
+busybox_grep_hello_cmd: [openat-v137p] flags = 0x8000
+busybox_grep_hello_cmd: [openat-v137p] mode = 0x1b6
+busybox_grep_hello_cmd: [read-v157] canonical fd = 3 ret = 84
+busybox_grep_hello_cmd: [B01-busybox-fd-trace] case=busybox_grep_hello_cmd fd=1 stream=stdout bytes=21
+busybox_grep_hello_cmd: [B01-busybox-fd-trace] case=busybox_grep_hello_cmd fd=1 stream=stdout bytes=1
+busybox_grep_hello_cmd: [read-v157] canonical fd = 3 ret = 0
+busybox_cut_c3_test_txt: [openat-v137p] dirfd = -100
+busybox_cut_c3_test_txt: [openat-v137p] flags = 0x8000
+busybox_cut_c3_test_txt: [openat-v137p] mode = 0x1b6
+busybox_cut_c3_test_txt: [read-v157] canonical fd = 3 ret = 12
+busybox_cut_c3_test_txt: [B01-busybox-fd-trace] case=busybox_cut_c3_test_txt fd=1 stream=stdout bytes=1
+busybox_cut_c3_test_txt: [B01-busybox-fd-trace] case=busybox_cut_c3_test_txt fd=1 stream=stdout bytes=1
+busybox_cut_c3_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_od_test_txt: [openat-v137p] dirfd = -100
+busybox_od_test_txt: [openat-v137p] flags = 0x8000
+busybox_od_test_txt: [openat-v137p] mode = 0x1b6
+busybox_od_test_txt: [B01-busybox-fd-trace] case=busybox_od_test_txt fd=1 stream=stdout bytes=49
+busybox_od_test_txt: [B01-busybox-fd-trace] case=busybox_od_test_txt fd=1 stream=stdout bytes=1
+busybox_od_test_txt: [B01-busybox-fd-trace] case=busybox_od_test_txt fd=1 stream=stdout bytes=7
+busybox_od_test_txt: [B01-busybox-fd-trace] case=busybox_od_test_txt fd=1 stream=stdout bytes=1
+busybox_hexdump_c_test_txt: [openat-v137p] dirfd = -100
+busybox_hexdump_c_test_txt: [openat-v137p] flags = 0x8000
+busybox_hexdump_c_test_txt: [openat-v137p] mode = 0x1b6
+busybox_hexdump_c_test_txt: [B01-busybox-fd-trace] case=busybox_hexdump_c_test_txt fd=1 stream=stdout bytes=73
+busybox_hexdump_c_test_txt: [B01-busybox-fd-trace] case=busybox_hexdump_c_test_txt fd=1 stream=stdout bytes=2
+busybox_hexdump_c_test_txt: [B01-busybox-fd-trace] case=busybox_hexdump_c_test_txt fd=1 stream=stdout bytes=8
+busybox_hexdump_c_test_txt: [B01-busybox-fd-trace] case=busybox_hexdump_c_test_txt fd=1 stream=stdout bytes=1
+busybox_md5sum_test_txt: [openat-v137p] dirfd = -100
+busybox_md5sum_test_txt: [openat-v137p] flags = 0x8000
+busybox_md5sum_test_txt: [openat-v137p] mode = 0x0
+busybox_md5sum_test_txt: [read-v157] canonical fd = 3 ret = 12
+busybox_md5sum_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_md5sum_test_txt: [B01-busybox-fd-trace] case=busybox_md5sum_test_txt fd=1 stream=stdout bytes=42
+busybox_md5sum_test_txt: [B01-busybox-fd-trace] case=busybox_md5sum_test_txt fd=1 stream=stdout bytes=1
+busybox_strings_test_txt: [openat-v137p] dirfd = -100
+busybox_strings_test_txt: [openat-v137p] flags = 0x8000
+busybox_strings_test_txt: [openat-v137p] mode = 0x1b6
+busybox_strings_test_txt: [read-v157] canonical fd = 3 ret = 12
+busybox_strings_test_txt: [B01-busybox-fd-trace] case=busybox_strings_test_txt fd=1 stream=stdout bytes=11
+busybox_strings_test_txt: [B01-busybox-fd-trace] case=busybox_strings_test_txt fd=1 stream=stdout bytes=1
+busybox_strings_test_txt: [read-v157] canonical fd = 3 ret = 0
+busybox_basename_aaa_bbb: [B01-busybox-fd-trace] case=busybox_basename_aaa_bbb fd=1 stream=stdout bytes=4
+busybox_basename_aaa_bbb: [write-v157] canonical fd = 1 ret = 4
+busybox_dirname_aaa_bbb: [B01-busybox-fd-trace] case=busybox_dirname_aaa_bbb fd=1 stream=stdout bytes=4
+busybox_dirname_aaa_bbb: [B01-busybox-fd-trace] case=busybox_dirname_aaa_bbb fd=1 stream=stdout bytes=1
+busybox_date: [openat-v137p] dirfd = -100
+busybox_date: [openat-v137p] flags = 0x88800
+busybox_date: [openat-v137p] mode = 0x2f
+busybox_date: [B01-busybox-fd-trace] case=busybox_date fd=1 stream=stdout bytes=28
+busybox_date: [B01-busybox-fd-trace] case=busybox_date fd=1 stream=stdout bytes=1
+busybox_cal: [openat-v137p] dirfd = -100
+busybox_cal: [openat-v137p] flags = 0x88800
+busybox_cal: [openat-v137p] mode = 0x2f
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=16
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=20
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=20
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=20
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=20
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=20
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=20
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=21
+busybox_cal: [B01-busybox-fd-trace] case=busybox_cal fd=1 stream=stdout bytes=1
+busybox_df: [B01-busybox-fd-trace] case=busybox_df fd=1 stream=stdout bytes=55
+busybox_df: [B01-busybox-fd-trace] case=busybox_df fd=1 stream=stdout bytes=12
+busybox_df: [openat-v137p] dirfd = -100
+busybox_df: [openat-v137p] flags = 0x8000
+busybox_df: [openat-v137p] mode = 0x1b6
+busybox_df: [read-v157] canonical fd = 3 ret = 46
+busybox_df: [B01-busybox-fd-trace] case=busybox_df fd=1 stream=stdout bytes=69
+busybox_df: [B01-busybox-fd-trace] case=busybox_df fd=1 stream=stdout bytes=1
+busybox_df: [read-v157] canonical fd = 3 ret = 0
+busybox_du: [fs-v68] newfstatat dirfd = -100
+busybox_du: [fs-v68] newfstatat path = 0x12c508
+busybox_du: [fs-v68] newfstatat stat = 0x4001fbd0
+busybox_du: [fs-v68] newfstatat flags = 0x100
+busybox_du: [fs-v157] newfstatat canonical ret = 0
+busybox_du: [openat-v137p] dirfd = -100
+busybox_du: [openat-v137p] flags = 0x98000
+busybox_du: [openat-v137p] mode = 0x0
+busybox_du: [getdents64-v59] fd = 3
+busybox_du: [getdents64-v59] buf = 0x40030a58
+busybox_du: [getdents64-v59] len = 2048
+busybox_du: [getdents64-v157] canonical ret = 104
+busybox_du: [fs-v68] newfstatat dirfd = -100
+busybox_du: [fs-v68] newfstatat path = 0x40031280
+busybox_du: [fs-v68] newfstatat stat = 0x4001fb20
+busybox_du: [fs-v68] newfstatat flags = 0x100
+busybox_du: [fs-v157] newfstatat canonical ret = 0
+busybox_du: [fs-v68] newfstatat dirfd = -100
+busybox_du: [fs-v68] newfstatat path = 0x40031280
+busybox_du: [fs-v68] newfstatat stat = 0x4001fb20
+busybox_du: [fs-v68] newfstatat flags = 0x100
+busybox_du: [fs-v157] newfstatat canonical ret = 0
+busybox_du: [fs-v68] newfstatat dirfd = -100
+busybox_du: [fs-v68] newfstatat path = 0x40031280
+busybox_du: [fs-v68] newfstatat stat = 0x4001fb20
+busybox_du: [fs-v68] newfstatat flags = 0x100
+busybox_du: [fs-v157] newfstatat canonical ret = 0
+busybox_du: [getdents64-v59] fd = 3
+busybox_du: [getdents64-v59] buf = 0x40030a58
+busybox_du: [getdents64-v59] len = 2048
+busybox_du: [getdents64-v157] canonical ret = 0
+busybox_du: [B01-busybox-fd-trace] case=busybox_du fd=1 stream=stdout bytes=3
+busybox_du: [B01-busybox-fd-trace] case=busybox_du fd=1 stream=stdout bytes=1
+busybox_ps: [B01-busybox-fd-trace] case=busybox_ps fd=1 stream=stdout bytes=28
+busybox_ps: [B01-busybox-fd-trace] case=busybox_ps fd=1 stream=stdout bytes=1
+busybox_ps: [openat-v137p] dirfd = -100
+busybox_ps: [openat-v137p] flags = 0x98000
+busybox_ps: [openat-v137p] mode = 0x0
+busybox_ps: [getdents64-v59] fd = 3
+busybox_ps: [getdents64-v59] buf = 0x40030a58
+busybox_ps: [getdents64-v59] len = 2048
+busybox_ps: [getdents64-v157] canonical ret = 88
+busybox_ps: [getdents64-v59] fd = 3
+busybox_ps: [getdents64-v59] buf = 0x40030a58
+busybox_ps: [getdents64-v59] len = 2048
+busybox_ps: [getdents64-v157] canonical ret = 0
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=79
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=1
+busybox_free: [openat-v137p] dirfd = -100
+busybox_free: [openat-v137p] flags = 0x8000
+busybox_free: [openat-v137p] mode = 0x1b6
+busybox_free: [read-v157] canonical fd = 3 ret = 162
+busybox_free: [read-v157] canonical fd = 3 ret = 0
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=85
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=1
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=49
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=1
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=43
+busybox_free: [B01-busybox-fd-trace] case=busybox_free fd=1 stream=stdout bytes=1
+busybox_uptime: [openat-v137p] dirfd = -100
+busybox_uptime: [openat-v137p] flags = 0x88800
+busybox_uptime: [openat-v137p] mode = 0x2f
+busybox_uptime: [B01-busybox-fd-trace] case=busybox_uptime fd=1 stream=stdout bytes=61
+busybox_uptime: [B01-busybox-fd-trace] case=busybox_uptime fd=1 stream=stdout bytes=1
+busybox_uname: [B01-busybox-fd-trace] case=busybox_uname fd=1 stream=stdout bytes=12
+busybox_uname: [B01-busybox-fd-trace] case=busybox_uname fd=1 stream=stdout bytes=1
+busybox_which_ls: [fs-v68] faccessat dirfd = -100
+busybox_which_ls: [fs-v68] faccessat path = 0x40030020
+busybox_which_ls: [fs-v68] faccessat mode = 0x1
+busybox_which_ls: [fs-v68] faccessat flags = 0x0
+busybox_which_ls: [fs-v157] faccessat canonical ret = -2
+busybox_which_ls: [fs-v68] faccessat dirfd = -100
+busybox_which_ls: [fs-v68] faccessat path = 0x40030020
+busybox_which_ls: [fs-v68] faccessat mode = 0x1
+busybox_which_ls: [fs-v68] faccessat flags = 0x0
+busybox_which_ls: [fs-v157] faccessat canonical ret = 0
+busybox_which_ls: [fs-v68] newfstatat dirfd = -100
+busybox_which_ls: [fs-v68] newfstatat path = 0x40030020
+busybox_which_ls: [fs-v68] newfstatat stat = 0x4001fba0
+busybox_which_ls: [fs-v68] newfstatat flags = 0x0
+busybox_which_ls: [fs-v157] newfstatat canonical ret = 0
+busybox_which_ls: [B01-busybox-fd-trace] case=busybox_which_ls fd=1 stream=stdout bytes=7
+busybox_which_ls: [B01-busybox-fd-trace] case=busybox_which_ls fd=1 stream=stdout bytes=1

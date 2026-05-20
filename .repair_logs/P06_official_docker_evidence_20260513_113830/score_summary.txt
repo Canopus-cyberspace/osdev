@@ -1,0 +1,52 @@
+verdict Accpted
+score 112
+basic-musl-rv 100.0
+busybox-musl-rv 12.0
+basic-musl-la 0.0
+busybox-musl-la 0.0
+rank 112.0
+judge-basic-total 100
+judge-busybox-total 12
+basic-musl test_brk 3 3
+basic-musl test_chdir 3 3
+basic-musl test_clone 4 4
+basic-musl test_close 2 2
+basic-musl test_dup2 2 2
+basic-musl test_dup 2 2
+basic-musl test_execve 3 3
+basic-musl test_fork 3 3
+basic-musl test_fstat 3 3
+basic-musl test_getcwd 2 2
+basic-musl test_getdents 5 5
+basic-musl test_getpid 3 3
+basic-musl test_getppid 2 2
+basic-musl test_gettimeofday 3 3
+basic-musl test_mkdir 3 3
+basic-musl test_mmap 3 3
+basic-musl test_mount 5 5
+basic-musl test_munmap 4 4
+basic-musl test_open 3 3
+basic-musl test_openat 4 4
+basic-musl test_pipe 4 4
+basic-musl test_read 3 3
+basic-musl test_sleep 2 2
+basic-musl test_times 6 6
+basic-musl test_umount 5 5
+basic-musl test_uname 2 2
+basic-musl test_unlink 2 2
+basic-musl test_wait 4 4
+basic-musl test_waitpid 4 4
+basic-musl test_write 2 2
+basic-musl test_yield 4 4
+busybox-musl busybox echo "#### independent command test" 1 1
+busybox-musl busybox true 1 1
+busybox-musl busybox pwd 1 1
+busybox-musl busybox ls 1 1
+busybox-musl busybox echo "#### file opration test" 1 1
+busybox-musl busybox echo "hello world" > test.txt 1 1
+busybox-musl busybox cat test.txt 1 1
+busybox-musl busybox rm test.txt 1 1
+busybox-musl busybox mkdir test_dir 1 1
+busybox-musl busybox mv test_dir test 1 1
+busybox-musl busybox cp busybox_cmd.txt busybox_cmd.bak 1 1
+busybox-musl busybox rm busybox_cmd.bak 1 1

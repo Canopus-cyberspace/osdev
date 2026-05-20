@@ -1,0 +1,38 @@
+verdict Accpted
+score 100
+basic-musl-rv 100.0
+basic-musl-la 0.0
+rank 100.0
+judge_total 100
+test_brk 3 3
+test_chdir 3 3
+test_clone 4 4
+test_close 2 2
+test_dup2 2 2
+test_dup 2 2
+test_execve 3 3
+test_exit 0 0
+test_fork 3 3
+test_fstat 3 3
+test_getcwd 2 2
+test_getdents 5 5
+test_getpid 3 3
+test_getppid 2 2
+test_gettimeofday 3 3
+test_mkdir 3 3
+test_mmap 3 3
+test_mount 5 5
+test_munmap 4 4
+test_open 3 3
+test_openat 4 4
+test_pipe 4 4
+test_read 3 3
+test_sleep 2 2
+test_times 6 6
+test_umount 5 5
+test_uname 2 2
+test_unlink 2 2
+test_wait 4 4
+test_waitpid 4 4
+test_write 2 2
+test_yield 4 4

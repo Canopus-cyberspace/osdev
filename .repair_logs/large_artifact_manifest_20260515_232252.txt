@@ -1,0 +1,5 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-15T23:22:52+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/K04b_real_basic_musl_fork_clone_exec_hardmode_20260515_231626

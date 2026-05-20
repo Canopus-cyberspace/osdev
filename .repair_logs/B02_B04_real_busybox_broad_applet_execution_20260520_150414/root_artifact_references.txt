@@ -1,0 +1,10 @@
+path: /home/lenovo/projects/uestc-kernel/os_serial_out_rv.txt
+size_bytes: 445062
+sha256: 8d29630e718ce64c6220f6e36bfe21a4e4d6d66a289ec05d0cf82eb2758a9e77
+type: ASCII text, with very long lines (421)
+
+path: /home/lenovo/projects/uestc-kernel/os_serial_out_la.txt
+size_bytes: 310
+sha256: 64215e65ec3215455ae14bdb8b019ca5f030d82d2adb040cdcec70e2e58ddf25
+type: ASCII text
+

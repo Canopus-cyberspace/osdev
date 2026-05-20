@@ -1,0 +1,18 @@
+{
+  "version": "v126",
+  "purpose": "Registry for the next phase: converting guard-only userland compatibility checks into explicit external-init syscall conformance scenarios.",
+  "scenario_groups": [
+    {"id": "vfs_basic", "syscalls": ["openat", "read", "write", "lseek", "close", "fstat", "getdents64"], "expected_next": "real file-offset/content checks"},
+    {"id": "usercopy_iovec_time", "syscalls": ["readv", "writev", "clock_gettime", "nanosleep"], "expected_next": "EFAULT/cross-page/iovec checks"},
+    {"id": "mmap_brk", "syscalls": ["mmap", "munmap", "mprotect", "brk"], "expected_next": "mapped memory read/write/protection checks"},
+    {"id": "process_lifecycle", "syscalls": ["clone", "execve", "exit", "wait4", "getpid", "getppid"], "expected_next": "parent-child lifecycle checks"},
+    {"id": "waitable_fd", "syscalls": ["pipe2", "eventfd2", "timerfd_create", "poll", "epoll_ctl"], "expected_next": "readiness/timeout/wakeup checks"},
+    {"id": "futex_sched", "syscalls": ["futex", "futex_waitv", "sched_yield"], "expected_next": "wait/wake scheduling checks"},
+    {"id": "signal", "syscalls": ["rt_sigaction", "rt_sigprocmask", "rt_sigreturn", "tgkill"], "expected_next": "delivery/sigreturn trap-context checks"},
+    {"id": "socket_loopback", "syscalls": ["socketpair", "sendmsg", "recvmsg", "poll"], "expected_next": "loopback payload and readiness checks"},
+    {"id": "ipc", "syscalls": ["msgget", "msgsnd", "msgrcv", "shmget", "shmat", "semget", "mq_open"], "expected_next": "object lifecycle and blocking checks"},
+    {"id": "fs_metadata_path", "syscalls": ["statx", "faccessat2", "readlinkat", "renameat2", "xattr"], "expected_next": "metadata/path mutation checks"},
+    {"id": "security_runtime", "syscalls": ["capget", "capset", "landlock_create_ruleset", "prctl"], "expected_next": "permission return-value checks"},
+    {"id": "sched_resource_affinity", "syscalls": ["sched_getaffinity", "sched_setaffinity", "getrusage", "getpriority", "getcpu"], "expected_next": "resource/affinity result-shape checks"}
+  ]
+}

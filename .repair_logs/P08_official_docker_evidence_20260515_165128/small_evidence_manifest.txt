@@ -1,0 +1,14 @@
+small evidence directory: /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128
+119 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/small_evidence_manifest.txt
+292 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/run.log
+310 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/os_serial_out_la.txt
+1091 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/project_root_large_artifact_manifest.txt
+1299 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/environment_fingerprint.txt
+1834 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/judge_basic_musl.json
+2211 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/busybox_musl_group.txt
+2294 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/score_summary.txt
+3673 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/judge_busybox_musl.json
+4432 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/basic_musl_group.txt
+42348 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/os_serial_out_rv.txt
+61798 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/console_log
+379390 /home/lenovo/projects/uestc-kernel/.repair_logs/P08_official_docker_evidence_20260515_165128/docker_evaluate.log

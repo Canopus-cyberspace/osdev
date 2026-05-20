@@ -1,45 +1,20 @@
 # MM_STATUS
 
-## v60 - brk heap scaffold
+## v76 - memory/policy/fd scaffold
 
 Implemented:
-- fixed user heap window at `0x40030000..0x40034000`
-- mapped heap pages as R/W/U
-- `USER_BRK` starts at `USER_HEAP_START`
-- `brk(0)` returns current break
-- `brk(addr)` updates break when addr is inside the heap window
-- invalid brk requests keep and return current break
+- mremap returns 0 for zero-length smoke calls
+- msync/mlock/munlock/mlockall/munlockall return 0
+- mincore returns 0 and can zero a vector byte
+- remap_file_pages returns 0
+- mbind/get_mempolicy/set_mempolicy return 0
+- memfd_create returns fixed fd 21
+- userfaultfd returns fixed fd 22
 
 Still TODO:
-- lazy allocation
-- dynamic heap expansion
-- page fault based allocation
-- mmap/munmap
-- per-process address space ownership
-
-## v61 - mmap/munmap scaffold
-
-Implemented:
-- fixed mmap window at `0x40040000..0x40044000`
-- mapped mmap pages as R/W/U
-- `mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)` returns `0x40040000`
-- `munmap(0x40040000, 4096)` clears scaffold active state and returns 0
-
-Still TODO:
-- real VMA list
-- MAP_FIXED handling
-- file-backed mmap
-- page fault based lazy mapping
-- real PTE unmap and TLB invalidation per VMA
-
-## v62 - mprotect/madvise scaffold
-
-Implemented:
-- `mprotect(mmap_addr, 4096, PROT_READ)` validates fixed mmap window and returns 0
-- `madvise(mmap_addr, 4096, MADV_NORMAL)` validates fixed mmap window and returns 0
-
-Still TODO:
-- real PTE permission update
-- VMA metadata
-- lazy mmap
-- page fault handling
+- real VMA splitting/merging
+- real page residency accounting
+- real memory locking accounting
+- NUMA policy support
+- real anonymous file objects for memfd
+- real userfaultfd event delivery

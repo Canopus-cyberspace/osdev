@@ -1,0 +1,86 @@
+===== busybox_true REAL-RUN busybox true =====
+===== busybox_echo_independent REAL-RUN busybox echo #### independent command test =====
+#### independent command test
+===== busybox_pwd REAL-RUN busybox pwd =====
+/musl
+===== busybox_ls REAL-RUN busybox ls =====
+[0;0mbusybox[m          [0;0mbusybox_cmd.txt[m  [0;0mtest.txt[m
+===== busybox_cat_test_txt REAL-RUN busybox cat test.txt =====
+hello world
+===== busybox_touch_test_txt REAL-RUN busybox touch test.txt =====
+===== busybox_rm_test_txt REAL-RUN busybox rm test.txt =====
+===== busybox_mkdir_test_dir REAL-RUN busybox mkdir test_dir =====
+===== busybox_rmdir_test REAL-RUN busybox rmdir test =====
+===== busybox_mv_test_dir_test REAL-RUN busybox mv test_dir test =====
+===== busybox_cp_busybox_cmd_bak REAL-RUN busybox cp busybox_cmd.txt busybox_cmd.bak =====
+===== busybox_rm_busybox_cmd_bak REAL-RUN busybox rm busybox_cmd.bak =====
+===== busybox_stat_test_txt REAL-RUN busybox stat test.txt =====
+  File: test.txt
+  Size: 12        	Blocks: 0          IO Block: 0      regular file
+Device: 2722h/10018d	Inode: 10018       Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/ UNKNOWN)   Gid: (    0/ UNKNOWN)
+Access: 1970-01-01 00:00:00.000000000 +0000
+Modify: 1970-01-01 00:00:00.000000000 +0000
+Change: 1970-01-01 00:00:00.000000000 +0000
+===== busybox_find_busybox_cmd REAL-RUN busybox find -name busybox_cmd.txt =====
+./busybox_cmd.txt
+===== busybox_wc_test_txt REAL-RUN busybox wc test.txt =====
+        1         2        12 test.txt
+===== busybox_head_test_txt REAL-RUN busybox head test.txt =====
+hello world
+===== busybox_tail_test_txt REAL-RUN busybox tail test.txt =====
+hello world
+===== busybox_sort_test_txt REAL-RUN busybox sort test.txt =====
+hello world
+===== busybox_uniq_test_txt REAL-RUN busybox uniq test.txt =====
+hello world
+===== busybox_grep_hello_cmd REAL-RUN busybox grep hello busybox_cmd.txt =====
+hello busybox_cmd.txt
+===== busybox_cut_c3_test_txt REAL-RUN busybox cut -c 3 test.txt =====
+l
+===== busybox_od_test_txt REAL-RUN busybox od test.txt =====
+0000000 062550 066154 020157 067567 066162 005144
+0000014
+===== busybox_hexdump_c_test_txt REAL-RUN busybox hexdump -C test.txt =====
+00000000  68 65 6c 6c 6f 20 77 6f  72 6c 64 0a              |hello world.|
+0000000c
+===== busybox_md5sum_test_txt REAL-RUN busybox md5sum test.txt =====
+6f5902ac237024bdd0c176cb93063dc4  test.txt
+===== busybox_strings_test_txt REAL-RUN busybox strings test.txt =====
+hello world
+===== busybox_basename_aaa_bbb REAL-RUN busybox basename /aaa/bbb =====
+bbb
+===== busybox_dirname_aaa_bbb REAL-RUN busybox dirname /aaa/bbb =====
+/aaa
+===== busybox_date REAL-RUN busybox date =====
+Thu Jan  1 00:00:01 UTC 1970
+===== busybox_cal REAL-RUN busybox cal =====
+    January 1970
+Su Mo Tu We Th Fr Sa
+             1  2  3
+ 4  5  6  7  8  9 10
+11 12 13 14 15 16 17
+18 19 20 21 22 23 24
+25 26 27 28 29 30 31
+                     
+===== busybox_df REAL-RUN busybox df =====
+Filesystem           1K-blocks      Used Available Use% Mounted on
+proc                         2 18014398509481964         0 100% /proc
+===== busybox_du REAL-RUN busybox du =====
+0	.
+===== busybox_dmesg REAL-RUN busybox dmesg =====
+===== busybox_ps REAL-RUN busybox ps =====
+PID   USER     TIME  COMMAND
+===== busybox_free REAL-RUN busybox free =====
+              total        used        free      shared  buff/cache   available
+Mem:          65536 18014398509367296       49152           0      131072           0
+-/+ buffers/cache:  18014398509367296      180224
+Swap:             0           0           0
+===== busybox_uptime REAL-RUN busybox uptime =====
+ 00:00:01 up 0 min,  0 users,  load average: 0.00, 0.00, 0.00
+===== busybox_uname REAL-RUN busybox uname =====
+UESTC-Kernel
+===== busybox_which_ls REAL-RUN busybox which ls =====
+/bin/ls
+===== busybox_false REAL-RUN busybox false =====
+===== busybox_sleep_1 REAL-RUN busybox sleep 1 =====

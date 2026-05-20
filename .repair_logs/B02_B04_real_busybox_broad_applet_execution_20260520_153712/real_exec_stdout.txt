@@ -1,0 +1,3 @@
+========== START test_write ==========
+Hello operating system contest.
+========== END test_write ==========

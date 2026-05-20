@@ -1,0 +1,5 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-19T23:34:23+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/B02_B04_real_busybox_broad_applet_execution_20260519_180712

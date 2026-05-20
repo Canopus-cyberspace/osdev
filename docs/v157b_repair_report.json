@@ -1,0 +1,17 @@
+{
+  "baseline": "v156 PASS + v157 attempted source state",
+  "fixed": [
+    "StatusSnap.delivered field and constructors",
+    "build_init_elf.py BASE_MARKER syntax guard",
+    "active_once duplicate visibility guard",
+    "v155/v156 unused-assignment warning cleanup"
+  ],
+  "package": "v157b_statussnap_warning_repair_fix",
+  "regressions_required": [
+    "v151k7",
+    "v154",
+    "v155",
+    "v156",
+    "v157/v157b"
+  ]
+}

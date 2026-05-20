@@ -1,0 +1,5 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-13T10:26:07+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/P02_project_root_sdcard_cleanup_20260513_100943

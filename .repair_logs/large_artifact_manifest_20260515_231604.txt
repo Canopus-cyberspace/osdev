@@ -1,0 +1,7 @@
+# Large artifact cleanup manifest
+timestamp=2026-05-15T23:16:04+08:00
+root=/home/lenovo/projects/uestc-kernel
+
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/K04a_real_basic_musl_process_ipc_hardmode_20260515_215615
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/K04a_real_basic_musl_process_ipc_hardmode_20260515_215505
+DELETE_OLD_NON_EVIDENCE_DIR path=/home/lenovo/projects/uestc-kernel/.repair_logs/K04a_real_basic_musl_process_ipc_hardmode_20260515_215336

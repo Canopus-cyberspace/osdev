@@ -1,4 +1,4 @@
-use crate::mm::user_buffer::{copy_from_user, UserBuffer, USER_COPY_CHUNK_SIZE};
+use crate::syscall::user_ptr::{copy_from_user, UserBuffer, USER_COPY_CHUNK_SIZE};
 
 pub fn sys_write(fd: usize, buf: usize, len: usize) -> isize {
     if fd != 1 && fd != 2 {
