@@ -85,7 +85,7 @@ const CASES: &[LaBasicCase] = &[
     LaBasicCase {
         name: "clone",
         path: "/musl/basic/clone",
-        enabled: false,
+        enabled: true,
     },
     LaBasicCase {
         name: "execve",

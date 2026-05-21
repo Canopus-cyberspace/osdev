@@ -256,13 +256,29 @@ impl Ext4 {
         let mut consumed = 0usize;
         while consumed < size {
             let mut block = [0u8; MAX_BLOCK_SIZE];
-            self.read_inode_block(inode, logical, &mut block)?;
+            self.read_file_block(inode, logical, &mut block)?;
             let take = min(self.block_size, size - consumed);
             copy_bytes(&mut out[consumed..consumed + take], &block[..take]);
             consumed += take;
             logical += 1;
         }
         Ok(())
+    }
+
+    fn read_file_block(
+        &self,
+        inode: &Inode,
+        logical: u32,
+        out: &mut [u8; MAX_BLOCK_SIZE],
+    ) -> Result<(), &'static str> {
+        match self.read_inode_block(inode, logical, out) {
+            Ok(()) => Ok(()),
+            Err("ext4_extent_missing") => {
+                zero_bytes(out);
+                Ok(())
+            }
+            Err(err) => Err(err),
+        }
     }
 
     fn read_inode_block(

@@ -27,3 +27,11 @@ Added exec-specific image snapshot helpers so failed execve can restore the curr
 Implemented LoongArch pipe endpoint ownership in `src/arch/loongarch64/fd_table.rs`. The fd table now owns `PipeState` objects with shared buffers and read/write endpoint reference counts. `close`, `dup`, `dup3`, and fork fd snapshot/restore update those references so child writes remain visible to the parent without invalidating parent-owned endpoints.
 
 Enabled `/musl/basic/pipe` as a real PLV3 ELF case.
+
+## Iteration 06
+
+Enabled the real LoongArch `/musl/basic/clone` case. The existing `process::sys_clone` full-copy child path was reused; no process semantics change was needed.
+
+Local smoke initially failed before `START test_clone`. Inspection of `sdcard-la.img` showed that `/musl/basic/clone` is a sparse ext4 file with a missing regular-file extent. Added `Ext4::read_file_block` in `src/arch/loongarch64/sdcard_ext4.rs` so regular file payload reads zero-fill sparse holes while directory lookup remains strict.
+
+`mmap` and `munmap` stayed on their existing `real_elf.rs` implementation and remained passing. BusyBox was inspected but left disabled because `/musl/busybox` is a 2.0 MiB fixed-address ET_EXEC at `0x120000000`, beyond the current 128 KiB direct-memory LoongArch basic loader.

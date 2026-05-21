@@ -81,6 +81,57 @@ Official validation was attempted but failed before kernel evaluation because Do
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
 ```
 
+## Iteration 06
+
+Local build, image generation, ELF checks, and LoongArch smoke validation passed.
+
+```text
+cargo build --target riscv64gc-unknown-none-elf: passed
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+kernel-la entry: 0x90000000
+LoongArch local smoke: attempted=32 completed=32 failed=none
+```
+
+Newly enabled local case evidence:
+
+```text
+START test_clone
+  Child says successfully!
+clone process successfully.
+pid:2
+END test_clone
+```
+
+The local LoongArch smoke also preserved `START/END test_mmap` and `START/END test_munmap`, and contained no `ENOSYS`, `panic`, `Failed to load ELF`, `unsupported`, or `blocker` marker.
+
+BusyBox inspection found the next loader blocker:
+
+```text
+/musl/busybox size: 2065912 bytes
+ELF type: EXEC
+entry: 0x1201b640c
+first LOAD vaddr: 0x120000000
+```
+
+Official validation was attempted but failed before kernel evaluation because Docker was unavailable:
+
+```text
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
+```
+
+The latest prior successful official score remains:
+
+```text
+Verdict: Accpted
+Score: 217
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 64.0
+busybox-musl-la: 0.0
+```
+
 ## Iteration 04
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.

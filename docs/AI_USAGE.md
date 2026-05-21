@@ -25,3 +25,9 @@ No fake `execve` output, hard-coded success text, or `runtime_dispatch.rs` rewri
 AI was used to inspect LoongArch pipe/fd ownership, implement pipe endpoint refcounts, enable the real `/musl/basic/pipe` case, and document validation results.
 
 No fake pipe output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 06
+
+AI was used to inspect the LoongArch clone, mmap, munmap, ext4, and BusyBox loader paths; identify the sparse ext4 file blocker for `/musl/basic/clone`; enable the real clone case; and document validation results.
+
+No BusyBox output, hard-coded command success text, fake basic-musl output, or `runtime_dispatch.rs` rewrite was added.
