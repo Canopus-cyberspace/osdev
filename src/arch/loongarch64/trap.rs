@@ -461,7 +461,7 @@ pub fn run_user_mode_smoke() {
 #[no_mangle]
 extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
     let ecode = (frame.estat >> LOONGARCH_ESTAT_ECODE_SHIFT) & LOONGARCH_ESTAT_ECODE_MASK;
-    let quiet_group = user::is_basic_group_active();
+    let quiet_group = user::is_any_group_active();
     let quiet_real_write = ecode == LOONGARCH_ECODE_SYS && syscall::is_quiet_real_write(frame);
     if !quiet_group && !quiet_real_write {
         early_console_write("[loongarch64-trap] ecode=");

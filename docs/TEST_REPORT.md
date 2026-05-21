@@ -111,6 +111,53 @@ The final local LoongArch smoke log contained no `unsupported`, `missing syscall
 
 Official validation was attempted but timed out before producing Docker log output. The generated latest `docker_evaluate.log` was 0 bytes, so the official score was not refreshed.
 
+## Iteration 10
+
+Local build, image generation, ELF checks, local QEMU smoke, local BusyBox judge parsing, and official validation passed.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+kernel-la entry: 0x90000000
+LoongArch local smoke: attempted=32 completed=32 failed=none
+BusyBox local smoke: completed=7 attempted=7 matched=7 failed=0
+```
+
+Local `make -j16 all` exposed a jobserver warning in the local Rust environment, so final local validation used normal `make all`. The official wrapper was run with `CARGO_BUILD_JOBS=16` and `MAKEFLAGS=-j16`; official QEMU still used `-smp 1`.
+
+Official validation initially hit stale generated project-root raw images:
+
+```text
+gzip: sdcard-rv.img already exists; not overwritten
+```
+
+Only generated project-root `sdcard-rv.img` and `sdcard-la.img` were removed. The official `.img.gz` testdata was left intact. The rerun completed:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260521_173700/docker_evaluate.log
+Verdict: Accpted
+Score: 256
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 98.0
+busybox-musl-la: 5.0
+```
+
+LoongArch BusyBox official testcase lines observed:
+
+```text
+testcase busybox true success
+testcase busybox false success
+testcase busybox pwd success
+testcase busybox sh -c exit success
+testcase busybox ls success
+```
+
+The official log contained no `Failed to load ELF`, `panic`, `timeout`, `ENOSYS`, or `user fault` marker.
+
 ## Iteration 06
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.

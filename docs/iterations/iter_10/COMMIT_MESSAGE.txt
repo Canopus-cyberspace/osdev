@@ -1,0 +1,31 @@
+enable bounded loongarch busybox scoring runner
+
+Turn the LoongArch BusyBox smoke into a scoring-capable official
+busybox-musl runner for the safe real command subset. The runner still loads
+the real /musl/busybox ET_EXEC from sdcard-la.img, enters PLV3, captures real
+exit codes, and emits official testcase lines only for commands that correspond
+to official BusyBox judge entries.
+
+Enable official busybox-musl group markers around the bounded command set and
+map true, false, pwd, sh -c exit, and ls to judge-visible testcase lines.
+Continue running echo hello and cat /musl/busybox_cmd.txt as real smoke
+coverage without synthetic official testcase claims.
+
+Add BusyBox group-active state so syscall/trap diagnostics stay quiet inside
+official groups, and add concise phase/command progress prints to diagnose
+future official wrapper stalls. Keep uname and ash -c exit disabled until their
+known blockers are fixed.
+
+Keep runtime_dispatch.rs unchanged.
+
+Validation:
+- CPU_COUNT=16
+- cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+- make all: passed
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch basic smoke: attempted=32 completed=32 failed=none
+- local BusyBox smoke: completed=7 attempted=7 matched=7 failed=0
+- official Docker: Accpted, score 256
+- official rank: basic-musl-rv 100.0, busybox-musl-rv 53.0,
+  basic-musl-la 98.0, busybox-musl-la 5.0

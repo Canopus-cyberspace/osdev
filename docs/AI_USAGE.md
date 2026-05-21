@@ -49,3 +49,9 @@ Accepted changes let the real `/musl/busybox true` enter at `0x1201b640c` and ex
 AI was used to inspect real BusyBox command traces, add a bounded BusyBox smoke runner, implement narrow syscall compatibility, preserve the 32-case basic-musl regression line, attempt official validation, and document the iteration.
 
 Accepted changes expanded real non-scoring BusyBox coverage to seven commands. No official BusyBox group marker, fake BusyBox output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 10
+
+AI was used to inspect the existing BusyBox runner, official BusyBox judge format, group marker parsing, group-active state, diagnostic suppression paths, local QEMU output, official Docker output, and iteration documentation.
+
+Accepted changes enabled official BusyBox group markers only around the safe real BusyBox command set and emitted official testcase lines only for real command outcomes that match official judge entries. No fake BusyBox output, hard-coded command success, unsafe `uname`/`ash` enablement, or `runtime_dispatch.rs` rewrite was added.

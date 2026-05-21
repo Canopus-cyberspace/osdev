@@ -9,6 +9,7 @@ struct BusyboxCommand {
     name: &'static str,
     argv: &'static [&'static [u8]],
     expected_exit: usize,
+    official_name: Option<&'static str>,
 }
 
 const COMMANDS: &[BusyboxCommand] = &[
@@ -16,40 +17,50 @@ const COMMANDS: &[BusyboxCommand] = &[
         name: "true",
         argv: &[b"busybox", b"true"],
         expected_exit: 0,
+        official_name: Some("true"),
     },
     BusyboxCommand {
         name: "false",
         argv: &[b"busybox", b"false"],
         expected_exit: 1,
+        official_name: Some("false"),
     },
     BusyboxCommand {
         name: "echo",
         argv: &[b"busybox", b"echo", b"hello"],
         expected_exit: 0,
+        official_name: None,
     },
     BusyboxCommand {
         name: "pwd",
         argv: &[b"busybox", b"pwd"],
         expected_exit: 0,
+        official_name: Some("pwd"),
     },
     BusyboxCommand {
         name: "sh-exit",
         argv: &[b"busybox", b"sh", b"-c", b"exit"],
         expected_exit: 0,
+        official_name: Some("sh -c exit"),
     },
     BusyboxCommand {
         name: "ls",
         argv: &[b"busybox", b"ls"],
         expected_exit: 0,
+        official_name: Some("ls"),
     },
     BusyboxCommand {
         name: "cat",
         argv: &[b"busybox", b"cat", b"/musl/busybox_cmd.txt"],
         expected_exit: 0,
+        official_name: None,
     },
 ];
 
 pub(crate) fn run_loongarch_busybox_loader_probe() {
+    early_console_write("[loongarch64-busybox] scoring-capable group begin\n");
+    early_console_write("#### OS COMP TEST GROUP START busybox-musl ####\n");
+    user::set_busybox_group_active(true);
     let mut completed = 0usize;
     let mut matched = 0usize;
     let mut failed = 0usize;
@@ -64,8 +75,11 @@ pub(crate) fn run_loongarch_busybox_loader_probe() {
         } else {
             failed += 1;
         }
+        emit_official_result(&COMMANDS[i], result.matched_expected);
         i += 1;
     }
+    user::set_busybox_group_active(false);
+    early_console_write("#### OS COMP TEST GROUP END busybox-musl ####\n");
     early_console_write("[loongarch64-busybox] smoke completed=");
     write_usize_dec(completed);
     early_console_write(" attempted=");
@@ -75,6 +89,18 @@ pub(crate) fn run_loongarch_busybox_loader_probe() {
     early_console_write(" failed=");
     write_usize_dec(failed);
     early_console_write("\n");
+}
+
+fn emit_official_result(command: &BusyboxCommand, success: bool) {
+    if let Some(name) = command.official_name {
+        early_console_write("testcase busybox ");
+        early_console_write(name);
+        if success {
+            early_console_write(" success\n");
+        } else {
+            early_console_write(" fail\n");
+        }
+    }
 }
 
 struct BusyboxRunResult {
@@ -153,6 +179,9 @@ fn run_probe(
     let _ = cwd.set_from_slice(b"/musl");
     fd_table::set_cwd(&cwd);
 
+    early_console_write("[loongarch64-busybox] command-start=");
+    early_console_write(command_name);
+    early_console_write("\n");
     early_console_write("[loongarch64-busybox] entering command=");
     early_console_write(command_name);
     early_console_write("\n");

@@ -5,6 +5,7 @@ use crate::process;
 
 static mut WRITE_SYSCALL_COUNT: usize = 0;
 static mut BASIC_GROUP_ACTIVE: bool = false;
+static mut BUSYBOX_GROUP_ACTIVE: bool = false;
 static mut USER_EXITED: bool = false;
 static mut USER_EXIT_CODE: usize = 0;
 static mut USER_FAULT_ACTIVE: bool = false;
@@ -63,8 +64,14 @@ pub(crate) fn set_basic_group_active(active: bool) {
     }
 }
 
-pub(crate) fn is_basic_group_active() -> bool {
-    unsafe { BASIC_GROUP_ACTIVE }
+pub(crate) fn set_busybox_group_active(active: bool) {
+    unsafe {
+        BUSYBOX_GROUP_ACTIVE = active;
+    }
+}
+
+pub(crate) fn is_any_group_active() -> bool {
+    unsafe { BASIC_GROUP_ACTIVE || BUSYBOX_GROUP_ACTIVE }
 }
 
 pub(crate) fn record_write_syscall() {

@@ -70,8 +70,9 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
     let id = abi.syscall_id();
     let args = abi.syscall_args();
     let from_user = (abi.frame.prmd & 0x3) == 3;
-    let quiet_group = user::is_basic_group_active();
-    let quiet_real_write = id == syscall_numbers::SYS_WRITE && real_elf::has_loaded_user_elf();
+    let quiet_group = user::is_any_group_active();
+    let quiet_real_io = real_elf::has_loaded_user_elf()
+        && (id == syscall_numbers::SYS_WRITE || id == syscall_numbers::SYS_WRITEV);
 
     if user::consume_syscall_budget(id) {
         abi.frame.era = trap::user_exit_return_addr();
@@ -79,7 +80,7 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
         return;
     }
 
-    if !quiet_group && !quiet_real_write {
+    if !quiet_group && !quiet_real_io {
         early_console_write("[loongarch64-syscall] id=");
         write_usize_dec(id);
         early_console_write(" a0=");
@@ -93,11 +94,11 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
 
     match id {
         syscall_numbers::SYS_WRITE => {
-            let ret = syscall_write(args[0], args[1], args[2], quiet_real_write);
+            let ret = syscall_write(args[0], args[1], args[2], quiet_real_io);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_WRITEV => {
-            let ret = syscall_writev(args[0], args[1], args[2], quiet_real_write);
+            let ret = syscall_writev(args[0], args[1], args[2], quiet_real_io);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_READ => {
@@ -298,7 +299,7 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
 
 fn syscall_write(fd: usize, buf: usize, len: usize, quiet: bool) -> isize {
     if !user_mem::user_range_valid(buf, len) {
-        if !user::is_basic_group_active() {
+        if !user::is_any_group_active() {
             early_console_write("[loongarch64-usercopy] invalid write buffer\n");
         }
         return EFAULT;

@@ -59,3 +59,11 @@ Expanded the non-scoring LoongArch BusyBox smoke to seven real commands: `true`,
 Added a BusyBox-only syscall budget in `user.rs`, narrow compatibility in `syscall.rs` for `writev`, `readv`, `fcntl`, `sendfile`, and signal setup calls, and fixed `getdents64` EOF/path behavior for BusyBox `ls`.
 
 Local smoke preserved all 32 enabled LoongArch basic-musl cases and completed the BusyBox smoke with `completed=7 attempted=7 matched=7 failed=0`. Official validation was attempted but timed out before producing Docker evaluation output.
+
+## Iteration 10
+
+Converted the LoongArch BusyBox smoke into a bounded scoring-capable official `busybox-musl` runner for the safe command subset. The runner still executes real `/musl/busybox` PLV3 commands from `sdcard-la.img`, but now wraps them in official BusyBox group markers and emits judge-visible testcase lines only for real commands that map to official entries: `true`, `false`, `pwd`, `sh -c exit`, and `ls`.
+
+Added BusyBox group-active state in `user.rs`, reused `busybox_runner.rs` for official-name mapping and result emission, kept syscall/trap diagnostics quiet inside active official groups, and added concise phase/command progress prints in `kernel.rs` and the BusyBox runner.
+
+Local smoke preserved LoongArch basic `attempted=32 completed=32 failed=none` and BusyBox `completed=7 attempted=7 matched=7 failed=0`. Official validation completed with `Accpted`, score `256`, `basic-musl-la=98.0`, and `busybox-musl-la=5.0`.

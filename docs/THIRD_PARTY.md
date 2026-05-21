@@ -33,3 +33,7 @@ No third-party code, dependencies, binaries, disk images, or large logs were add
 ## Iteration 09
 
 No third-party code, dependencies, binaries, disk images, or large logs were added. The iteration reused existing project source and official sdcard content already present in the local evaluation environment. `qemu-system-loongarch64`, `debugfs`, `readelf`, and `file` were used only as local inspection and validation tools.
+
+## Iteration 10
+
+No third-party code, dependencies, binaries, disk images, or large logs were added. The iteration reused existing project source, official sdcard content already present in the local evaluation environment, and the official local BusyBox judge script for validation. `qemu-system-loongarch64`, `readelf`, and `file` were used only as inspection and validation tools.
