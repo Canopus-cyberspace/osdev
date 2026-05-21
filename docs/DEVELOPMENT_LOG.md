@@ -93,3 +93,11 @@ Attempted a bounded LoongArch BusyBox file-operation scoring expansion using a p
 Local testing exposed instability before any new command could be safely promoted: shell redirection with `echo "hello world" > test.txt` stalled, and after trimming shell commands `grep hello busybox_cmd.txt` also stalled. The scratch path also briefly interfered with the basic `openat` case during the attempt. The risky patch was saved as `/tmp/iter13_risky_busybox_scratch.diff` and reverted under the fallback policy.
 
 No source changes shipped. The final tree preserves the Iteration 12 BusyBox allowlist and official score-260 baseline. Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.
+
+## Iteration 14
+
+Repeated the LoongArch BusyBox file-operation expansion as a gated attempt with explicit fallback. The attempted source patch targeted the same ownership boundaries: `busybox_runner.rs` for command policy and promotion, `fd_table.rs` for the BusyBox-only scratch overlay and fd state, `syscall.rs` for narrow compatibility wrappers, `user.rs` for BusyBox command state, and `real_elf.rs`/`user_mmu.rs` for fixed-address user execution.
+
+Local testing again showed the scratch path was not safe to ship: `touch test.txt` stalled, directory command probing destabilized the known-good `false` command, and a reduced `printf "abc\n"` probe later stalled on a fresh run. The risky patches were saved as `/tmp/iter14_risky_busybox_scratch.diff` and `/tmp/iter14_printf_only.diff`, then reverted under the fallback policy.
+
+No source changes shipped. The final tree preserves the known-good BusyBox scoring commands and official score-260 baseline. Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.

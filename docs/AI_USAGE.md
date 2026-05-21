@@ -73,3 +73,9 @@ Accepted changes only classify real BusyBox commands as scoring, smoke, or disab
 AI was used to inspect the LoongArch BusyBox runner, fd table, syscall compatibility paths, user/process state, and official BusyBox judge format; attempt a scratch-file expansion; detect local instability; apply the fallback policy; validate the restored baseline; and document the iteration.
 
 No scratch-FS source change was accepted because the attempt destabilized known-good command execution. No fake BusyBox output, hard-coded command success, official script change, or `runtime_dispatch.rs` change was added.
+
+## Iteration 14
+
+AI was used to inspect the LoongArch BusyBox runner, fd table, syscall compatibility paths, user/process state, MMU synchronization path, and official BusyBox judge format; attempt a gated Virtual Scratch FS expansion; test a reduced `printf` probe; detect local stalls; apply the fallback policy; validate the restored baseline; and document the iteration.
+
+No source change was accepted because the attempts still risked known-good BusyBox stability. No fake BusyBox output, hard-coded command success, official script change, or `runtime_dispatch.rs` change was added.

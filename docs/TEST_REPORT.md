@@ -101,6 +101,50 @@ testcase busybox ls success
 
 The official log did not show `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, or a user fault in enabled commands.
 
+## Iteration 14
+
+Local build, image generation, ELF checks, local LoongArch smoke, and official Docker validation passed after reverting the risky BusyBox scratch-FS and reduced-probe attempts.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make -j 16 all: passed with the known local jobserver warning
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+LoongArch local basic smoke: attempted=32 completed=32 failed=none
+LoongArch local BusyBox smoke: completed=7 attempted=7 matched=7 failed=0 disabled=3
+```
+
+Before official validation, stale containers from `zhouzhouyi/os-contest:20260510` were inspected. None needed removal in this run.
+
+Official validation:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260521_233219/docker_evaluate.log
+docker_evaluate.log size: 798848 bytes
+Verdict: Accpted
+Score: 260
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 102.0
+busybox-musl-la: 5.0
+```
+
+Official LoongArch evidence:
+
+```text
+[loongarch64-basic] attempted=32 completed=32 failed=none
+[loongarch64-busybox] smoke completed=7 attempted=7 matched=7 failed=0 disabled=3
+testcase busybox true success
+testcase busybox false success
+testcase busybox pwd success
+testcase busybox sh -c exit success
+testcase busybox ls success
+```
+
+The official log did not show `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, or a user fault in enabled commands.
+
 ## Iteration 03
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.
