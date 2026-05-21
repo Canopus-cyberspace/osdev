@@ -6,6 +6,7 @@ use core::arch::global_asm;
 #[path = "../../kernel_early.rs"]
 mod kernel_early;
 mod basic_runner;
+mod busybox_runner;
 mod console;
 mod fd_table;
 mod process;
@@ -50,6 +51,7 @@ extern "C" fn loongarch64_early_entry() {
     );
     trap::install_trap_vector();
     basic_runner::run_loongarch_basic_musl_group();
+    busybox_runner::run_loongarch_busybox_loader_probe();
 }
 
 pub(crate) fn early_console_write(s: &str) {

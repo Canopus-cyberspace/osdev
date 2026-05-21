@@ -137,6 +137,18 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_statx(args[0], args[1], args[2], args[3], args[4]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_NEWFSTATAT => {
+            let ret = syscall_newfstatat(args[0], args[1], args[2], args[3]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_FACCESSAT | syscall_numbers::SYS_FACCESSAT2 => {
+            let ret = syscall_faccessat(args[0], args[1], args[2], args[3]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_READLINKAT => {
+            let ret = syscall_readlinkat(args[0], args[1], args[2], args[3]);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_GETDENTS64 => {
             let ret = syscall_getdents64(args[0], args[1], args[2]);
             abi.set_return_value(ret);
@@ -188,6 +200,18 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
         syscall_numbers::SYS_SET_TID_ADDRESS => {
             abi.set_return_value(1);
         }
+        syscall_numbers::SYS_SET_ROBUST_LIST => {
+            abi.set_return_value(0);
+        }
+        syscall_numbers::SYS_GETRLIMIT | syscall_numbers::SYS_PRLIMIT64 => {
+            let out_ptr = if id == syscall_numbers::SYS_GETRLIMIT {
+                args[1]
+            } else {
+                args[3]
+            };
+            let ret = syscall_getrlimit(out_ptr);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_CLOCK_GETTIME => {
             let ret = syscall_clock_gettime(args[1]);
             abi.set_return_value(ret);
@@ -202,8 +226,17 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
         syscall_numbers::SYS_GETPID => {
             abi.set_return_value(process::current_pid() as isize);
         }
+        syscall_numbers::SYS_GETTID => {
+            abi.set_return_value(process::current_pid() as isize);
+        }
         syscall_numbers::SYS_GETPPID => {
             abi.set_return_value(process::current_ppid() as isize);
+        }
+        syscall_numbers::SYS_GETUID
+        | syscall_numbers::SYS_GETEUID
+        | syscall_numbers::SYS_GETGID
+        | syscall_numbers::SYS_GETEGID => {
+            abi.set_return_value(0);
         }
         syscall_numbers::SYS_SCHED_YIELD
         | syscall_numbers::SYS_NANOSLEEP
@@ -757,6 +790,122 @@ fn syscall_statx(
     }
 
     write_statx(statx_ptr, inode, mode, size)
+}
+
+fn syscall_newfstatat(dirfd_raw: usize, path_ptr: usize, stat_ptr: usize, flags: usize) -> isize {
+    let _ = flags;
+    if path_ptr == 0 {
+        return EBADF;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    if len == 0 && dirfd_raw < MAX_FDS {
+        let entry = match fd_table::fd_entry(dirfd_raw) {
+            Some(entry) if entry.kind != FD_CLOSED => entry,
+            _ => return EBADF,
+        };
+        return write_stat(stat_ptr, entry.inode as usize, entry.mode as usize, entry.size);
+    }
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(dirfd_raw, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    match stat_path_like(path_str) {
+        Some((inode, mode, size)) => write_stat(stat_ptr, inode, mode, size),
+        None => ENOENT,
+    }
+}
+
+fn syscall_faccessat(dirfd_raw: usize, path_ptr: usize, mode: usize, flags: usize) -> isize {
+    let _ = (mode, flags);
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(dirfd_raw, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    if path_exists_like(path_str) {
+        0
+    } else {
+        ENOENT
+    }
+}
+
+fn syscall_readlinkat(dirfd_raw: usize, path_ptr: usize, buf: usize, bufsiz: usize) -> isize {
+    if bufsiz == 0 {
+        return EINVAL;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(dirfd_raw, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    let target = if path_str == "/proc/self/exe" {
+        b"/musl/busybox".as_slice()
+    } else {
+        return EINVAL;
+    };
+    let take = core::cmp::min(bufsiz, target.len());
+    if user_mem::copy_to_user(buf, &target[..take]).is_err() {
+        return EFAULT;
+    }
+    take as isize
+}
+
+fn syscall_getrlimit(out_ptr: usize) -> isize {
+    if out_ptr == 0 {
+        return 0;
+    }
+    let mut rlim = [0u8; 16];
+    write_le64(&mut rlim, 0, 8 * 1024 * 1024);
+    write_le64(&mut rlim, 8, 8 * 1024 * 1024);
+    if user_mem::copy_to_user(out_ptr, &rlim).is_err() {
+        return EFAULT;
+    }
+    0
+}
+
+fn path_exists_like(path: &str) -> bool {
+    stat_path_like(path).is_some()
+}
+
+fn stat_path_like(path: &str) -> Option<(usize, usize, usize)> {
+    if fd_table::is_virtual_dir_path(path) {
+        return Some((0, (S_IFDIR | 0o755) as usize, 0));
+    }
+    if fd_table::is_virtual_file_path(path) {
+        return Some((
+            0,
+            (S_IFREG | 0o644) as usize,
+            fd_table::virtual_file_size(path).unwrap_or(0),
+        ));
+    }
+    match sdcard_ext4::stat_path(path) {
+        Ok(stat) => Some((stat.inode as usize, stat.mode as usize, stat.size)),
+        Err(_) => None,
+    }
 }
 
 fn syscall_getdents64(fd: usize, buf: usize, len: usize) -> isize {

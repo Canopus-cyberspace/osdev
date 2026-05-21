@@ -10,8 +10,21 @@ static mut USER_EXIT_CODE: usize = 0;
 static mut USER_FAULT_ACTIVE: bool = false;
 static mut USER_FAULT_ECODE: usize = 0;
 static mut USER_FAULT_ERA: usize = 0;
+static mut USER_FAULT_BADV: usize = 0;
 static mut MISSING_SYSCALL_ACTIVE: bool = false;
 static mut MISSING_SYSCALL_ID: usize = 0;
+
+#[derive(Copy, Clone)]
+pub(crate) struct UserRunSnapshot {
+    pub(crate) exited: bool,
+    pub(crate) exit_code: usize,
+    pub(crate) fault_active: bool,
+    pub(crate) fault_ecode: usize,
+    pub(crate) fault_era: usize,
+    pub(crate) fault_badv: usize,
+    pub(crate) missing_syscall_active: bool,
+    pub(crate) missing_syscall_id: usize,
+}
 
 pub(crate) fn reset_case_state() {
     reset_user_run_state();
@@ -27,6 +40,7 @@ fn reset_user_run_state() {
         USER_FAULT_ACTIVE = false;
         USER_FAULT_ECODE = 0;
         USER_FAULT_ERA = 0;
+        USER_FAULT_BADV = 0;
         MISSING_SYSCALL_ACTIVE = false;
         MISSING_SYSCALL_ID = 0;
     }
@@ -55,11 +69,12 @@ pub(crate) fn record_user_exit(code: usize) {
     }
 }
 
-pub(crate) fn record_user_fault(ecode: usize, era: usize) {
+pub(crate) fn record_user_fault(ecode: usize, era: usize, badv: usize) {
     unsafe {
         USER_FAULT_ACTIVE = true;
         USER_FAULT_ECODE = ecode;
         USER_FAULT_ERA = era;
+        USER_FAULT_BADV = badv;
     }
 }
 
@@ -80,6 +95,21 @@ pub(crate) fn report_missing_syscall() {
     }
 }
 
+pub(crate) fn run_snapshot() -> UserRunSnapshot {
+    unsafe {
+        UserRunSnapshot {
+            exited: USER_EXITED,
+            exit_code: USER_EXIT_CODE,
+            fault_active: USER_FAULT_ACTIVE,
+            fault_ecode: USER_FAULT_ECODE,
+            fault_era: USER_FAULT_ERA,
+            fault_badv: USER_FAULT_BADV,
+            missing_syscall_active: MISSING_SYSCALL_ACTIVE,
+            missing_syscall_id: MISSING_SYSCALL_ID,
+        }
+    }
+}
+
 pub(crate) fn report_user_run_status(case_name: &str, emit: bool) -> bool {
     unsafe {
         if USER_FAULT_ACTIVE && !USER_EXITED && WRITE_SYSCALL_COUNT == 0 {
@@ -92,6 +122,8 @@ pub(crate) fn report_user_run_status(case_name: &str, emit: bool) -> bool {
                 write_usize_dec(USER_FAULT_ECODE);
                 early_console_write(" era=");
                 write_usize_hex(USER_FAULT_ERA);
+                early_console_write(" badv=");
+                write_usize_hex(USER_FAULT_BADV);
                 early_console_write("\n");
             }
             false
@@ -103,6 +135,8 @@ pub(crate) fn report_user_run_status(case_name: &str, emit: bool) -> bool {
                 write_usize_dec(USER_FAULT_ECODE);
                 early_console_write(" era=");
                 write_usize_hex(USER_FAULT_ERA);
+                early_console_write(" badv=");
+                write_usize_hex(USER_FAULT_BADV);
                 early_console_write("\n");
             }
             false

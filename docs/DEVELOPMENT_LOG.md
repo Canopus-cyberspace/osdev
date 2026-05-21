@@ -35,3 +35,11 @@ Enabled the real LoongArch `/musl/basic/clone` case. The existing `process::sys_
 Local smoke initially failed before `START test_clone`. Inspection of `sdcard-la.img` showed that `/musl/basic/clone` is a sparse ext4 file with a missing regular-file extent. Added `Ext4::read_file_block` in `src/arch/loongarch64/sdcard_ext4.rs` so regular file payload reads zero-fill sparse holes while directory lookup remains strict.
 
 `mmap` and `munmap` stayed on their existing `real_elf.rs` implementation and remained passing. BusyBox was inspected but left disabled because `/musl/busybox` is a 2.0 MiB fixed-address ET_EXEC at `0x120000000`, beyond the current 128 KiB direct-memory LoongArch basic loader.
+
+## Iteration 07
+
+Upgraded the LoongArch user ELF loader and user memory model for BusyBox groundwork. `real_elf.rs` now tracks multiple user regions for image, stack, heap, and mmap backing, and the user-copy helpers translate through those regions instead of assuming one small contiguous basic-musl image.
+
+Added `busybox_runner.rs` as a focused non-scoring probe. It loads the real `/musl/busybox` ET_EXEC from `sdcard-la.img` and attempts a PLV3 entry for `busybox true` without printing official BusyBox markers or success output.
+
+Local smoke preserved all 32 enabled LoongArch basic-musl cases. BusyBox now loads and enters PLV3, then returns with a controlled fixed-address execution fault. The remaining blocker is real LoongArch user virtual-address mapping for ET_EXEC ranges such as `0x120000000`.

@@ -192,3 +192,43 @@ Official validation was attempted but failed before kernel evaluation because Do
 ```text
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
 ```
+
+## Iteration 07
+
+Local build, image generation, ELF checks, and LoongArch smoke validation passed.
+
+```text
+cargo build --target riscv64gc-unknown-none-elf: passed
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+kernel-la entry: 0x90000000
+LoongArch local smoke: attempted=32 completed=32 failed=none
+```
+
+BusyBox loader probe evidence:
+
+```text
+[loongarch64-busybox] loaded /musl/busybox file_size=2065912 entry=0x901ca40c first_load=0x120000000 load_size=2087832 segments=2
+[loongarch64-busybox] entering command=true
+[loongarch64-busybox] blocker: user fault ecode=8 era=0x9019d85c badv=0x90016138
+```
+
+No BusyBox command success or official `busybox-musl` group marker was emitted. The local LoongArch smoke log contained no `ENOSYS`, `panic`, or `Failed to load ELF` marker.
+
+Official validation was attempted but failed before kernel evaluation because Docker was unavailable:
+
+```text
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
+```
+
+The latest prior successful official score remains:
+
+```text
+Verdict: Accpted
+Score: 217
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 64.0
+busybox-musl-la: 0.0
+```

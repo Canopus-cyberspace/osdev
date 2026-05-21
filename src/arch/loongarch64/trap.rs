@@ -477,7 +477,7 @@ extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
         syscall::handle_syscall(frame);
     } else {
         if (frame.prmd & 0x3) == 3 {
-            user::record_user_fault(ecode, frame.era);
+            user::record_user_fault(ecode, frame.era, frame.badv);
             frame.era = user_exit_return_addr();
             frame.prmd &= !0x3;
         } else {

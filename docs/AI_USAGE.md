@@ -31,3 +31,9 @@ No fake pipe output, hard-coded success text, or `runtime_dispatch.rs` rewrite w
 AI was used to inspect the LoongArch clone, mmap, munmap, ext4, and BusyBox loader paths; identify the sparse ext4 file blocker for `/musl/basic/clone`; enable the real clone case; and document validation results.
 
 No BusyBox output, hard-coded command success text, fake basic-musl output, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 07
+
+AI was used to inspect and extend the LoongArch ELF loader, user-region tracking, user-copy helpers, BusyBox probe path, and early BusyBox syscall compatibility hooks.
+
+Accepted changes loaded the real `/musl/busybox` payload and entered PLV3 for a non-scoring `busybox true` probe. No BusyBox output, official BusyBox group marker, hard-coded command success text, fake basic-musl output, or `runtime_dispatch.rs` rewrite was added.

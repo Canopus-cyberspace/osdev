@@ -1,0 +1,34 @@
+upgrade loongarch user elf loader for busybox groundwork
+
+Expand the LoongArch real ELF loader from the small basic-musl direct-image
+path into a larger multi-region user memory model. Track image, stack, heap,
+and mmap regions separately, translate user-copy operations through those
+regions, and snapshot the new metadata for fork and execve preservation.
+
+Add a shared load_user_elf_with_args path so the existing basic-musl runner and
+new BusyBox loader probe use the same ELF parsing and stack construction logic.
+Increase loader capacity for the real /musl/busybox ET_EXEC image and parse all
+PT_LOAD segments while preserving the stable basic-musl PIE behavior.
+
+Add a focused LoongArch BusyBox probe that loads /musl/busybox from sdcard-la.img
+and attempts a real PLV3 entry for "busybox true" without emitting official
+busybox-musl markers or hard-coded success output. The probe now reaches a
+controlled user fault instead of failing at load time or hanging, exposing the
+next blocker: static ET_EXEC execution still needs real LoongArch virtual
+address mapping for the fixed 0x120000000 load range.
+
+Add small LoongArch syscall compatibility hooks needed by early BusyBox probing
+and include badv in user-fault diagnostics. Do not change runtime_dispatch.rs.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf: passed
+- make all: passed
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU smoke: attempted=32 completed=32 failed=none
+- /musl/busybox loads with file_size=2065912 and first_load=0x120000000
+- BusyBox probe enters PLV3 and returns with a controlled fault
+- no ENOSYS, panic, or Failed to load ELF marker in local smoke
+
+Official validation was attempted but blocked by local Docker API
+unavailability.
