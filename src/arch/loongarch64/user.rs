@@ -1,6 +1,7 @@
 use crate::console::{write_usize_dec, write_usize_hex};
 use crate::early_console_write;
 use crate::fd_table;
+use crate::process;
 
 static mut WRITE_SYSCALL_COUNT: usize = 0;
 static mut BASIC_GROUP_ACTIVE: bool = false;
@@ -14,6 +15,7 @@ static mut MISSING_SYSCALL_ID: usize = 0;
 
 pub(crate) fn reset_case_state() {
     reset_user_run_state();
+    process::reset_case_process_state();
     fd_table::reset_case_fd_state();
 }
 

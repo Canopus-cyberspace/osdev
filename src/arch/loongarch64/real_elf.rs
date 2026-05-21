@@ -114,6 +114,18 @@ static mut USER_HEAP: UserHeap = UserHeap {
 static mut USER_MMAP: UserMmap = UserMmap {
     bytes: [0; USER_MMAP_SIZE],
 };
+static mut USER_IMAGE_BACKUP: UserImage = UserImage {
+    bytes: [0; USER_IMAGE_SIZE],
+};
+static mut USER_STACK_BACKUP: UserStack = UserStack {
+    bytes: [0; USER_STACK_SIZE],
+};
+static mut USER_HEAP_BACKUP: UserHeap = UserHeap {
+    bytes: [0; USER_HEAP_SIZE],
+};
+static mut USER_MMAP_BACKUP: UserMmap = UserMmap {
+    bytes: [0; USER_MMAP_SIZE],
+};
 static mut USER_RANGES: [UserRange; 4] = [
     UserRange::empty(),
     UserRange::empty(),
@@ -122,6 +134,14 @@ static mut USER_RANGES: [UserRange; 4] = [
 ];
 static mut USER_BRK: usize = 0;
 static mut USER_MMAP_ACTIVE: bool = false;
+static mut USER_RANGES_BACKUP: [UserRange; 4] = [
+    UserRange::empty(),
+    UserRange::empty(),
+    UserRange::empty(),
+    UserRange::empty(),
+];
+static mut USER_BRK_BACKUP: usize = 0;
+static mut USER_MMAP_ACTIVE_BACKUP: bool = false;
 
 pub fn load_basic_write() -> Result<RealElfLoad, &'static str> {
     load_basic_case("/musl/basic/write")
@@ -238,6 +258,30 @@ pub fn user_range_valid(ptr: usize, len: usize) -> bool {
 
 pub fn has_loaded_user_elf() -> bool {
     unsafe { USER_RANGES[0].end > USER_RANGES[0].start }
+}
+
+pub(crate) fn save_user_snapshot() {
+    unsafe {
+        copy_bytes(user_image_backup_mut(), user_image_mut());
+        copy_bytes(user_stack_backup_mut(), user_stack_mut());
+        copy_bytes(user_heap_backup_mut(), user_heap_mut());
+        copy_bytes(user_mmap_backup_mut(), user_mmap_mut());
+        USER_RANGES_BACKUP = USER_RANGES;
+        USER_BRK_BACKUP = USER_BRK;
+        USER_MMAP_ACTIVE_BACKUP = USER_MMAP_ACTIVE;
+    }
+}
+
+pub(crate) fn restore_user_snapshot() {
+    unsafe {
+        copy_bytes(user_image_mut(), user_image_backup_mut());
+        copy_bytes(user_stack_mut(), user_stack_backup_mut());
+        copy_bytes(user_heap_mut(), user_heap_backup_mut());
+        copy_bytes(user_mmap_mut(), user_mmap_backup_mut());
+        USER_RANGES = USER_RANGES_BACKUP;
+        USER_BRK = USER_BRK_BACKUP;
+        USER_MMAP_ACTIVE = USER_MMAP_ACTIVE_BACKUP;
+    }
 }
 
 pub fn sys_brk(addr: usize) -> isize {
@@ -415,6 +459,34 @@ unsafe fn user_heap_mut() -> &'static mut [u8] {
 unsafe fn user_mmap_mut() -> &'static mut [u8] {
     core::slice::from_raw_parts_mut(
         core::ptr::addr_of_mut!(USER_MMAP.bytes) as *mut u8,
+        USER_MMAP_SIZE,
+    )
+}
+
+unsafe fn user_image_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_IMAGE_BACKUP.bytes) as *mut u8,
+        USER_IMAGE_SIZE,
+    )
+}
+
+unsafe fn user_stack_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_STACK_BACKUP.bytes) as *mut u8,
+        USER_STACK_SIZE,
+    )
+}
+
+unsafe fn user_heap_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_HEAP_BACKUP.bytes) as *mut u8,
+        USER_HEAP_SIZE,
+    )
+}
+
+unsafe fn user_mmap_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_MMAP_BACKUP.bytes) as *mut u8,
         USER_MMAP_SIZE,
     )
 }

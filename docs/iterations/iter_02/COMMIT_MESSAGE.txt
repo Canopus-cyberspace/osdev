@@ -1,0 +1,26 @@
+add loongarch trap stack groundwork for safe plv3 traps
+
+Move LoongArch PLV3 trap handling off the user stack by switching
+__loongarch64_trap_entry to a dedicated kernel-owned trap stack before
+allocating the trap frame or calling Rust code.
+
+Preserve the incoming user stack pointer in the LoongArch trap frame so
+return-to-PLV3 restores the original user ABI state. Preserve the temporary
+register used during stack switching through scratch CSRs, and keep the
+existing full register save/restore path intact.
+
+Re-enable full user stack snapshot restore for per-case LoongArch basic-musl
+execution now that trap handling no longer consumes the PLV3 stack.
+
+No LoongArch basic-musl cases are added in this iteration, and the shared
+RISC-V runtime dispatcher behavior is unchanged.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf
+- make all
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU smoke: attempted=24 completed=24 failed=none
+
+Official validation was attempted but blocked by local Docker API
+unavailability.

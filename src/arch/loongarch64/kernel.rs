@@ -8,6 +8,7 @@ mod kernel_early;
 mod basic_runner;
 mod console;
 mod fd_table;
+mod process;
 mod real_elf;
 mod sdcard_ext4;
 mod syscall;

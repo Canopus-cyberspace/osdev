@@ -5,6 +5,7 @@ use crate::fd_table::{
     FD_PIPE_READ, FD_PIPE_WRITE, FD_REGULAR, FD_STDIN, MAX_FDS, O_CREAT, O_DIRECTORY,
     PATH_BUF_SIZE, S_IFDIR, S_IFREG,
 };
+use crate::process;
 use crate::real_elf;
 use crate::sdcard_ext4;
 use crate::trap::{self, LoongArchTrapFrame};
@@ -100,6 +101,21 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_pipe2(args[0], args[1]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_CLONE => match process::sys_clone(abi.frame, args[0], args[1]) {
+            Ok(child_pid) => abi.set_return_value(child_pid as isize),
+            Err(ret) => abi.set_return_value(ret),
+        },
+        syscall_numbers::SYS_WAIT4 => {
+            let ret = process::sys_wait4(args[0], args[1], args[2]);
+            abi.set_return_value(ret);
+        },
+        syscall_numbers::SYS_EXECVE => {
+            let ret = syscall_execve(args[0], args[1], args[2], abi.frame);
+            if ret == 0 {
+                return;
+            }
+            abi.set_return_value(ret);
+        },
         syscall_numbers::SYS_CLOSE => {
             let ret = syscall_close(args[0]);
             abi.set_return_value(ret);
@@ -148,6 +164,14 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_unlinkat(args[0], args[1], args[2]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_MOUNT => {
+            let ret = syscall_mount(args[0], args[1], args[2], args[3], args[4]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_UMOUNT2 => {
+            let ret = syscall_umount2(args[0], args[1]);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_BRK => {
             let ret = real_elf::sys_brk(args[0]);
             abi.set_return_value(ret);
@@ -175,10 +199,10 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             abi.set_return_value(ENOTTY);
         }
         syscall_numbers::SYS_GETPID => {
-            abi.set_return_value(1);
+            abi.set_return_value(process::current_pid() as isize);
         }
         syscall_numbers::SYS_GETPPID => {
-            abi.set_return_value(1);
+            abi.set_return_value(process::current_ppid() as isize);
         }
         syscall_numbers::SYS_SCHED_YIELD
         | syscall_numbers::SYS_NANOSLEEP
@@ -186,6 +210,9 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             abi.set_return_value(0);
         }
         syscall_numbers::SYS_EXIT | syscall_numbers::SYS_EXIT_GROUP => {
+            if process::exit_current_and_maybe_restore_parent(abi.frame, args[0]) {
+                return;
+            }
             user::record_user_exit(args[0]);
             if !quiet_group {
                 early_console_write("[loongarch64-syscall] exit code=");
@@ -234,8 +261,16 @@ fn syscall_write(fd: usize, buf: usize, len: usize, quiet: bool) -> isize {
             early_console_write("\n");
         }
 
-        let bytes = unsafe { core::slice::from_raw_parts(buf as *const u8, len) };
-        write_bytes(bytes);
+        let mut done = 0usize;
+        while done < len {
+            let take = core::cmp::min(len - done, FD_IO_BUFFER_SIZE);
+            let tmp = unsafe { &mut fd_table::fd_io_buffer_mut()[..take] };
+            if user_mem::copy_from_user(buf + done, tmp).is_err() {
+                return EFAULT;
+            }
+            write_bytes(tmp);
+            done += take;
+        }
         return len as isize;
     }
 
@@ -503,6 +538,29 @@ fn syscall_pipe2(pipefd_ptr: usize, flags: usize) -> isize {
     0
 }
 
+fn syscall_execve(
+    path_ptr: usize,
+    argv_ptr: usize,
+    envp_ptr: usize,
+    frame: &mut LoongArchTrapFrame,
+) -> isize {
+    let _ = (argv_ptr, envp_ptr);
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(AT_FDCWD as usize, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    process::exec_current(frame, path_str)
+}
+
 fn syscall_getcwd(buf: usize, size: usize) -> isize {
     if size == 0 {
         return EINVAL;
@@ -740,6 +798,53 @@ fn syscall_unlinkat(dirfd_raw: usize, path_ptr: usize, flags: usize) -> isize {
     } else {
         ENOENT
     }
+}
+
+fn syscall_mount(
+    source_ptr: usize,
+    target_ptr: usize,
+    fstype_ptr: usize,
+    flags: usize,
+    data_ptr: usize,
+) -> isize {
+    let _ = (flags, data_ptr);
+    if read_optional_user_string(source_ptr).is_err()
+        || read_optional_user_string(fstype_ptr).is_err()
+    {
+        return EFAULT;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(target_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(AT_FDCWD as usize, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    fd_table::create_virtual_dir_path(path_str, S_IFDIR as usize);
+    0
+}
+
+fn syscall_umount2(target_ptr: usize, flags: usize) -> isize {
+    let _ = flags;
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    match user_mem::read_user_cstr(target_ptr, &mut raw) {
+        Ok(_) => 0,
+        Err(_) => EFAULT,
+    }
+}
+
+fn read_optional_user_string(ptr: usize) -> Result<(), ()> {
+    if ptr == 0 {
+        return Ok(());
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    user_mem::read_user_cstr(ptr, &mut raw).map(|_| ()).map_err(|_| ())
 }
 
 fn syscall_mmap(
