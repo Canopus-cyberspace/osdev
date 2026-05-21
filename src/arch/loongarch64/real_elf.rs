@@ -482,6 +482,7 @@ pub(crate) fn activate_current_user_mmu() -> Result<(), &'static str> {
             USER_MMAP_SIZE,
         )?;
         user_mmu::activate_paged_mode();
+        user_mmu::sync_user_entry();
         Ok(())
     }
 }

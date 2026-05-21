@@ -68,6 +68,12 @@ loongarch64_mmu_tlbfill:
     ibar 0
     dbar 0
     ret
+
+    .globl loongarch64_mmu_sync_user_entry
+loongarch64_mmu_sync_user_entry:
+    ibar 0
+    dbar 0
+    ret
 "#
 );
 
@@ -78,6 +84,7 @@ extern "C" {
     fn loongarch64_mmu_write_dmw0(value: usize);
     fn loongarch64_mmu_flush_tlb_all();
     fn loongarch64_mmu_tlbfill(tlbidx: usize, tlbehi: usize, tlbelo0: usize, tlbelo1: usize);
+    fn loongarch64_mmu_sync_user_entry();
 }
 
 pub(crate) fn begin_mapping_install() {
@@ -129,6 +136,16 @@ pub(crate) fn activate_paged_mode() {
         let current = loongarch64_mmu_read_crmd();
         let next = (current & !CSR_CRMD_DIRECT_MASK) | CSR_CRMD_PAGED_CACHED;
         loongarch64_mmu_write_crmd(next);
+    }
+}
+
+pub(crate) fn sync_user_entry() {
+    unsafe {
+        let mut i = 0usize;
+        while i < 64 {
+            loongarch64_mmu_sync_user_entry();
+            i += 1;
+        }
     }
 }
 

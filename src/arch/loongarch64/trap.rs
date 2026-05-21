@@ -6,6 +6,7 @@ use crate::console::{write_usize_dec, write_usize_hex};
 use crate::early_console_write;
 use crate::syscall;
 use crate::user;
+use crate::user_mmu;
 
 const LOONGARCH_ECODE_SYS: usize = 11;
 const LOONGARCH_ESTAT_ECODE_SHIFT: usize = 16;
@@ -486,5 +487,9 @@ extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
             }
             frame.era = frame.era.wrapping_add(4);
         }
+    }
+
+    if (frame.prmd & 0x3) == 3 {
+        user_mmu::sync_user_entry();
     }
 }

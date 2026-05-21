@@ -55,3 +55,9 @@ Accepted changes expanded real non-scoring BusyBox coverage to seven commands. N
 AI was used to inspect the existing BusyBox runner, official BusyBox judge format, group marker parsing, group-active state, diagnostic suppression paths, local QEMU output, official Docker output, and iteration documentation.
 
 Accepted changes enabled official BusyBox group markers only around the safe real BusyBox command set and emitted official testcase lines only for real command outcomes that match official judge entries. No fake BusyBox output, hard-coded command success, unsafe `uname`/`ash` enablement, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 11
+
+AI was used to inspect the official basic-musl score table, identify `test_waitpid` as the only LoongArch scoring miss, compare RISC-V and LoongArch serial output, fix LoongArch wait status encoding, diagnose quiet BusyBox timing sensitivity, validate locally and officially, and document the iteration.
+
+Accepted changes were limited to real wait status semantics and LoongArch user-entry synchronization. No fake `waitpid` output, hard-coded testcase success, marker manipulation, unsafe BusyBox command enablement, or `runtime_dispatch.rs` rewrite was added.

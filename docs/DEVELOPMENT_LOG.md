@@ -67,3 +67,13 @@ Converted the LoongArch BusyBox smoke into a bounded scoring-capable official `b
 Added BusyBox group-active state in `user.rs`, reused `busybox_runner.rs` for official-name mapping and result emission, kept syscall/trap diagnostics quiet inside active official groups, and added concise phase/command progress prints in `kernel.rs` and the BusyBox runner.
 
 Local smoke preserved LoongArch basic `attempted=32 completed=32 failed=none` and BusyBox `completed=7 attempted=7 matched=7 failed=0`. Official validation completed with `Accpted`, score `256`, `basic-musl-la=98.0`, and `busybox-musl-la=5.0`.
+
+## Iteration 11
+
+Closed the LoongArch basic-musl `waitpid` scoring gap. Official score-256 evidence showed only `test_waitpid` missing on LoongArch, with serial output `waitpid error.` instead of `waitpid successfully.` and `wstatus: 3`.
+
+Fixed `src/arch/loongarch64/process.rs` so child exit recording masks to the low 8 bits and `wait4` writes Linux-compatible normal-exit status as `(exit_code & 0xff) << 8` through `user_mem::copy_to_user`.
+
+The corrected waitpid path exposed a quiet BusyBox timing sensitivity, so `src/arch/loongarch64/user_mmu.rs` now provides a small silent `ibar`/`dbar` user-entry settle loop. `real_elf.rs` calls it after fixed-address mapping activation and `trap.rs` calls it before PLV3 return.
+
+Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.

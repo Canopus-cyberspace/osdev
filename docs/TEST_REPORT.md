@@ -158,6 +158,43 @@ testcase busybox ls success
 
 The official log contained no `Failed to load ELF`, `panic`, `timeout`, `ENOSYS`, or `user fault` marker.
 
+## Iteration 11
+
+Local build, image generation, ELF checks, local QEMU smoke, and official validation passed.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make -j 16 all: passed with local jobserver warning
+make all: passed without warnings
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+kernel-la entry: 0x90000000
+```
+
+Local smoke evidence:
+
+```text
+waitpid successfully.
+wstatus: 3
+[loongarch64-basic] attempted=32 completed=32 failed=none
+[loongarch64-busybox] smoke completed=7 attempted=7 matched=7 failed=0
+```
+
+Official validation:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260521_180525/docker_evaluate.log
+Verdict: Accpted
+Score: 260
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 102.0
+busybox-musl-la: 5.0
+```
+
+The previous gap was `test_waitpid`, which changed from LoongArch `0/4` to `4/4`. The official log contained no `Failed to load ELF`, `panic`, `timeout`, `ENOSYS`, or `user fault` marker.
+
 ## Iteration 06
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.

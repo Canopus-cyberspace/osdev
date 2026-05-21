@@ -135,7 +135,7 @@ pub(crate) fn sys_wait4(pid_raw: usize, status_ptr: usize, options: usize) -> is
             if child.active && child_matches(pid, child.pid) {
                 if status_ptr != 0 {
                     let mut status = [0u8; 4];
-                    write_le32(&mut status, child.code as u32);
+                    write_le32(&mut status, wait_status(child.code));
                     if user_mem::copy_to_user(status_ptr, &status).is_err() {
                         return EFAULT;
                     }
@@ -180,7 +180,7 @@ unsafe fn push_exited_child(pid: usize, code: usize) {
         if !EXITED_CHILDREN[i].active {
             EXITED_CHILDREN[i] = ExitedChild {
                 pid,
-                code,
+                code: code & 0xff,
                 active: true,
             };
             return;
@@ -189,9 +189,13 @@ unsafe fn push_exited_child(pid: usize, code: usize) {
     }
     EXITED_CHILDREN[MAX_EXITED_CHILDREN - 1] = ExitedChild {
         pid,
-        code,
+        code: code & 0xff,
         active: true,
     };
+}
+
+fn wait_status(exit_code: usize) -> u32 {
+    ((exit_code & 0xff) << 8) as u32
 }
 
 unsafe fn remove_exited_child(index: usize) {
