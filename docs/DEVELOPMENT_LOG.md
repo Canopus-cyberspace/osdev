@@ -85,3 +85,11 @@ Stabilized the LoongArch BusyBox runner after the aggressive expansion attempt. 
 Only the proven real PLV3 commands `true`, `false`, `pwd`, `sh -c exit`, and `ls` emit official BusyBox testcase lines. `echo hello` and `cat /musl/busybox_cmd.txt` remain real non-scoring smoke commands. `basename /aaa/bbb`, `uname`, and `ash -c exit` are documented as disabled and are not executed by the official LoongArch runner.
 
 Local validation preserved LoongArch basic 32/32 and the five BusyBox scoring commands. The latest completed official baseline remains `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`; the final official refresh attempt timed out in the wrapper with a 0-byte `docker_evaluate.log`.
+
+## Iteration 13
+
+Attempted a bounded LoongArch BusyBox file-operation scoring expansion using a persistent in-memory scratch layer in the LoongArch fd path. The attempted source patch correctly targeted `busybox_runner.rs` for command policy, `fd_table.rs` for scratch files and fd state, `syscall.rs` for compatibility wrappers, and `user.rs` for per-command reset state.
+
+Local testing exposed instability before any new command could be safely promoted: shell redirection with `echo "hello world" > test.txt` stalled, and after trimming shell commands `grep hello busybox_cmd.txt` also stalled. The scratch path also briefly interfered with the basic `openat` case during the attempt. The risky patch was saved as `/tmp/iter13_risky_busybox_scratch.diff` and reverted under the fallback policy.
+
+No source changes shipped. The final tree preserves the Iteration 12 BusyBox allowlist and official score-260 baseline. Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.

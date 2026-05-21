@@ -67,3 +67,9 @@ Accepted changes were limited to real wait status semantics and LoongArch user-e
 AI was used to inspect the interrupted BusyBox expansion patch, reduce it to a focused allowlist stabilization in `busybox_runner.rs`, run local and official validation, and document the checkpoint.
 
 Accepted changes only classify real BusyBox commands as scoring, smoke, or disabled. No fake BusyBox output, hard-coded command success, broad syscall rewrite, official script change, or `runtime_dispatch.rs` change was added.
+
+## Iteration 13
+
+AI was used to inspect the LoongArch BusyBox runner, fd table, syscall compatibility paths, user/process state, and official BusyBox judge format; attempt a scratch-file expansion; detect local instability; apply the fallback policy; validate the restored baseline; and document the iteration.
+
+No scratch-FS source change was accepted because the attempt destabilized known-good command execution. No fake BusyBox output, hard-coded command success, official script change, or `runtime_dispatch.rs` change was added.
