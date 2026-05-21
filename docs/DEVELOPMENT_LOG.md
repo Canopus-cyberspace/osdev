@@ -15,3 +15,9 @@ This keeps trap/vector mechanics in `src/arch/loongarch64/trap.rs`. The only mem
 Enabled the LoongArch `exit`, `wait`, `waitpid`, `yield`, and `fork` basic-musl cases as real PLV3 ELFs. Initial testing exposed a nested trap-stack overwrite when a child trapped while the parent was still inside `sys_clone`.
 
 Fixed that in `src/arch/loongarch64/trap.rs` by adding a `loongarch64_trap_stack_cursor` and reserving a separate 16 KiB stack slice per active trap. The existing process lifecycle code in `src/arch/loongarch64/process.rs` was reused for child execution, child exit recording, and `wait4`.
+
+## Iteration 04
+
+Implemented LoongArch `execve` for the real `/musl/basic/execve` case. `syscall.rs` now safely reads path, argv, and envp from user memory; `real_elf.rs` rebuilds the replacement program stack with copied argv/envp strings; and `process.rs` switches the current trap frame to the new entry and user stack while preserving process identity, fd table, and cwd.
+
+Added exec-specific image snapshot helpers so failed execve can restore the current image without disturbing the fork parent snapshot.

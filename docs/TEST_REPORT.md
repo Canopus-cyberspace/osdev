@@ -80,3 +80,33 @@ Official validation was attempted but failed before kernel evaluation because Do
 ```text
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
 ```
+
+## Iteration 04
+
+Local build, image generation, ELF checks, and LoongArch smoke validation passed.
+
+```text
+cargo build --target riscv64gc-unknown-none-elf: passed
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+kernel-la entry: 0x90000000
+LoongArch local smoke: attempted=30 completed=30 failed=none
+```
+
+Execve evidence:
+
+```text
+START test_execve
+  I am test_echo.
+execve success.
+END main
+```
+
+The local LoongArch smoke log contained no `ENOSYS`, `panic`, `Failed to load ELF`, `unsupported`, or `blocker` marker.
+
+Official validation was attempted but failed before kernel evaluation because Docker was unavailable:
+
+```text
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
+```

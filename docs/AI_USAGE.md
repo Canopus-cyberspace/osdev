@@ -13,3 +13,9 @@ No AI-suggested fake output, parser-shaped success text, or broad runtime dispat
 AI was used to inspect the LoongArch fork/wait path, identify nested trap-stack corruption, implement the trap stack cursor, enable the five real fork-dependent basic-musl cases, and document validation results.
 
 No fake case output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 04
+
+AI was used to inspect the LoongArch `execve` path, implement safe argv/envp copying, extend ELF stack construction, enable the real `/musl/basic/execve` case, and document validation results.
+
+No fake `execve` output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.

@@ -17,6 +17,7 @@ mod syscall_numbers;
 
 const ENOENT: isize = -2;
 const EBADF: isize = -9;
+const E2BIG: isize = -7;
 const EFAULT: isize = -14;
 const EINVAL: isize = -22;
 const ENOTTY: isize = -25;
@@ -544,7 +545,6 @@ fn syscall_execve(
     envp_ptr: usize,
     frame: &mut LoongArchTrapFrame,
 ) -> isize {
-    let _ = (argv_ptr, envp_ptr);
     let mut raw = [0u8; PATH_BUF_SIZE];
     let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
         Ok(len) => len,
@@ -558,7 +558,45 @@ fn syscall_execve(
         Ok(path_str) => path_str,
         Err(_) => return EINVAL,
     };
-    process::exec_current(frame, path_str)
+    let mut argv = [real_elf::ExecString::empty(); real_elf::EXEC_ARG_MAX];
+    let argc = match read_exec_strings(argv_ptr, &mut argv) {
+        Ok(argc) => argc,
+        Err(ret) => return ret,
+    };
+    let mut envp = [real_elf::ExecString::empty(); real_elf::EXEC_ENV_MAX];
+    let envc = match read_exec_strings(envp_ptr, &mut envp) {
+        Ok(envc) => envc,
+        Err(ret) => return ret,
+    };
+    process::exec_current(frame, path_str, &argv[..argc], &envp[..envc])
+}
+
+fn read_exec_strings(
+    vec_ptr: usize,
+    out: &mut [real_elf::ExecString],
+) -> Result<usize, isize> {
+    if vec_ptr == 0 {
+        return Ok(0);
+    }
+    let mut i = 0usize;
+    while i < out.len() {
+        let ptr = user_mem::read_user_usize(vec_ptr + i * core::mem::size_of::<usize>())
+            .map_err(|_| EFAULT)?;
+        if ptr == 0 {
+            return Ok(i);
+        }
+        let mut raw = [0u8; real_elf::EXEC_STRING_MAX];
+        let len = user_mem::read_user_cstr(ptr, &mut raw).map_err(|_| EFAULT)?;
+        out[i].set_from_slice(&raw[..len]).map_err(|_| E2BIG)?;
+        i += 1;
+    }
+    let next = user_mem::read_user_usize(vec_ptr + out.len() * core::mem::size_of::<usize>())
+        .map_err(|_| EFAULT)?;
+    if next == 0 {
+        Ok(out.len())
+    } else {
+        Err(E2BIG)
+    }
 }
 
 fn syscall_getcwd(buf: usize, size: usize) -> isize {

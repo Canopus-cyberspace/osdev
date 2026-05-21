@@ -1,0 +1,27 @@
+implement loongarch execve for real basic-musl test
+
+Implement LoongArch sys_execve with safe user-copy handling for the path,
+argv, and envp vectors. Add a bounded ExecString representation and rebuild
+the replacement ELF user stack with argc, argv, envp, and auxv.
+
+Reuse the existing ext4-backed real ELF loader while adding an execve-specific
+snapshot path so failed execve restores the old user image without clobbering
+the fork parent snapshot. Preserve pid, ppid, fd table, cwd, and process
+identity across successful execve, and return to the new user program by
+updating ERA and user SP.
+
+Enable the real /musl/basic/execve case. Do not enable clone, pipe, or
+BusyBox work in this iteration. Do not change runtime_dispatch.rs.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf
+- make all
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU smoke: attempted=30 completed=30 failed=none
+- test_execve reaches test_echo output:
+  "  I am test_echo."
+  "execve success."
+
+Official validation was attempted but blocked by local Docker API
+unavailability.

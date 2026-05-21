@@ -10,6 +10,9 @@ const USER_IMAGE_SIZE: usize = 128 * 1024;
 const USER_STACK_SIZE: usize = 64 * 1024;
 const USER_HEAP_SIZE: usize = 64 * 1024;
 const USER_MMAP_SIZE: usize = 128 * 1024;
+pub(crate) const EXEC_ARG_MAX: usize = 8;
+pub(crate) const EXEC_ENV_MAX: usize = 8;
+pub(crate) const EXEC_STRING_MAX: usize = 128;
 
 const ELF_MAGIC: &[u8; 4] = b"\x7fELF";
 const ET_EXEC: u16 = 2;
@@ -82,6 +85,43 @@ pub struct RealElfLoad {
 }
 
 #[derive(Copy, Clone)]
+pub(crate) struct ExecString {
+    bytes: [u8; EXEC_STRING_MAX],
+    len: usize,
+}
+
+impl ExecString {
+    pub(crate) const fn empty() -> Self {
+        Self {
+            bytes: [0; EXEC_STRING_MAX],
+            len: 0,
+        }
+    }
+
+    pub(crate) fn set_from_slice(&mut self, src: &[u8]) -> Result<(), &'static str> {
+        if src.len() >= EXEC_STRING_MAX {
+            return Err("exec_string_long");
+        }
+        self.len = src.len();
+        let mut i = 0usize;
+        while i < src.len() {
+            self.bytes[i] = src[i];
+            i += 1;
+        }
+        self.bytes[self.len] = 0;
+        while i + 1 < EXEC_STRING_MAX {
+            i += 1;
+            self.bytes[i] = 0;
+        }
+        Ok(())
+    }
+
+    fn as_bytes(&self) -> &[u8] {
+        &self.bytes[..self.len]
+    }
+}
+
+#[derive(Copy, Clone)]
 struct ElfHeader {
     e_type: u16,
     entry: usize,
@@ -126,6 +166,18 @@ static mut USER_HEAP_BACKUP: UserHeap = UserHeap {
 static mut USER_MMAP_BACKUP: UserMmap = UserMmap {
     bytes: [0; USER_MMAP_SIZE],
 };
+static mut USER_IMAGE_EXEC_BACKUP: UserImage = UserImage {
+    bytes: [0; USER_IMAGE_SIZE],
+};
+static mut USER_STACK_EXEC_BACKUP: UserStack = UserStack {
+    bytes: [0; USER_STACK_SIZE],
+};
+static mut USER_HEAP_EXEC_BACKUP: UserHeap = UserHeap {
+    bytes: [0; USER_HEAP_SIZE],
+};
+static mut USER_MMAP_EXEC_BACKUP: UserMmap = UserMmap {
+    bytes: [0; USER_MMAP_SIZE],
+};
 static mut USER_RANGES: [UserRange; 4] = [
     UserRange::empty(),
     UserRange::empty(),
@@ -142,12 +194,28 @@ static mut USER_RANGES_BACKUP: [UserRange; 4] = [
 ];
 static mut USER_BRK_BACKUP: usize = 0;
 static mut USER_MMAP_ACTIVE_BACKUP: bool = false;
+static mut USER_RANGES_EXEC_BACKUP: [UserRange; 4] = [
+    UserRange::empty(),
+    UserRange::empty(),
+    UserRange::empty(),
+    UserRange::empty(),
+];
+static mut USER_BRK_EXEC_BACKUP: usize = 0;
+static mut USER_MMAP_ACTIVE_EXEC_BACKUP: bool = false;
 
 pub fn load_basic_write() -> Result<RealElfLoad, &'static str> {
     load_basic_case("/musl/basic/write")
 }
 
 pub fn load_basic_case(path: &str) -> Result<RealElfLoad, &'static str> {
+    load_basic_case_with_args(path, &[], &[])
+}
+
+pub(crate) fn load_basic_case_with_args(
+    path: &str,
+    argv: &[ExecString],
+    envp: &[ExecString],
+) -> Result<RealElfLoad, &'static str> {
     unsafe {
         let elf = elf_buf_mut();
         let file = sdcard_ext4::load_path(path, elf)?;
@@ -201,7 +269,7 @@ pub fn load_basic_case(path: &str) -> Result<RealElfLoad, &'static str> {
         let load_bias = image_base.wrapping_sub(min_page);
         let entry = load_bias + header.entry;
         let phdr = load_bias + header.phoff;
-        let stack_pointer = build_stack(entry, phdr, header, path.as_bytes())?;
+        let stack_pointer = build_stack(entry, phdr, header, path.as_bytes(), argv, envp)?;
 
         let stack = user_stack_mut();
         let stack_start = stack.as_ptr() as usize;
@@ -281,6 +349,30 @@ pub(crate) fn restore_user_snapshot() {
         USER_RANGES = USER_RANGES_BACKUP;
         USER_BRK = USER_BRK_BACKUP;
         USER_MMAP_ACTIVE = USER_MMAP_ACTIVE_BACKUP;
+    }
+}
+
+pub(crate) fn save_exec_snapshot() {
+    unsafe {
+        copy_bytes(user_image_exec_backup_mut(), user_image_mut());
+        copy_bytes(user_stack_exec_backup_mut(), user_stack_mut());
+        copy_bytes(user_heap_exec_backup_mut(), user_heap_mut());
+        copy_bytes(user_mmap_exec_backup_mut(), user_mmap_mut());
+        USER_RANGES_EXEC_BACKUP = USER_RANGES;
+        USER_BRK_EXEC_BACKUP = USER_BRK;
+        USER_MMAP_ACTIVE_EXEC_BACKUP = USER_MMAP_ACTIVE;
+    }
+}
+
+pub(crate) fn restore_exec_snapshot() {
+    unsafe {
+        copy_bytes(user_image_mut(), user_image_exec_backup_mut());
+        copy_bytes(user_stack_mut(), user_stack_exec_backup_mut());
+        copy_bytes(user_heap_mut(), user_heap_exec_backup_mut());
+        copy_bytes(user_mmap_mut(), user_mmap_exec_backup_mut());
+        USER_RANGES = USER_RANGES_EXEC_BACKUP;
+        USER_BRK = USER_BRK_EXEC_BACKUP;
+        USER_MMAP_ACTIVE = USER_MMAP_ACTIVE_EXEC_BACKUP;
     }
 }
 
@@ -491,38 +583,102 @@ unsafe fn user_mmap_backup_mut() -> &'static mut [u8] {
     )
 }
 
+unsafe fn user_image_exec_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_IMAGE_EXEC_BACKUP.bytes) as *mut u8,
+        USER_IMAGE_SIZE,
+    )
+}
+
+unsafe fn user_stack_exec_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_STACK_EXEC_BACKUP.bytes) as *mut u8,
+        USER_STACK_SIZE,
+    )
+}
+
+unsafe fn user_heap_exec_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_HEAP_EXEC_BACKUP.bytes) as *mut u8,
+        USER_HEAP_SIZE,
+    )
+}
+
+unsafe fn user_mmap_exec_backup_mut() -> &'static mut [u8] {
+    core::slice::from_raw_parts_mut(
+        core::ptr::addr_of_mut!(USER_MMAP_EXEC_BACKUP.bytes) as *mut u8,
+        USER_MMAP_SIZE,
+    )
+}
+
 unsafe fn build_stack(
     entry: usize,
     phdr: usize,
     header: ElfHeader,
     argv0: &[u8],
+    argv: &[ExecString],
+    envp: &[ExecString],
 ) -> Result<usize, &'static str> {
     let stack = user_stack_mut();
     zero_bytes(stack);
     let stack_base = stack.as_ptr() as usize;
     let mut sp = USER_STACK_SIZE;
-    let home_ptr = stack_copy_down(stack, stack_base, &mut sp, b"HOME=/musl")?;
-    let path_ptr = stack_copy_down(stack, stack_base, &mut sp, b"PATH=/musl:/bin:/usr/bin:.")?;
-    let argv0_ptr = stack_copy_down(stack, stack_base, &mut sp, argv0)?;
+    let mut env_ptrs = [0usize; EXEC_ENV_MAX + 2];
+    let envc = if envp.is_empty() {
+        env_ptrs[0] = stack_copy_down(stack, stack_base, &mut sp, b"PATH=/musl:/bin:/usr/bin:.")?;
+        env_ptrs[1] = stack_copy_down(stack, stack_base, &mut sp, b"HOME=/musl")?;
+        2
+    } else {
+        if envp.len() > EXEC_ENV_MAX {
+            return Err("user_stack_envc");
+        }
+        let mut i = 0usize;
+        while i < envp.len() {
+            env_ptrs[i] = stack_copy_down(stack, stack_base, &mut sp, envp[i].as_bytes())?;
+            i += 1;
+        }
+        envp.len()
+    };
+    let mut arg_ptrs = [0usize; EXEC_ARG_MAX + 1];
+    let argc = if argv.is_empty() {
+        arg_ptrs[0] = stack_copy_down(stack, stack_base, &mut sp, argv0)?;
+        1
+    } else {
+        if argv.len() > EXEC_ARG_MAX {
+            return Err("user_stack_argc");
+        }
+        let mut i = 0usize;
+        while i < argv.len() {
+            arg_ptrs[i] = stack_copy_down(stack, stack_base, &mut sp, argv[i].as_bytes())?;
+            i += 1;
+        }
+        argv.len()
+    };
     sp &= !15usize;
 
-    let words = 1 + 1 + 1 + 2 + 1 + 14;
-    let bytes = words * core::mem::size_of::<usize>();
+    let words = 1 + argc + 1 + envc + 1 + 14;
+    let bytes = align_up(words * core::mem::size_of::<usize>(), 16);
     if sp < bytes {
         return Err("user_stack_bounds");
     }
     sp -= bytes;
     let mut pos = sp;
-    stack_write_usize(stack, pos, 1)?;
+    stack_write_usize(stack, pos, argc)?;
     pos += 8;
-    stack_write_usize(stack, pos, argv0_ptr)?;
-    pos += 8;
+    let mut i = 0usize;
+    while i < argc {
+        stack_write_usize(stack, pos, arg_ptrs[i])?;
+        pos += 8;
+        i += 1;
+    }
     stack_write_usize(stack, pos, 0)?;
     pos += 8;
-    stack_write_usize(stack, pos, path_ptr)?;
-    pos += 8;
-    stack_write_usize(stack, pos, home_ptr)?;
-    pos += 8;
+    i = 0;
+    while i < envc {
+        stack_write_usize(stack, pos, env_ptrs[i])?;
+        pos += 8;
+        i += 1;
+    }
     stack_write_usize(stack, pos, 0)?;
     pos += 8;
     stack_write_usize(stack, pos, AT_PHDR)?;

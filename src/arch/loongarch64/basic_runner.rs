@@ -90,7 +90,7 @@ const CASES: &[LaBasicCase] = &[
     LaBasicCase {
         name: "execve",
         path: "/musl/basic/execve",
-        enabled: false,
+        enabled: true,
     },
     LaBasicCase {
         name: "mmap",

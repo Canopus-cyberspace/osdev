@@ -149,15 +149,24 @@ pub(crate) fn sys_wait4(pid_raw: usize, status_ptr: usize, options: usize) -> is
     ECHILD
 }
 
-pub(crate) fn exec_current(frame: &mut LoongArchTrapFrame, path: &str) -> isize {
-    match real_elf::load_basic_case(path) {
+pub(crate) fn exec_current(
+    frame: &mut LoongArchTrapFrame,
+    path: &str,
+    argv: &[real_elf::ExecString],
+    envp: &[real_elf::ExecString],
+) -> isize {
+    real_elf::save_exec_snapshot();
+    match real_elf::load_basic_case_with_args(path, argv, envp) {
         Ok(load) => {
             frame.era = load.entry;
             frame.regs[3] = load.stack_pointer;
             frame.regs[4] = 0;
             0
         }
-        Err(_) => -2,
+        Err(_) => {
+            real_elf::restore_exec_snapshot();
+            -2
+        }
     }
 }
 
