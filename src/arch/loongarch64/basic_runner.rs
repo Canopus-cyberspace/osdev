@@ -60,12 +60,27 @@ const CASES: &[LaBasicCase] = &[
     LaBasicCase {
         name: "exit",
         path: "/musl/basic/exit",
-        enabled: false,
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "wait",
+        path: "/musl/basic/wait",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "waitpid",
+        path: "/musl/basic/waitpid",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "yield",
+        path: "/musl/basic/yield",
+        enabled: true,
     },
     LaBasicCase {
         name: "fork",
         path: "/musl/basic/fork",
-        enabled: false,
+        enabled: true,
     },
     LaBasicCase {
         name: "clone",
@@ -75,21 +90,6 @@ const CASES: &[LaBasicCase] = &[
     LaBasicCase {
         name: "execve",
         path: "/musl/basic/execve",
-        enabled: false,
-    },
-    LaBasicCase {
-        name: "wait",
-        path: "/musl/basic/wait",
-        enabled: false,
-    },
-    LaBasicCase {
-        name: "waitpid",
-        path: "/musl/basic/waitpid",
-        enabled: false,
-    },
-    LaBasicCase {
-        name: "yield",
-        path: "/musl/basic/yield",
         enabled: false,
     },
     LaBasicCase {

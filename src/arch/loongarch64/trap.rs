@@ -19,6 +19,7 @@ pub struct LoongArchTrapFrame {
     pub estat: usize,
     pub badv: usize,
     pub prmd: usize,
+    trap_stack_top: usize,
 }
 
 #[repr(C)]
@@ -40,9 +41,15 @@ global_asm!(
 __loongarch64_trap_entry:
     csrwr $sp, 0x30
     csrwr $r12, 0x31
-    la.local $r12, loongarch64_trap_stack_top
-    or $sp, $r12, $zero
-    addi.d $sp, $sp, -288
+    csrwr $r13, 0x32
+    la.local $r13, loongarch64_trap_stack_cursor
+    ld.d $sp, $r13, 0
+    li.d $r12, -16384
+    add.d $r12, $sp, $r12
+    st.d $r12, $r13, 0
+    addi.d $sp, $sp, -304
+    addi.d $r12, $sp, 304
+    st.d $r12, $sp, 288
 
     st.d $r1,  $sp, 8
     st.d $r2,  $sp, 16
@@ -59,6 +66,7 @@ __loongarch64_trap_entry:
     st.d $r11, $sp, 88
     csrrd $r12, 0x31
     st.d $r12, $sp, 96
+    csrrd $r13, 0x32
     st.d $r13, $sp, 104
     st.d $r14, $sp, 112
     st.d $r15, $sp, 120
@@ -90,6 +98,10 @@ __loongarch64_trap_entry:
 
     or $a0, $sp, $zero
     bl loongarch64_trap_handler
+
+    ld.d $r12, $sp, 288
+    la.local $r13, loongarch64_trap_stack_cursor
+    st.d $r12, $r13, 0
 
     ld.d $r12, $sp, 280
     csrwr $r12, 0x1
@@ -339,9 +351,14 @@ loongarch64_kernel_saved_slot:
     .section .trap_stack, "aw", @nobits
     .align 12
 loongarch64_trap_stack:
-    .space 32768
+    .space 65536
     .globl loongarch64_trap_stack_top
 loongarch64_trap_stack_top:
+
+    .section .data, "aw"
+    .align 3
+loongarch64_trap_stack_cursor:
+    .dword loongarch64_trap_stack_top
 
     .section .user.text, "ax"
     .balign 4
