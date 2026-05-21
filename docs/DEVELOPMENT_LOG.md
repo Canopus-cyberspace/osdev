@@ -43,3 +43,11 @@ Upgraded the LoongArch user ELF loader and user memory model for BusyBox groundw
 Added `busybox_runner.rs` as a focused non-scoring probe. It loads the real `/musl/busybox` ET_EXEC from `sdcard-la.img` and attempts a PLV3 entry for `busybox true` without printing official BusyBox markers or success output.
 
 Local smoke preserved all 32 enabled LoongArch basic-musl cases. BusyBox now loads and enters PLV3, then returns with a controlled fixed-address execution fault. The remaining blocker is real LoongArch user virtual-address mapping for ET_EXEC ranges such as `0x120000000`.
+
+## Iteration 08
+
+Added `src/arch/loongarch64/user_mmu.rs` as the focused LoongArch CSR/DMW/TLB owner and wired it into the existing `real_elf.rs` user image metadata. Static ET_EXEC payloads now keep their real user virtual entry and segment addresses, and the non-scoring BusyBox probe activates fixed-address mappings for image, stack, heap, and mmap before entering PLV3.
+
+The real `/musl/busybox true` command now loads from `sdcard-la.img`, enters at `0x1201b640c`, reaches syscall traps in the BusyBox fixed virtual range, and exits with code 0. Official BusyBox scoring remains disabled because only the bounded non-scoring smoke is stable.
+
+Local smoke preserved all 32 enabled LoongArch basic-musl cases. Official validation could not be refreshed because Docker was unavailable before kernel evaluation.

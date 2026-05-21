@@ -2,16 +2,23 @@
 
 use core::cmp::{max, min};
 
+use crate::console::{write_usize_dec, write_usize_hex};
+use crate::early_console_write;
 use crate::sdcard_ext4;
+use crate::user_mmu;
 
 const PAGE_SIZE: usize = 4096;
+const HUGE_PAGE_SIZE: usize = 2 * 1024 * 1024;
 const OFFICIAL_ELF_CAP: usize = 3 * 1024 * 1024;
-const USER_IMAGE_SIZE: usize = 3 * 1024 * 1024;
-const USER_STACK_SIZE: usize = 64 * 1024;
-const USER_HEAP_SIZE: usize = 256 * 1024;
+const USER_IMAGE_SIZE: usize = 4 * 1024 * 1024;
+const USER_STACK_SIZE: usize = 2 * 1024 * 1024;
+const USER_HEAP_SIZE: usize = 2 * 1024 * 1024;
 const USER_MMAP_SIZE: usize = 2 * 1024 * 1024;
 const MAX_USER_REGIONS: usize = 16;
 const MAX_MMAP_SLOTS: usize = 8;
+const FIXED_STACK_VA: usize = 0x1_3000_0000;
+const FIXED_HEAP_VA: usize = 0x1_3400_0000;
+const FIXED_MMAP_VA: usize = 0x1_3800_0000;
 pub(crate) const EXEC_ARG_MAX: usize = 8;
 pub(crate) const EXEC_ENV_MAX: usize = 8;
 pub(crate) const EXEC_STRING_MAX: usize = 128;
@@ -40,22 +47,22 @@ struct ElfBytes {
     bytes: [u8; OFFICIAL_ELF_CAP],
 }
 
-#[repr(C, align(16384))]
+#[repr(C, align(2097152))]
 struct UserImage {
     bytes: [u8; USER_IMAGE_SIZE],
 }
 
-#[repr(C, align(4096))]
+#[repr(C, align(2097152))]
 struct UserStack {
     bytes: [u8; USER_STACK_SIZE],
 }
 
-#[repr(C, align(4096))]
+#[repr(C, align(2097152))]
 struct UserHeap {
     bytes: [u8; USER_HEAP_SIZE],
 }
 
-#[repr(C, align(4096))]
+#[repr(C, align(2097152))]
 struct UserMmap {
     bytes: [u8; USER_MMAP_SIZE],
 }
@@ -245,17 +252,35 @@ static mut USER_MMAP_EXEC_BACKUP: UserMmap = UserMmap {
 };
 static mut USER_REGIONS: [UserRegion; MAX_USER_REGIONS] = [UserRegion::empty(); MAX_USER_REGIONS];
 static mut USER_BRK: usize = 0;
+static mut USER_HEAP_USER_START: usize = 0;
+static mut USER_MMAP_USER_START: usize = 0;
+static mut CURRENT_LOAD_USER_START: usize = 0;
+static mut CURRENT_LOAD_HOST_START: usize = 0;
+static mut CURRENT_LOAD_SIZE: usize = 0;
+static mut CURRENT_ENTRY: usize = 0;
 static mut USER_MMAP_SLOTS: [MmapSlot; MAX_MMAP_SLOTS] = [MmapSlot::empty(); MAX_MMAP_SLOTS];
 static mut USER_MMAP_NEXT: usize = 0;
 static mut USER_REGIONS_BACKUP: [UserRegion; MAX_USER_REGIONS] =
     [UserRegion::empty(); MAX_USER_REGIONS];
 static mut USER_BRK_BACKUP: usize = 0;
+static mut USER_HEAP_USER_START_BACKUP: usize = 0;
+static mut USER_MMAP_USER_START_BACKUP: usize = 0;
+static mut CURRENT_LOAD_USER_START_BACKUP: usize = 0;
+static mut CURRENT_LOAD_HOST_START_BACKUP: usize = 0;
+static mut CURRENT_LOAD_SIZE_BACKUP: usize = 0;
+static mut CURRENT_ENTRY_BACKUP: usize = 0;
 static mut USER_MMAP_SLOTS_BACKUP: [MmapSlot; MAX_MMAP_SLOTS] =
     [MmapSlot::empty(); MAX_MMAP_SLOTS];
 static mut USER_MMAP_NEXT_BACKUP: usize = 0;
 static mut USER_REGIONS_EXEC_BACKUP: [UserRegion; MAX_USER_REGIONS] =
     [UserRegion::empty(); MAX_USER_REGIONS];
 static mut USER_BRK_EXEC_BACKUP: usize = 0;
+static mut USER_HEAP_USER_START_EXEC_BACKUP: usize = 0;
+static mut USER_MMAP_USER_START_EXEC_BACKUP: usize = 0;
+static mut CURRENT_LOAD_USER_START_EXEC_BACKUP: usize = 0;
+static mut CURRENT_LOAD_HOST_START_EXEC_BACKUP: usize = 0;
+static mut CURRENT_LOAD_SIZE_EXEC_BACKUP: usize = 0;
+static mut CURRENT_ENTRY_EXEC_BACKUP: usize = 0;
 static mut USER_MMAP_SLOTS_EXEC_BACKUP: [MmapSlot; MAX_MMAP_SLOTS] =
     [MmapSlot::empty(); MAX_MMAP_SLOTS];
 static mut USER_MMAP_NEXT_EXEC_BACKUP: usize = 0;
@@ -349,17 +374,46 @@ pub(crate) fn load_user_elf_with_args(
 
         let image_base = image.as_ptr() as usize;
         let runtime_bias = image_base.wrapping_sub(min_page);
-        let entry = runtime_bias + header.entry;
-        let phdr = runtime_bias + header.phoff;
-        let stack_pointer = build_stack(entry, phdr, header, path.as_bytes(), argv, envp)?;
+        let fixed_va = header.e_type == ET_EXEC;
+        let entry = if fixed_va {
+            header.entry
+        } else {
+            runtime_bias + header.entry
+        };
+        let phdr = if fixed_va {
+            min_page + header.phoff
+        } else {
+            runtime_bias + header.phoff
+        };
+        let stack_user_start = if fixed_va {
+            FIXED_STACK_VA
+        } else {
+            user_stack_mut().as_ptr() as usize
+        };
+        let stack_pointer =
+            build_stack(entry, phdr, header, stack_user_start, path.as_bytes(), argv, envp)?;
 
         let stack = user_stack_mut();
         let stack_start = stack.as_ptr() as usize;
-        let stack_end = stack_start + USER_STACK_SIZE;
+        let stack_user_end = stack_user_start + USER_STACK_SIZE;
         let heap_start = user_heap_mut().as_ptr() as usize;
-        add_region(REGION_STACK, stack_start, stack_start, stack_end - stack_start)?;
-        add_region(REGION_HEAP, heap_start, heap_start, 0)?;
-        USER_BRK = heap_start;
+        let heap_user_start = if fixed_va { FIXED_HEAP_VA } else { heap_start };
+        let mmap_start = user_mmap_mut().as_ptr() as usize;
+        let mmap_user_start = if fixed_va { FIXED_MMAP_VA } else { mmap_start };
+        add_region(
+            REGION_STACK,
+            stack_user_start,
+            stack_start,
+            stack_user_end - stack_user_start,
+        )?;
+        add_region(REGION_HEAP, heap_user_start, heap_start, 0)?;
+        USER_BRK = heap_user_start;
+        USER_HEAP_USER_START = heap_user_start;
+        USER_MMAP_USER_START = mmap_user_start;
+        CURRENT_LOAD_USER_START = if fixed_va { min_page } else { image_base };
+        CURRENT_LOAD_HOST_START = image_base;
+        CURRENT_LOAD_SIZE = load_size;
+        CURRENT_ENTRY = entry;
 
         Ok(RealElfLoad {
             inode: file.inode,
@@ -401,6 +455,71 @@ pub fn has_loaded_user_elf() -> bool {
     }
 }
 
+pub(crate) fn activate_current_user_mmu() -> Result<(), &'static str> {
+    unsafe {
+        if CURRENT_LOAD_USER_START == 0 || CURRENT_LOAD_HOST_START == 0 || CURRENT_LOAD_SIZE == 0 {
+            return Err("mmu_no_image");
+        }
+        user_mmu::begin_mapping_install();
+        user_mmu::map_huge_range(
+            CURRENT_LOAD_USER_START,
+            CURRENT_LOAD_HOST_START,
+            CURRENT_LOAD_SIZE,
+        )?;
+        user_mmu::map_huge_range(
+            FIXED_STACK_VA,
+            core::ptr::addr_of!(USER_STACK.bytes) as usize,
+            USER_STACK_SIZE,
+        )?;
+        user_mmu::map_huge_range(
+            FIXED_HEAP_VA,
+            core::ptr::addr_of!(USER_HEAP.bytes) as usize,
+            USER_HEAP_SIZE,
+        )?;
+        user_mmu::map_huge_range(
+            FIXED_MMAP_VA,
+            core::ptr::addr_of!(USER_MMAP.bytes) as usize,
+            USER_MMAP_SIZE,
+        )?;
+        user_mmu::activate_paged_mode();
+        Ok(())
+    }
+}
+
+pub(crate) fn deactivate_current_user_mmu() {
+    user_mmu::deactivate_paged_mode();
+}
+
+pub(crate) fn current_entry() -> usize {
+    unsafe { CURRENT_ENTRY }
+}
+
+pub(crate) fn dump_user_regions(prefix: &str) {
+    unsafe {
+        early_console_write(prefix);
+        early_console_write("entry=");
+        write_usize_hex(CURRENT_ENTRY);
+        early_console_write(" regions:\n");
+        let mut i = 0usize;
+        while i < MAX_USER_REGIONS {
+            let r = USER_REGIONS[i];
+            if r.active {
+                early_console_write(prefix);
+                early_console_write(" region kind=");
+                write_usize_dec(r.kind as usize);
+                early_console_write(" user=");
+                write_usize_hex(r.user_start);
+                early_console_write(" host=");
+                write_usize_hex(r.host_start);
+                early_console_write(" len=");
+                write_usize_hex(r.len);
+                early_console_write("\n");
+            }
+            i += 1;
+        }
+    }
+}
+
 pub(crate) fn save_user_snapshot() {
     unsafe {
         copy_bytes(user_image_backup_mut(), user_image_mut());
@@ -409,6 +528,12 @@ pub(crate) fn save_user_snapshot() {
         copy_bytes(user_mmap_backup_mut(), user_mmap_mut());
         USER_REGIONS_BACKUP = USER_REGIONS;
         USER_BRK_BACKUP = USER_BRK;
+        USER_HEAP_USER_START_BACKUP = USER_HEAP_USER_START;
+        USER_MMAP_USER_START_BACKUP = USER_MMAP_USER_START;
+        CURRENT_LOAD_USER_START_BACKUP = CURRENT_LOAD_USER_START;
+        CURRENT_LOAD_HOST_START_BACKUP = CURRENT_LOAD_HOST_START;
+        CURRENT_LOAD_SIZE_BACKUP = CURRENT_LOAD_SIZE;
+        CURRENT_ENTRY_BACKUP = CURRENT_ENTRY;
         USER_MMAP_SLOTS_BACKUP = USER_MMAP_SLOTS;
         USER_MMAP_NEXT_BACKUP = USER_MMAP_NEXT;
     }
@@ -422,6 +547,12 @@ pub(crate) fn restore_user_snapshot() {
         copy_bytes(user_mmap_mut(), user_mmap_backup_mut());
         USER_REGIONS = USER_REGIONS_BACKUP;
         USER_BRK = USER_BRK_BACKUP;
+        USER_HEAP_USER_START = USER_HEAP_USER_START_BACKUP;
+        USER_MMAP_USER_START = USER_MMAP_USER_START_BACKUP;
+        CURRENT_LOAD_USER_START = CURRENT_LOAD_USER_START_BACKUP;
+        CURRENT_LOAD_HOST_START = CURRENT_LOAD_HOST_START_BACKUP;
+        CURRENT_LOAD_SIZE = CURRENT_LOAD_SIZE_BACKUP;
+        CURRENT_ENTRY = CURRENT_ENTRY_BACKUP;
         USER_MMAP_SLOTS = USER_MMAP_SLOTS_BACKUP;
         USER_MMAP_NEXT = USER_MMAP_NEXT_BACKUP;
     }
@@ -435,6 +566,12 @@ pub(crate) fn save_exec_snapshot() {
         copy_bytes(user_mmap_exec_backup_mut(), user_mmap_mut());
         USER_REGIONS_EXEC_BACKUP = USER_REGIONS;
         USER_BRK_EXEC_BACKUP = USER_BRK;
+        USER_HEAP_USER_START_EXEC_BACKUP = USER_HEAP_USER_START;
+        USER_MMAP_USER_START_EXEC_BACKUP = USER_MMAP_USER_START;
+        CURRENT_LOAD_USER_START_EXEC_BACKUP = CURRENT_LOAD_USER_START;
+        CURRENT_LOAD_HOST_START_EXEC_BACKUP = CURRENT_LOAD_HOST_START;
+        CURRENT_LOAD_SIZE_EXEC_BACKUP = CURRENT_LOAD_SIZE;
+        CURRENT_ENTRY_EXEC_BACKUP = CURRENT_ENTRY;
         USER_MMAP_SLOTS_EXEC_BACKUP = USER_MMAP_SLOTS;
         USER_MMAP_NEXT_EXEC_BACKUP = USER_MMAP_NEXT;
     }
@@ -448,6 +585,12 @@ pub(crate) fn restore_exec_snapshot() {
         copy_bytes(user_mmap_mut(), user_mmap_exec_backup_mut());
         USER_REGIONS = USER_REGIONS_EXEC_BACKUP;
         USER_BRK = USER_BRK_EXEC_BACKUP;
+        USER_HEAP_USER_START = USER_HEAP_USER_START_EXEC_BACKUP;
+        USER_MMAP_USER_START = USER_MMAP_USER_START_EXEC_BACKUP;
+        CURRENT_LOAD_USER_START = CURRENT_LOAD_USER_START_EXEC_BACKUP;
+        CURRENT_LOAD_HOST_START = CURRENT_LOAD_HOST_START_EXEC_BACKUP;
+        CURRENT_LOAD_SIZE = CURRENT_LOAD_SIZE_EXEC_BACKUP;
+        CURRENT_ENTRY = CURRENT_ENTRY_EXEC_BACKUP;
         USER_MMAP_SLOTS = USER_MMAP_SLOTS_EXEC_BACKUP;
         USER_MMAP_NEXT = USER_MMAP_NEXT_EXEC_BACKUP;
     }
@@ -455,7 +598,12 @@ pub(crate) fn restore_exec_snapshot() {
 
 pub fn sys_brk(addr: usize) -> isize {
     unsafe {
-        let heap_start = core::ptr::addr_of!(USER_HEAP.bytes) as usize;
+        let heap_host_start = core::ptr::addr_of!(USER_HEAP.bytes) as usize;
+        let heap_start = if USER_HEAP_USER_START == 0 {
+            heap_host_start
+        } else {
+            USER_HEAP_USER_START
+        };
         let heap_end = heap_start + USER_HEAP_SIZE;
         if USER_BRK == 0 {
             USER_BRK = heap_start;
@@ -469,7 +617,7 @@ pub fn sys_brk(addr: usize) -> isize {
         }
         if requested >= heap_start && requested <= heap_end {
             USER_BRK = requested;
-            set_region(REGION_HEAP, heap_start, heap_start, USER_BRK - heap_start);
+            set_region(REGION_HEAP, heap_start, heap_host_start, USER_BRK - heap_start);
         }
         USER_BRK as isize
     }
@@ -495,7 +643,14 @@ pub fn sys_mmap(
             Some(slot) => slot,
             None => return -12,
         };
-        let mmap_start = core::ptr::addr_of!(USER_MMAP.bytes) as usize + USER_MMAP_SLOTS[slot].offset;
+        let mmap_host_base = core::ptr::addr_of!(USER_MMAP.bytes) as usize;
+        let mmap_user_base = if USER_MMAP_USER_START == 0 {
+            mmap_host_base
+        } else {
+            USER_MMAP_USER_START
+        };
+        let mmap_start = mmap_user_base + USER_MMAP_SLOTS[slot].offset;
+        let mmap_host_start = mmap_host_base + USER_MMAP_SLOTS[slot].offset;
         let mmap = user_mmap_mut();
         zero_bytes(&mut mmap[USER_MMAP_SLOTS[slot].offset..USER_MMAP_SLOTS[slot].offset + aligned_len]);
         if let Some(src) = file_bytes {
@@ -503,7 +658,7 @@ pub fn sys_mmap(
             let dst = USER_MMAP_SLOTS[slot].offset;
             copy_bytes(&mut mmap[dst..dst + take], &src[..take]);
         }
-        if add_region(REGION_MMAP, mmap_start, mmap_start, aligned_len).is_err() {
+        if add_region(REGION_MMAP, mmap_start, mmap_host_start, aligned_len).is_err() {
             USER_MMAP_SLOTS[slot] = MmapSlot::empty();
             return -12;
         }
@@ -517,7 +672,12 @@ pub fn sys_munmap(addr: usize, len: usize) -> isize {
     }
     unsafe {
         let aligned_len = align_up(len, PAGE_SIZE);
-        let mmap_base = core::ptr::addr_of!(USER_MMAP.bytes) as usize;
+        let mmap_host_base = core::ptr::addr_of!(USER_MMAP.bytes) as usize;
+        let mmap_base = if USER_MMAP_USER_START == 0 {
+            mmap_host_base
+        } else {
+            USER_MMAP_USER_START
+        };
         let mut i = 0usize;
         while i < MAX_MMAP_SLOTS {
             if USER_MMAP_SLOTS[i].active
@@ -882,18 +1042,19 @@ unsafe fn build_stack(
     entry: usize,
     phdr: usize,
     header: ElfHeader,
+    stack_user_base: usize,
     argv0: &[u8],
     argv: &[ExecString],
     envp: &[ExecString],
 ) -> Result<usize, &'static str> {
     let stack = user_stack_mut();
     zero_bytes(stack);
-    let stack_base = stack.as_ptr() as usize;
     let mut sp = USER_STACK_SIZE;
     let mut env_ptrs = [0usize; EXEC_ENV_MAX + 2];
     let envc = if envp.is_empty() {
-        env_ptrs[0] = stack_copy_down(stack, stack_base, &mut sp, b"PATH=/musl:/bin:/usr/bin:.")?;
-        env_ptrs[1] = stack_copy_down(stack, stack_base, &mut sp, b"HOME=/musl")?;
+        env_ptrs[0] =
+            stack_copy_down(stack, stack_user_base, &mut sp, b"PATH=/musl:/bin:/usr/bin:.")?;
+        env_ptrs[1] = stack_copy_down(stack, stack_user_base, &mut sp, b"HOME=/musl")?;
         2
     } else {
         if envp.len() > EXEC_ENV_MAX {
@@ -901,14 +1062,14 @@ unsafe fn build_stack(
         }
         let mut i = 0usize;
         while i < envp.len() {
-            env_ptrs[i] = stack_copy_down(stack, stack_base, &mut sp, envp[i].as_bytes())?;
+            env_ptrs[i] = stack_copy_down(stack, stack_user_base, &mut sp, envp[i].as_bytes())?;
             i += 1;
         }
         envp.len()
     };
     let mut arg_ptrs = [0usize; EXEC_ARG_MAX + 1];
     let argc = if argv.is_empty() {
-        arg_ptrs[0] = stack_copy_down(stack, stack_base, &mut sp, argv0)?;
+        arg_ptrs[0] = stack_copy_down(stack, stack_user_base, &mut sp, argv0)?;
         1
     } else {
         if argv.len() > EXEC_ARG_MAX {
@@ -916,7 +1077,7 @@ unsafe fn build_stack(
         }
         let mut i = 0usize;
         while i < argv.len() {
-            arg_ptrs[i] = stack_copy_down(stack, stack_base, &mut sp, argv[i].as_bytes())?;
+            arg_ptrs[i] = stack_copy_down(stack, stack_user_base, &mut sp, argv[i].as_bytes())?;
             i += 1;
         }
         argv.len()
@@ -975,7 +1136,7 @@ unsafe fn build_stack(
     stack_write_usize(stack, pos, AT_NULL)?;
     pos += 8;
     stack_write_usize(stack, pos, 0)?;
-    Ok(stack_base + sp)
+    Ok(stack_user_base + sp)
 }
 
 fn stack_copy_down(

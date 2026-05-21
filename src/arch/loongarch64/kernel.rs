@@ -14,6 +14,7 @@ mod real_elf;
 mod sdcard_ext4;
 mod syscall;
 mod trap;
+mod user_mmu;
 mod user;
 mod user_mem;
 mod virtio_blk_pci;

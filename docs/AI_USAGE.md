@@ -37,3 +37,9 @@ No BusyBox output, hard-coded command success text, fake basic-musl output, or `
 AI was used to inspect and extend the LoongArch ELF loader, user-region tracking, user-copy helpers, BusyBox probe path, and early BusyBox syscall compatibility hooks.
 
 Accepted changes loaded the real `/musl/busybox` payload and entered PLV3 for a non-scoring `busybox true` probe. No BusyBox output, official BusyBox group marker, hard-coded command success text, fake basic-musl output, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 08
+
+AI was used to inspect the LoongArch fixed-address BusyBox blocker, implement the focused `user_mmu.rs` CSR/TLB helper module, wire fixed ET_EXEC mappings through `real_elf.rs`, validate the non-scoring BusyBox `true` probe, and document the evidence.
+
+Accepted changes let the real `/musl/busybox true` enter at `0x1201b640c` and exit with code 0 through the LoongArch trap path. No official BusyBox group marker, fake BusyBox output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.

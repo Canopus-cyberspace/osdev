@@ -232,3 +232,33 @@ busybox-musl-rv: 53.0
 basic-musl-la: 64.0
 busybox-musl-la: 0.0
 ```
+
+## Iteration 08
+
+Local build, image generation, ELF checks, and LoongArch smoke validation passed.
+
+```text
+cargo build --target riscv64gc-unknown-none-elf: passed
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+kernel-la entry: 0x90000000
+LoongArch local smoke: attempted=32 completed=32 failed=none
+```
+
+The real BusyBox probe now exits successfully through PLV3:
+
+```text
+[loongarch64-busybox] loaded /musl/busybox file_size=2065912 entry=0x1201b640c first_load=0x120000000 load_size=2087832 segments=2 command=true
+[loongarch64-busybox] mapped entry=0x1201b640c
+[loongarch64-busybox] command=true exit_code=0
+[loongarch64-busybox] smoke completed=1 attempted=1
+```
+
+The final local LoongArch smoke log contained no `ENOSYS`, `panic`, `Failed to load ELF`, `user fault`, or `missing syscall` marker.
+
+Official validation was attempted but failed before kernel evaluation because Docker was unavailable:
+
+```text
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
+```
