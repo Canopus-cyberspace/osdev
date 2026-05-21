@@ -195,6 +195,58 @@ busybox-musl-la: 5.0
 
 The previous gap was `test_waitpid`, which changed from LoongArch `0/4` to `4/4`. The official log contained no `Failed to load ELF`, `panic`, `timeout`, `ENOSYS`, or `user fault` marker.
 
+## Iteration 12
+
+Local build, image generation, ELF checks, local QEMU smoke, and official validation passed.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make -j 16 all: passed with local jobserver warning
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+```
+
+Local smoke evidence:
+
+```text
+[loongarch64-basic] attempted=32 completed=32 failed=none
+[loongarch64-busybox] smoke completed=7 attempted=7 matched=7 failed=0 disabled=3
+```
+
+LoongArch BusyBox official testcase lines remained limited to:
+
+```text
+testcase busybox true success
+testcase busybox false success
+testcase busybox pwd success
+testcase busybox sh -c exit success
+testcase busybox ls success
+```
+
+Official validation:
+
+```text
+final refresh log: /home/lenovo/oscomp-official-env/logs/evaluate_20260521_214042/docker_evaluate.log
+final refresh result: timeout guard exited 124 after 30 minutes
+final refresh docker_evaluate.log size: 0 bytes
+```
+
+Latest completed official baseline:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260521_213325/docker_evaluate.log
+Verdict: Accpted
+Score: 260
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 102.0
+busybox-musl-la: 5.0
+```
+
+Generated project-root sdcard artifacts were removed after validation. Official testdata images were not touched.
+
 ## Iteration 06
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.

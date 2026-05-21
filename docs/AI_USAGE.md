@@ -61,3 +61,9 @@ Accepted changes enabled official BusyBox group markers only around the safe rea
 AI was used to inspect the official basic-musl score table, identify `test_waitpid` as the only LoongArch scoring miss, compare RISC-V and LoongArch serial output, fix LoongArch wait status encoding, diagnose quiet BusyBox timing sensitivity, validate locally and officially, and document the iteration.
 
 Accepted changes were limited to real wait status semantics and LoongArch user-entry synchronization. No fake `waitpid` output, hard-coded testcase success, marker manipulation, unsafe BusyBox command enablement, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 12
+
+AI was used to inspect the interrupted BusyBox expansion patch, reduce it to a focused allowlist stabilization in `busybox_runner.rs`, run local and official validation, and document the checkpoint.
+
+Accepted changes only classify real BusyBox commands as scoring, smoke, or disabled. No fake BusyBox output, hard-coded command success, broad syscall rewrite, official script change, or `runtime_dispatch.rs` change was added.

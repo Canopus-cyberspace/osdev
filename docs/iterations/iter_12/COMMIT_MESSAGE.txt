@@ -1,0 +1,22 @@
+stabilize loongarch busybox scoring allowlist
+
+Keep the LoongArch BusyBox runner bounded to the currently proven
+real PLV3 commands after the aggressive expansion attempt exposed
+stalling commands.
+
+- classify BusyBox commands as scoring, smoke, or disabled
+- emit official testcase lines only for scoring commands
+- keep true, false, pwd, sh -c exit, and ls as scoring commands
+- keep echo and cat smoke coverage non-scoring
+- document basename, uname, and ash -c exit as disabled blockers
+- preserve LoongArch basic 32/32 and official score-260 baseline
+- leave runtime_dispatch.rs unchanged
+
+Validation:
+- cargo build -j 16 --target riscv64gc-unknown-none-elf
+- make -j 16 all
+- make all
+- local LoongArch basic smoke: attempted=32 completed=32 failed=none
+- local BusyBox smoke: completed=7 attempted=7 matched=7 failed=0 disabled=3
+- latest completed official baseline: Accpted, score 260
+- final official refresh attempt timed out with a 0-byte docker_evaluate.log

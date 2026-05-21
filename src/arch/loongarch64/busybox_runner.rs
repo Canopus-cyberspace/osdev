@@ -10,50 +10,89 @@ struct BusyboxCommand {
     argv: &'static [&'static [u8]],
     expected_exit: usize,
     official_name: Option<&'static str>,
+    class: BusyboxCommandClass,
 }
 
-const COMMANDS: &[BusyboxCommand] = &[
+#[derive(Copy, Clone)]
+enum BusyboxCommandClass {
+    Scoring,
+    Smoke,
+    Disabled,
+}
+
+const RUN_COMMANDS: &[BusyboxCommand] = &[
     BusyboxCommand {
         name: "true",
         argv: &[b"busybox", b"true"],
         expected_exit: 0,
         official_name: Some("true"),
+        class: BusyboxCommandClass::Scoring,
     },
     BusyboxCommand {
         name: "false",
         argv: &[b"busybox", b"false"],
         expected_exit: 1,
         official_name: Some("false"),
+        class: BusyboxCommandClass::Scoring,
     },
     BusyboxCommand {
         name: "echo",
         argv: &[b"busybox", b"echo", b"hello"],
         expected_exit: 0,
         official_name: None,
+        class: BusyboxCommandClass::Smoke,
     },
     BusyboxCommand {
         name: "pwd",
         argv: &[b"busybox", b"pwd"],
         expected_exit: 0,
         official_name: Some("pwd"),
+        class: BusyboxCommandClass::Scoring,
     },
     BusyboxCommand {
         name: "sh-exit",
         argv: &[b"busybox", b"sh", b"-c", b"exit"],
         expected_exit: 0,
         official_name: Some("sh -c exit"),
+        class: BusyboxCommandClass::Scoring,
     },
     BusyboxCommand {
         name: "ls",
         argv: &[b"busybox", b"ls"],
         expected_exit: 0,
         official_name: Some("ls"),
+        class: BusyboxCommandClass::Scoring,
     },
     BusyboxCommand {
         name: "cat",
         argv: &[b"busybox", b"cat", b"/musl/busybox_cmd.txt"],
         expected_exit: 0,
         official_name: None,
+        class: BusyboxCommandClass::Smoke,
+    },
+];
+
+const DISABLED_COMMANDS: &[BusyboxCommand] = &[
+    BusyboxCommand {
+        name: "basename",
+        argv: &[b"busybox", b"basename", b"/aaa/bbb"],
+        expected_exit: 0,
+        official_name: Some("basename /aaa/bbb"),
+        class: BusyboxCommandClass::Disabled,
+    },
+    BusyboxCommand {
+        name: "uname",
+        argv: &[b"busybox", b"uname"],
+        expected_exit: 0,
+        official_name: Some("uname"),
+        class: BusyboxCommandClass::Disabled,
+    },
+    BusyboxCommand {
+        name: "ash-exit",
+        argv: &[b"busybox", b"ash", b"-c", b"exit"],
+        expected_exit: 0,
+        official_name: Some("ash -c exit"),
+        class: BusyboxCommandClass::Disabled,
     },
 ];
 
@@ -64,31 +103,53 @@ pub(crate) fn run_loongarch_busybox_loader_probe() {
     let mut completed = 0usize;
     let mut matched = 0usize;
     let mut failed = 0usize;
-    let mut i = 0usize;
-    while i < COMMANDS.len() {
-        let result = run_command(&COMMANDS[i]);
-        if result.completed {
-            completed += 1;
-        }
-        if result.matched_expected {
-            matched += 1;
-        } else {
-            failed += 1;
-        }
-        emit_official_result(&COMMANDS[i], result.matched_expected);
-        i += 1;
-    }
+    let mut attempted = 0usize;
+    run_command_set(
+        RUN_COMMANDS,
+        &mut attempted,
+        &mut completed,
+        &mut matched,
+        &mut failed,
+    );
     user::set_busybox_group_active(false);
     early_console_write("#### OS COMP TEST GROUP END busybox-musl ####\n");
     early_console_write("[loongarch64-busybox] smoke completed=");
     write_usize_dec(completed);
     early_console_write(" attempted=");
-    write_usize_dec(i);
+    write_usize_dec(attempted);
     early_console_write(" matched=");
     write_usize_dec(matched);
     early_console_write(" failed=");
     write_usize_dec(failed);
+    early_console_write(" disabled=");
+    write_usize_dec(DISABLED_COMMANDS.len());
     early_console_write("\n");
+}
+
+fn run_command_set(
+    commands: &[BusyboxCommand],
+    attempted: &mut usize,
+    completed: &mut usize,
+    matched: &mut usize,
+    failed: &mut usize,
+) {
+    let mut i = 0usize;
+    while i < commands.len() {
+        *attempted += 1;
+        let result = run_command(&commands[i]);
+        if result.completed {
+            *completed += 1;
+        }
+        if result.matched_expected {
+            *matched += 1;
+        } else {
+            *failed += 1;
+        }
+        if let BusyboxCommandClass::Scoring = commands[i].class {
+            emit_official_result(&commands[i], result.matched_expected);
+        }
+        i += 1;
+    }
 }
 
 fn emit_official_result(command: &BusyboxCommand, success: bool) {
@@ -109,7 +170,7 @@ struct BusyboxRunResult {
 }
 
 fn run_command(command: &BusyboxCommand) -> BusyboxRunResult {
-    let mut argv = [ExecString::empty(); 4];
+    let mut argv = [ExecString::empty(); 8];
     if command.argv.len() > argv.len() {
         early_console_write("[loongarch64-busybox] blocker: too many argv entries command=");
         early_console_write(command.name);

@@ -77,3 +77,11 @@ Fixed `src/arch/loongarch64/process.rs` so child exit recording masks to the low
 The corrected waitpid path exposed a quiet BusyBox timing sensitivity, so `src/arch/loongarch64/user_mmu.rs` now provides a small silent `ibar`/`dbar` user-entry settle loop. `real_elf.rs` calls it after fixed-address mapping activation and `trap.rs` calls it before PLV3 return.
 
 Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.
+
+## Iteration 12
+
+Stabilized the LoongArch BusyBox runner after the aggressive expansion attempt. `src/arch/loongarch64/busybox_runner.rs` now explicitly separates commands into scoring, smoke, and disabled classes.
+
+Only the proven real PLV3 commands `true`, `false`, `pwd`, `sh -c exit`, and `ls` emit official BusyBox testcase lines. `echo hello` and `cat /musl/busybox_cmd.txt` remain real non-scoring smoke commands. `basename /aaa/bbb`, `uname`, and `ash -c exit` are documented as disabled and are not executed by the official LoongArch runner.
+
+Local validation preserved LoongArch basic 32/32 and the five BusyBox scoring commands. The latest completed official baseline remains `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`; the final official refresh attempt timed out in the wrapper with a 0-byte `docker_evaluate.log`.
