@@ -21,3 +21,9 @@ Fixed that in `src/arch/loongarch64/trap.rs` by adding a `loongarch64_trap_stack
 Implemented LoongArch `execve` for the real `/musl/basic/execve` case. `syscall.rs` now safely reads path, argv, and envp from user memory; `real_elf.rs` rebuilds the replacement program stack with copied argv/envp strings; and `process.rs` switches the current trap frame to the new entry and user stack while preserving process identity, fd table, and cwd.
 
 Added exec-specific image snapshot helpers so failed execve can restore the current image without disturbing the fork parent snapshot.
+
+## Iteration 05
+
+Implemented LoongArch pipe endpoint ownership in `src/arch/loongarch64/fd_table.rs`. The fd table now owns `PipeState` objects with shared buffers and read/write endpoint reference counts. `close`, `dup`, `dup3`, and fork fd snapshot/restore update those references so child writes remain visible to the parent without invalidating parent-owned endpoints.
+
+Enabled `/musl/basic/pipe` as a real PLV3 ELF case.

@@ -19,3 +19,9 @@ No fake case output, hard-coded success text, or `runtime_dispatch.rs` rewrite w
 AI was used to inspect the LoongArch `execve` path, implement safe argv/envp copying, extend ELF stack construction, enable the real `/musl/basic/execve` case, and document validation results.
 
 No fake `execve` output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 05
+
+AI was used to inspect LoongArch pipe/fd ownership, implement pipe endpoint refcounts, enable the real `/musl/basic/pipe` case, and document validation results.
+
+No fake pipe output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.

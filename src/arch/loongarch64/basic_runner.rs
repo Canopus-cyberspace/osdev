@@ -130,7 +130,7 @@ const CASES: &[LaBasicCase] = &[
     LaBasicCase {
         name: "pipe",
         path: "/musl/basic/pipe",
-        enabled: false,
+        enabled: true,
     },
     LaBasicCase {
         name: "open",

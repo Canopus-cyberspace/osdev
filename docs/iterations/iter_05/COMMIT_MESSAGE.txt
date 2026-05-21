@@ -1,0 +1,28 @@
+implement loongarch pipe fd ownership for basic-musl
+
+Replace the old single global LoongArch pipe state with a small table of
+PipeState objects owned by the LoongArch fd table. Track read and write
+endpoint reference counts so close, dup, dup3, and fork child snapshots
+preserve shared pipe semantics.
+
+Keep syscall marshalling in the LoongArch syscall layer and reuse the existing
+safe user-copy path for pipefd writeback and read/write buffers. During fork,
+increment pipe refs for the child fd table copy and release remaining child
+refs before restoring the parent fd table.
+
+Enable the real /musl/basic/pipe case. The case is loaded from sdcard-la.img
+and executes in PLV3; no output is faked.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf
+- make all
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU smoke: attempted=31 completed=31 failed=none
+- test_pipe output includes:
+  cpid: 0
+  cpid: 2
+    Write to pipe successfully.
+
+Official validation was attempted but blocked by local Docker API
+unavailability.

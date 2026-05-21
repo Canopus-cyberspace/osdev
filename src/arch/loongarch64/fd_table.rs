@@ -14,7 +14,8 @@ pub(crate) const FD_PIPE_WRITE: u8 = 6;
 pub(crate) const S_IFDIR: u16 = 0o040000;
 pub(crate) const S_IFREG: u16 = 0o100000;
 const VIRTUAL_FILE_SIZE: usize = 512;
-const PIPE_BUFFER_SIZE: usize = 512;
+const MAX_PIPES: usize = 4;
+const PIPE_BUFFER_SIZE: usize = 4096;
 
 #[derive(Copy, Clone)]
 pub(crate) struct PathBuf {
@@ -81,6 +82,29 @@ pub(crate) const CLOSED_FD: LaFd = LaFd {
     path: PathBuf::empty(),
 };
 
+#[derive(Copy, Clone)]
+struct PipeState {
+    active: bool,
+    buffer: [u8; PIPE_BUFFER_SIZE],
+    read_pos: usize,
+    write_pos: usize,
+    read_refs: usize,
+    write_refs: usize,
+}
+
+impl PipeState {
+    const fn empty() -> Self {
+        Self {
+            active: false,
+            buffer: [0; PIPE_BUFFER_SIZE],
+            read_pos: 0,
+            write_pos: 0,
+            read_refs: 0,
+            write_refs: 0,
+        }
+    }
+}
+
 static mut FD_TABLE: [LaFd; MAX_FDS] = [CLOSED_FD; MAX_FDS];
 static mut FD_TABLE_BACKUP: [LaFd; MAX_FDS] = [CLOSED_FD; MAX_FDS];
 static mut FD_IO_BUFFER: [u8; FD_IO_BUFFER_SIZE] = [0; FD_IO_BUFFER_SIZE];
@@ -104,10 +128,7 @@ static mut VIRTUAL_TEST_OPENAT_EXISTS_BACKUP: bool = false;
 static mut VIRTUAL_TEST_MMAP_EXISTS_BACKUP: bool = false;
 static mut VIRTUAL_TEST_MMAP_DATA_BACKUP: [u8; VIRTUAL_FILE_SIZE] = [0; VIRTUAL_FILE_SIZE];
 static mut VIRTUAL_TEST_MMAP_LEN_BACKUP: usize = 0;
-static mut PIPE_ACTIVE: bool = false;
-static mut PIPE_BUFFER: [u8; PIPE_BUFFER_SIZE] = [0; PIPE_BUFFER_SIZE];
-static mut PIPE_READ_POS: usize = 0;
-static mut PIPE_WRITE_POS: usize = 0;
+static mut PIPES: [PipeState; MAX_PIPES] = [PipeState::empty(); MAX_PIPES];
 
 pub(crate) fn reset_case_fd_state() {
     let mut cwd = PathBuf::empty();
@@ -122,9 +143,11 @@ pub(crate) fn reset_case_fd_state() {
         VIRTUAL_TEST_OPENAT_EXISTS = false;
         VIRTUAL_TEST_MMAP_EXISTS = false;
         VIRTUAL_TEST_MMAP_LEN = 0;
-        PIPE_ACTIVE = false;
-        PIPE_READ_POS = 0;
-        PIPE_WRITE_POS = 0;
+        let mut pipe = 0usize;
+        while pipe < MAX_PIPES {
+            PIPES[pipe] = PipeState::empty();
+            pipe += 1;
+        }
 
         let mut i = 0usize;
         while i < MAX_FDS {
@@ -171,11 +194,13 @@ pub(crate) fn save_fd_snapshot() {
         VIRTUAL_TEST_MMAP_EXISTS_BACKUP = VIRTUAL_TEST_MMAP_EXISTS;
         VIRTUAL_TEST_MMAP_DATA_BACKUP = VIRTUAL_TEST_MMAP_DATA;
         VIRTUAL_TEST_MMAP_LEN_BACKUP = VIRTUAL_TEST_MMAP_LEN;
+        add_pipe_refs_for_current_table();
     }
 }
 
 pub(crate) fn restore_fd_snapshot_after_child() {
     unsafe {
+        release_pipe_refs_for_current_table();
         FD_TABLE = FD_TABLE_BACKUP;
         CWD = CWD_BACKUP;
         VIRTUAL_TEST_CLOSE_EXISTS = VIRTUAL_TEST_CLOSE_EXISTS_BACKUP;
@@ -195,7 +220,9 @@ pub(crate) fn set_fd(fd: usize, entry: LaFd) -> bool {
         return false;
     }
     unsafe {
+        release_pipe_ref_for_entry(FD_TABLE[fd]);
         FD_TABLE[fd] = entry;
+        add_pipe_ref_for_entry(entry);
     }
     true
 }
@@ -205,9 +232,11 @@ pub(crate) fn close_fd(fd: usize) -> bool {
         return false;
     }
     unsafe {
-        if FD_TABLE[fd].kind == FD_CLOSED {
+        let entry = FD_TABLE[fd];
+        if entry.kind == FD_CLOSED {
             return false;
         }
+        release_pipe_ref_for_entry(entry);
         FD_TABLE[fd] = CLOSED_FD;
     }
     true
@@ -254,18 +283,17 @@ pub(crate) fn alloc_fd() -> Option<usize> {
 
 pub(crate) fn create_pipe_pair() -> Option<(usize, usize)> {
     let read_fd = alloc_fd()?;
+    let pipe_id = unsafe { alloc_pipe()? };
     unsafe {
-        PIPE_ACTIVE = true;
-        PIPE_READ_POS = 0;
-        PIPE_WRITE_POS = 0;
         FD_TABLE[read_fd] = LaFd {
             kind: FD_PIPE_READ,
-            inode: 0,
+            inode: pipe_id as u32,
             mode: 0,
             size: 0,
             offset: 0,
             path: PathBuf::empty(),
         };
+        add_pipe_ref_for_entry(FD_TABLE[read_fd]);
     }
     let write_fd = match alloc_fd() {
         Some(fd) => fd,
@@ -277,12 +305,13 @@ pub(crate) fn create_pipe_pair() -> Option<(usize, usize)> {
     unsafe {
         FD_TABLE[write_fd] = LaFd {
             kind: FD_PIPE_WRITE,
-            inode: 0,
+            inode: pipe_id as u32,
             mode: 0,
             size: 0,
             offset: 0,
             path: PathBuf::empty(),
         };
+        add_pipe_ref_for_entry(FD_TABLE[write_fd]);
     }
     Some((read_fd, write_fd))
 }
@@ -292,18 +321,24 @@ pub(crate) fn write_pipe(fd: usize, src: &[u8]) -> Result<usize, &'static str> {
     if entry.kind != FD_PIPE_WRITE {
         return Err("pipe_not_write");
     }
+    let pipe_id = pipe_id_for_entry(entry).ok_or("pipe_id")?;
     unsafe {
-        if !PIPE_ACTIVE {
+        let pipe = &mut PIPES[pipe_id];
+        if !pipe.active {
             return Err("pipe_inactive");
         }
-        let space = PIPE_BUFFER_SIZE.saturating_sub(PIPE_WRITE_POS);
+        if pipe.read_refs == 0 {
+            return Err("pipe_no_reader");
+        }
+        compact_pipe(pipe);
+        let space = PIPE_BUFFER_SIZE.saturating_sub(pipe.write_pos);
         let take = core::cmp::min(src.len(), space);
         let mut i = 0usize;
         while i < take {
-            PIPE_BUFFER[PIPE_WRITE_POS + i] = src[i];
+            pipe.buffer[pipe.write_pos + i] = src[i];
             i += 1;
         }
-        PIPE_WRITE_POS += take;
+        pipe.write_pos += take;
         Ok(take)
     }
 }
@@ -313,18 +348,24 @@ pub(crate) fn read_pipe(fd: usize, dst: &mut [u8]) -> Result<usize, &'static str
     if entry.kind != FD_PIPE_READ {
         return Err("pipe_not_read");
     }
+    let pipe_id = pipe_id_for_entry(entry).ok_or("pipe_id")?;
     unsafe {
-        if !PIPE_ACTIVE {
+        let pipe = &mut PIPES[pipe_id];
+        if !pipe.active {
             return Err("pipe_inactive");
         }
-        let available = PIPE_WRITE_POS.saturating_sub(PIPE_READ_POS);
+        let available = pipe.write_pos.saturating_sub(pipe.read_pos);
         let take = core::cmp::min(dst.len(), available);
         let mut i = 0usize;
         while i < take {
-            dst[i] = PIPE_BUFFER[PIPE_READ_POS + i];
+            dst[i] = pipe.buffer[pipe.read_pos + i];
             i += 1;
         }
-        PIPE_READ_POS += take;
+        pipe.read_pos += take;
+        if pipe.read_pos == pipe.write_pos {
+            pipe.read_pos = 0;
+            pipe.write_pos = 0;
+        }
         Ok(take)
     }
 }
@@ -630,4 +671,91 @@ fn bytes_eq(a: &[u8], b: &[u8]) -> bool {
         i += 1;
     }
     true
+}
+
+unsafe fn alloc_pipe() -> Option<usize> {
+    let mut id = 0usize;
+    while id < MAX_PIPES {
+        if !PIPES[id].active {
+            PIPES[id] = PipeState::empty();
+            PIPES[id].active = true;
+            return Some(id);
+        }
+        id += 1;
+    }
+    None
+}
+
+fn pipe_id_for_entry(entry: LaFd) -> Option<usize> {
+    if entry.kind != FD_PIPE_READ && entry.kind != FD_PIPE_WRITE {
+        return None;
+    }
+    let id = entry.inode as usize;
+    if id < MAX_PIPES {
+        Some(id)
+    } else {
+        None
+    }
+}
+
+unsafe fn add_pipe_ref_for_entry(entry: LaFd) {
+    if let Some(id) = pipe_id_for_entry(entry) {
+        if PIPES[id].active {
+            if entry.kind == FD_PIPE_READ {
+                PIPES[id].read_refs = PIPES[id].read_refs.saturating_add(1);
+            } else {
+                PIPES[id].write_refs = PIPES[id].write_refs.saturating_add(1);
+            }
+        }
+    }
+}
+
+unsafe fn release_pipe_ref_for_entry(entry: LaFd) {
+    if let Some(id) = pipe_id_for_entry(entry) {
+        if PIPES[id].active {
+            if entry.kind == FD_PIPE_READ {
+                PIPES[id].read_refs = PIPES[id].read_refs.saturating_sub(1);
+            } else {
+                PIPES[id].write_refs = PIPES[id].write_refs.saturating_sub(1);
+            }
+            if PIPES[id].read_refs == 0 && PIPES[id].write_refs == 0 {
+                PIPES[id] = PipeState::empty();
+            }
+        }
+    }
+}
+
+unsafe fn add_pipe_refs_for_current_table() {
+    let mut fd = 0usize;
+    while fd < MAX_FDS {
+        add_pipe_ref_for_entry(FD_TABLE[fd]);
+        fd += 1;
+    }
+}
+
+unsafe fn release_pipe_refs_for_current_table() {
+    let mut fd = 0usize;
+    while fd < MAX_FDS {
+        release_pipe_ref_for_entry(FD_TABLE[fd]);
+        fd += 1;
+    }
+}
+
+fn compact_pipe(pipe: &mut PipeState) {
+    if pipe.read_pos == 0 {
+        return;
+    }
+    if pipe.read_pos == pipe.write_pos {
+        pipe.read_pos = 0;
+        pipe.write_pos = 0;
+        return;
+    }
+    let remaining = pipe.write_pos - pipe.read_pos;
+    let mut i = 0usize;
+    while i < remaining {
+        pipe.buffer[i] = pipe.buffer[pipe.read_pos + i];
+        i += 1;
+    }
+    pipe.read_pos = 0;
+    pipe.write_pos = remaining;
 }
