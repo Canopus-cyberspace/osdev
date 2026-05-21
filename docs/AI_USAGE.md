@@ -79,3 +79,11 @@ No scratch-FS source change was accepted because the attempt destabilized known-
 AI was used to inspect the LoongArch BusyBox runner, fd table, syscall compatibility paths, user/process state, MMU synchronization path, and official BusyBox judge format; attempt a gated Virtual Scratch FS expansion; test a reduced `printf` probe; detect local stalls; apply the fallback policy; validate the restored baseline; and document the iteration.
 
 No source change was accepted because the attempts still risked known-good BusyBox stability. No fake BusyBox output, hard-coded command success, official script change, or `runtime_dispatch.rs` change was added.
+
+## Iteration 15
+
+AI was used to inspect the LoongArch BusyBox runner, user run-state ownership, trap observation path, Makefile LoongArch build flow, local QEMU diagnostic logs, and official Docker logs.
+
+Accepted changes add only cfg-gated non-scoring diagnostics for `basename /aaa/bbb`, `printf "abc\n"`, `uname`, and `ash -c exit`. The normal BusyBox scoring path remains limited to the five known-good commands, and the diagnostic mode is disabled unless `--cfg loongarch64_busybox_diag` is explicitly passed.
+
+No fake BusyBox output, hard-coded command success, scratch-FS reintroduction, official script change, or `runtime_dispatch.rs` change was added.

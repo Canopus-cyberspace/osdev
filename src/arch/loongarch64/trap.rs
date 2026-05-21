@@ -9,8 +9,23 @@ use crate::user;
 use crate::user_mmu;
 
 const LOONGARCH_ECODE_SYS: usize = 11;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_ECODE_INT: usize = 0;
 const LOONGARCH_ESTAT_ECODE_SHIFT: usize = 16;
 const LOONGARCH_ESTAT_ECODE_MASK: usize = 0x3f;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_ESTAT_TIMER_INT: usize = 1 << 11;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_CRMD_IE: usize = 1 << 2;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_ECFG_TIMER_INT: usize = 1 << 11;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_TIMER_INITVAL: usize = 200_000;
+
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_TIMER_SAVED_CRMD: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_TIMER_SAVED_ECFG: usize = 0;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -393,6 +408,44 @@ loongarch64_user_region_end:
 "#
 );
 
+#[cfg(loongarch64_busybox_diag)]
+global_asm!(
+    r#"
+    .section .text
+    .balign 4
+    .globl loongarch64_diag_read_crmd
+loongarch64_diag_read_crmd:
+    csrrd $a0, 0x0
+    ret
+
+    .globl loongarch64_diag_write_crmd
+loongarch64_diag_write_crmd:
+    csrwr $a0, 0x0
+    ret
+
+    .globl loongarch64_diag_read_ecfg
+loongarch64_diag_read_ecfg:
+    csrrd $a0, 0x4
+    ret
+
+    .globl loongarch64_diag_write_ecfg
+loongarch64_diag_write_ecfg:
+    csrwr $a0, 0x4
+    ret
+
+    .globl loongarch64_diag_write_tcfg
+loongarch64_diag_write_tcfg:
+    csrwr $a0, 0x41
+    ret
+
+    .globl loongarch64_diag_clear_timer
+loongarch64_diag_clear_timer:
+    li.d $a0, 1
+    csrwr $a0, 0x44
+    ret
+"#
+);
+
 extern "C" {
     fn loongarch64_install_trap_vector();
     fn loongarch64_trigger_syscall_probe();
@@ -402,6 +455,16 @@ extern "C" {
     fn loongarch64_user_exit_return();
     fn loongarch64_save_kernel_return_state(state: *mut KernelReturnState);
     fn loongarch64_restore_kernel_return_state(state: *const KernelReturnState);
+}
+
+#[cfg(loongarch64_busybox_diag)]
+extern "C" {
+    fn loongarch64_diag_read_crmd() -> usize;
+    fn loongarch64_diag_write_crmd(value: usize);
+    fn loongarch64_diag_read_ecfg() -> usize;
+    fn loongarch64_diag_write_ecfg(value: usize);
+    fn loongarch64_diag_write_tcfg(value: usize);
+    fn loongarch64_diag_clear_timer();
 }
 
 pub fn install_trap_vector() {
@@ -447,6 +510,28 @@ pub(crate) fn user_exit_return_addr() -> usize {
     loongarch64_user_exit_return as *const () as usize
 }
 
+#[cfg(loongarch64_busybox_diag)]
+pub(crate) fn start_diagnostic_timer() {
+    unsafe {
+        DIAGNOSTIC_TIMER_SAVED_CRMD = loongarch64_diag_read_crmd();
+        DIAGNOSTIC_TIMER_SAVED_ECFG = loongarch64_diag_read_ecfg();
+        loongarch64_diag_clear_timer();
+        loongarch64_diag_write_ecfg(DIAGNOSTIC_TIMER_SAVED_ECFG | LOONGARCH_ECFG_TIMER_INT);
+        loongarch64_diag_write_crmd(DIAGNOSTIC_TIMER_SAVED_CRMD | LOONGARCH_CRMD_IE);
+        loongarch64_diag_write_tcfg((LOONGARCH_TIMER_INITVAL << 2) | 0x3);
+    }
+}
+
+#[cfg(loongarch64_busybox_diag)]
+pub(crate) fn stop_diagnostic_timer() {
+    unsafe {
+        loongarch64_diag_write_tcfg(0);
+        loongarch64_diag_clear_timer();
+        loongarch64_diag_write_ecfg(DIAGNOSTIC_TIMER_SAVED_ECFG);
+        loongarch64_diag_write_crmd(DIAGNOSTIC_TIMER_SAVED_CRMD);
+    }
+}
+
 pub fn run_user_mode_smoke() {
     early_console_write(
         "[loongarch64] fallback embedded PLV3 smoke\n",
@@ -462,7 +547,8 @@ pub fn run_user_mode_smoke() {
 #[no_mangle]
 extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
     let ecode = (frame.estat >> LOONGARCH_ESTAT_ECODE_SHIFT) & LOONGARCH_ESTAT_ECODE_MASK;
-    let quiet_group = user::is_any_group_active();
+    user::record_trap_observation(ecode, frame.era, frame.badv);
+    let quiet_group = user::is_any_group_active() || user::diagnostic_active();
     let quiet_real_write = ecode == LOONGARCH_ECODE_SYS && syscall::is_quiet_real_write(frame);
     if !quiet_group && !quiet_real_write {
         early_console_write("[loongarch64-trap] ecode=");
@@ -472,6 +558,18 @@ extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
         early_console_write(" era=");
         write_usize_hex(frame.era);
         early_console_write("\n");
+    }
+
+    #[cfg(loongarch64_busybox_diag)]
+    if ecode == LOONGARCH_ECODE_INT && (frame.estat & LOONGARCH_ESTAT_TIMER_INT) != 0 {
+        unsafe {
+            loongarch64_diag_clear_timer();
+        }
+        if (frame.prmd & 0x3) == 3 && user::diagnostic_timer_tick_should_abort() {
+            frame.era = user_exit_return_addr();
+            frame.prmd &= !0x3;
+        }
+        return;
     }
 
     if ecode == LOONGARCH_ECODE_SYS {

@@ -12,6 +12,7 @@ KERNEL_RV ?= kernel-rv
 KERNEL_LA ?= kernel-la
 LOONGARCH_KERNEL_SRC ?= src/arch/loongarch64/kernel.rs
 LOONGARCH_LINKER ?= src/arch/loongarch64/linker.ld
+LOONGARCH_RUSTFLAGS ?=
 MAKE_BUILD_LOG ?= .repair_logs/make_all_cargo_build.log
 LOONGARCH_BUILD_LOG ?= .repair_logs/make_all_loongarch_build.log
 FORBIDDEN_BUILD_RE := matches any value|unreachable pattern|warning: unused variable:
@@ -55,6 +56,7 @@ loongarch-kernel:
 		-C linker=rust-lld \
 		-C link-arg=-T$(LOONGARCH_LINKER) \
 		-C link-arg=--no-relax \
+		$(LOONGARCH_RUSTFLAGS) \
 		-o "$(KERNEL_LA)" 2>&1 | tee "$(LOONGARCH_BUILD_LOG)"; \
 	if grep -nE '$(FORBIDDEN_BUILD_RE)' "$(LOONGARCH_BUILD_LOG)" >/dev/null; then \
 		echo "[make] forbidden LoongArch build output observed"; \

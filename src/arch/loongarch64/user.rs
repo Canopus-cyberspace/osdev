@@ -1,3 +1,5 @@
+#![cfg_attr(loongarch64_busybox_diag, allow(dead_code))]
+
 use crate::console::{write_usize_dec, write_usize_hex};
 use crate::early_console_write;
 use crate::fd_table;
@@ -18,6 +20,22 @@ static mut TIMEOUT_ACTIVE: bool = false;
 static mut SYSCALL_BUDGET_LIMIT: usize = 0;
 static mut SYSCALL_BUDGET_COUNT: usize = 0;
 static mut SYSCALL_BUDGET_LAST_ID: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_ACTIVE: bool = false;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_TICK_LIMIT: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_TIMER_TICKS: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_TRAP_COUNT: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_LAST_ERA: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_LAST_ECODE: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_LAST_BADV: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_SAME_ERA_COUNT: usize = 0;
 
 #[derive(Copy, Clone)]
 pub(crate) struct UserRunSnapshot {
@@ -32,6 +50,18 @@ pub(crate) struct UserRunSnapshot {
     pub(crate) timeout_active: bool,
     pub(crate) timeout_syscalls: usize,
     pub(crate) timeout_last_syscall_id: usize,
+    #[cfg(loongarch64_busybox_diag)]
+    pub(crate) diagnostic_trap_count: usize,
+    #[cfg(loongarch64_busybox_diag)]
+    pub(crate) diagnostic_last_era: usize,
+    #[cfg(loongarch64_busybox_diag)]
+    pub(crate) diagnostic_last_ecode: usize,
+    #[cfg(loongarch64_busybox_diag)]
+    pub(crate) diagnostic_last_badv: usize,
+    #[cfg(loongarch64_busybox_diag)]
+    pub(crate) diagnostic_same_era_count: usize,
+    #[cfg(loongarch64_busybox_diag)]
+    pub(crate) diagnostic_timer_ticks: usize,
 }
 
 pub(crate) fn reset_case_state() {
@@ -56,6 +86,17 @@ fn reset_user_run_state() {
         SYSCALL_BUDGET_COUNT = 0;
         SYSCALL_BUDGET_LAST_ID = 0;
     }
+    #[cfg(loongarch64_busybox_diag)]
+    unsafe {
+        DIAGNOSTIC_ACTIVE = false;
+        DIAGNOSTIC_TICK_LIMIT = 0;
+        DIAGNOSTIC_TIMER_TICKS = 0;
+        DIAGNOSTIC_TRAP_COUNT = 0;
+        DIAGNOSTIC_LAST_ERA = 0;
+        DIAGNOSTIC_LAST_ECODE = 0;
+        DIAGNOSTIC_LAST_BADV = 0;
+        DIAGNOSTIC_SAME_ERA_COUNT = 0;
+    }
 }
 
 pub(crate) fn set_basic_group_active(active: bool) {
@@ -72,6 +113,17 @@ pub(crate) fn set_busybox_group_active(active: bool) {
 
 pub(crate) fn is_any_group_active() -> bool {
     unsafe { BASIC_GROUP_ACTIVE || BUSYBOX_GROUP_ACTIVE }
+}
+
+pub(crate) fn diagnostic_active() -> bool {
+    #[cfg(loongarch64_busybox_diag)]
+    unsafe {
+        DIAGNOSTIC_ACTIVE
+    }
+    #[cfg(not(loongarch64_busybox_diag))]
+    {
+        false
+    }
 }
 
 pub(crate) fn record_write_syscall() {
@@ -109,6 +161,67 @@ pub(crate) fn start_syscall_budget(limit: usize) {
         SYSCALL_BUDGET_LIMIT = limit;
         SYSCALL_BUDGET_COUNT = 0;
         SYSCALL_BUDGET_LAST_ID = 0;
+    }
+}
+
+#[cfg(loongarch64_busybox_diag)]
+pub(crate) fn start_diagnostic_run(tick_limit: usize) {
+    unsafe {
+        DIAGNOSTIC_ACTIVE = true;
+        DIAGNOSTIC_TICK_LIMIT = tick_limit;
+        DIAGNOSTIC_TIMER_TICKS = 0;
+        DIAGNOSTIC_TRAP_COUNT = 0;
+        DIAGNOSTIC_LAST_ERA = 0;
+        DIAGNOSTIC_LAST_ECODE = 0;
+        DIAGNOSTIC_LAST_BADV = 0;
+        DIAGNOSTIC_SAME_ERA_COUNT = 0;
+        TIMEOUT_ACTIVE = false;
+    }
+}
+
+#[cfg(loongarch64_busybox_diag)]
+pub(crate) fn finish_diagnostic_run() {
+    unsafe {
+        DIAGNOSTIC_ACTIVE = false;
+        DIAGNOSTIC_TICK_LIMIT = 0;
+    }
+}
+
+pub(crate) fn record_trap_observation(ecode: usize, era: usize, badv: usize) {
+    #[cfg(not(loongarch64_busybox_diag))]
+    {
+        let _ = (ecode, era, badv);
+    }
+    #[cfg(loongarch64_busybox_diag)]
+    unsafe {
+        if !DIAGNOSTIC_ACTIVE {
+            return;
+        }
+        DIAGNOSTIC_TRAP_COUNT = DIAGNOSTIC_TRAP_COUNT.saturating_add(1);
+        if DIAGNOSTIC_LAST_ERA == era {
+            DIAGNOSTIC_SAME_ERA_COUNT = DIAGNOSTIC_SAME_ERA_COUNT.saturating_add(1);
+        } else {
+            DIAGNOSTIC_SAME_ERA_COUNT = 0;
+        }
+        DIAGNOSTIC_LAST_ERA = era;
+        DIAGNOSTIC_LAST_ECODE = ecode;
+        DIAGNOSTIC_LAST_BADV = badv;
+    }
+}
+
+#[cfg(loongarch64_busybox_diag)]
+pub(crate) fn diagnostic_timer_tick_should_abort() -> bool {
+    unsafe {
+        if !DIAGNOSTIC_ACTIVE || DIAGNOSTIC_TICK_LIMIT == 0 {
+            return false;
+        }
+        DIAGNOSTIC_TIMER_TICKS = DIAGNOSTIC_TIMER_TICKS.saturating_add(1);
+        if DIAGNOSTIC_TIMER_TICKS > DIAGNOSTIC_TICK_LIMIT {
+            TIMEOUT_ACTIVE = true;
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -152,6 +265,18 @@ pub(crate) fn run_snapshot() -> UserRunSnapshot {
             timeout_active: TIMEOUT_ACTIVE,
             timeout_syscalls: SYSCALL_BUDGET_COUNT,
             timeout_last_syscall_id: SYSCALL_BUDGET_LAST_ID,
+            #[cfg(loongarch64_busybox_diag)]
+            diagnostic_trap_count: DIAGNOSTIC_TRAP_COUNT,
+            #[cfg(loongarch64_busybox_diag)]
+            diagnostic_last_era: DIAGNOSTIC_LAST_ERA,
+            #[cfg(loongarch64_busybox_diag)]
+            diagnostic_last_ecode: DIAGNOSTIC_LAST_ECODE,
+            #[cfg(loongarch64_busybox_diag)]
+            diagnostic_last_badv: DIAGNOSTIC_LAST_BADV,
+            #[cfg(loongarch64_busybox_diag)]
+            diagnostic_same_era_count: DIAGNOSTIC_SAME_ERA_COUNT,
+            #[cfg(loongarch64_busybox_diag)]
+            diagnostic_timer_ticks: DIAGNOSTIC_TIMER_TICKS,
         }
     }
 }

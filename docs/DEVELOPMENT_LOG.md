@@ -101,3 +101,11 @@ Repeated the LoongArch BusyBox file-operation expansion as a gated attempt with 
 Local testing again showed the scratch path was not safe to ship: `touch test.txt` stalled, directory command probing destabilized the known-good `false` command, and a reduced `printf "abc\n"` probe later stalled on a fresh run. The risky patches were saved as `/tmp/iter14_risky_busybox_scratch.diff` and `/tmp/iter14_printf_only.diff`, then reverted under the fallback policy.
 
 No source changes shipped. The final tree preserves the known-good BusyBox scoring commands and official score-260 baseline. Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.
+
+## Iteration 15
+
+Added a cfg-gated LoongArch BusyBox diagnostic mode for user-mode stall/fault investigation without changing official scoring behavior. `busybox_runner.rs` owns the diagnostic command table and summary output, `user.rs` owns diagnostic counters and snapshots, `trap.rs` owns trap observation and a diagnostic timer hook, `kernel.rs` selects the diagnostic runner only under `loongarch64_busybox_diag`, and the `Makefile` exposes a local `LOONGARCH_RUSTFLAGS` hook.
+
+The isolated diagnostic build showed `basename /aaa/bbb`, `printf "abc\n"`, and `uname` can exit with code 0 when run as one-command probes, while `ash -c exit` faults reproducibly at `ERA=0x1201b64b8`, `BADV=0x1201b64b8`, `ECODE=15`. No diagnostic command was promoted to official BusyBox scoring.
+
+Normal local validation preserved LoongArch basic 32/32 and BusyBox smoke 7/7. Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.

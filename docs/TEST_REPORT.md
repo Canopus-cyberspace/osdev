@@ -145,6 +145,63 @@ testcase busybox ls success
 
 The official log did not show `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, or a user fault in enabled commands.
 
+## Iteration 15
+
+Local build, image generation, ELF checks, normal LoongArch smoke, diagnostic LoongArch smoke, and official Docker validation passed after adding cfg-gated non-scoring BusyBox diagnostics.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make -j 16 all: passed with the known local jobserver warning
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+LoongArch local basic smoke: attempted=32 completed=32 failed=none
+LoongArch local BusyBox smoke: completed=7 attempted=7 matched=7 failed=0 disabled=3
+```
+
+Diagnostic build:
+
+```text
+make KERNEL_LA=kernel-la-diag LOONGARCH_RUSTFLAGS='--cfg loongarch64_busybox_diag' loongarch-kernel: passed
+```
+
+Diagnostic command summaries:
+
+```text
+diag-basename: exited, exit_code=0, last_era=0x1201aa0bc, last_ecode=11, syscalls=4, traps=4
+diag-printf: exited, exit_code=0, last_era=0x1201aa0bc, last_ecode=11, syscalls=6, traps=6
+diag-uname: exited, exit_code=0, last_era=0x1201aa0bc, last_ecode=11, syscalls=6, traps=6
+diag-ash-exit: fault, last_era=0x1201b64b8, last_badv=0x1201b64b8, last_ecode=15, syscalls=7, traps=8
+```
+
+Final official validation:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260521_235948/docker_evaluate.log
+docker_evaluate.log size: 798847 bytes
+Verdict: Accpted
+Score: 260
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 102.0
+busybox-musl-la: 5.0
+```
+
+Official LoongArch evidence:
+
+```text
+[loongarch64-basic] attempted=32 completed=32 failed=none
+[loongarch64-busybox] smoke completed=7 attempted=7 matched=7 failed=0 disabled=3
+testcase busybox true success
+testcase busybox false success
+testcase busybox pwd success
+testcase busybox sh -c exit success
+testcase busybox ls success
+```
+
+The final official log did not show `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, or diagnostic output. A previous official attempt in the same iteration hit a transient LoongArch `virtio_pci_timeout`/`virtio_pci_status` failure and was discarded as validation evidence after the final rerun passed.
+
 ## Iteration 03
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.
