@@ -43,3 +43,9 @@ Accepted changes loaded the real `/musl/busybox` payload and entered PLV3 for a 
 AI was used to inspect the LoongArch fixed-address BusyBox blocker, implement the focused `user_mmu.rs` CSR/TLB helper module, wire fixed ET_EXEC mappings through `real_elf.rs`, validate the non-scoring BusyBox `true` probe, and document the evidence.
 
 Accepted changes let the real `/musl/busybox true` enter at `0x1201b640c` and exit with code 0 through the LoongArch trap path. No official BusyBox group marker, fake BusyBox output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.
+
+## Iteration 09
+
+AI was used to inspect real BusyBox command traces, add a bounded BusyBox smoke runner, implement narrow syscall compatibility, preserve the 32-case basic-musl regression line, attempt official validation, and document the iteration.
+
+Accepted changes expanded real non-scoring BusyBox coverage to seven commands. No official BusyBox group marker, fake BusyBox output, hard-coded success text, or `runtime_dispatch.rs` rewrite was added.

@@ -1,0 +1,34 @@
+expand non-scoring loongarch busybox smoke coverage
+
+Broaden the LoongArch BusyBox smoke runner from a single true command to a
+bounded non-scoring command set. The runner now executes real /musl/busybox
+from sdcard-la.img for true, false, echo hello, pwd, sh -c exit, ls, and
+cat /musl/busybox_cmd.txt, captures each exit code, and reports a concise
+completed/attempted/matched/failed summary. It still emits no official
+busybox-musl group markers and does not fake command output or success.
+
+Add per-run syscall-budget state for BusyBox smoke commands so syscall-looping
+commands can be returned to the kernel cleanly. Keep this state in the
+LoongArch user-run owner and leave basic-musl behavior unchanged.
+
+Add narrow LoongArch syscall compatibility used by real BusyBox execution:
+writev/readv forwarding through existing user-copy paths, fcntl success for
+simple descriptor queries, signal setup no-ops, and a regular-file sendfile
+path for stdout. Make getdents64 directory offsets return EOF on repeated
+calls and provide path-aware entries for / and /musl so busybox ls sees real
+sdcard-backed names.
+
+Keep runtime_dispatch.rs unchanged.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf: passed
+- make all: passed
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU basic smoke: attempted=32 completed=32 failed=none
+- local BusyBox smoke: completed=7 attempted=7 matched=7 failed=0
+- no unsupported, missing syscall, timeout, user fault, panic, Failed to load
+  ELF, or ENOSYS marker in the final local smoke
+
+Official validation was attempted but the wrapper timed out before producing
+Docker evaluation output.

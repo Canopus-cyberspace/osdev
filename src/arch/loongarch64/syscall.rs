@@ -73,6 +73,12 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
     let quiet_group = user::is_basic_group_active();
     let quiet_real_write = id == syscall_numbers::SYS_WRITE && real_elf::has_loaded_user_elf();
 
+    if user::consume_syscall_budget(id) {
+        abi.frame.era = trap::user_exit_return_addr();
+        abi.frame.prmd &= !0x3;
+        return;
+    }
+
     if !quiet_group && !quiet_real_write {
         early_console_write("[loongarch64-syscall] id=");
         write_usize_dec(id);
@@ -90,8 +96,16 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_write(args[0], args[1], args[2], quiet_real_write);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_WRITEV => {
+            let ret = syscall_writev(args[0], args[1], args[2], quiet_real_write);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_READ => {
             let ret = syscall_read(args[0], args[1], args[2]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_READV => {
+            let ret = syscall_readv(args[0], args[1], args[2]);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_OPENAT => {
@@ -129,8 +143,15 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_dup3(args[0], args[1], args[2]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_FCNTL => {
+            abi.set_return_value(0);
+        }
         syscall_numbers::SYS_FSTAT => {
             let ret = syscall_fstat(args[0], args[1]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_SENDFILE => {
+            let ret = syscall_sendfile(args[0], args[1], args[2], args[3]);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_STATX => {
@@ -201,6 +222,9 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             abi.set_return_value(1);
         }
         syscall_numbers::SYS_SET_ROBUST_LIST => {
+            abi.set_return_value(0);
+        }
+        syscall_numbers::SYS_RT_SIGACTION | syscall_numbers::SYS_RT_SIGPROCMASK => {
             abi.set_return_value(0);
         }
         syscall_numbers::SYS_GETRLIMIT | syscall_numbers::SYS_PRLIMIT64 => {
@@ -422,6 +446,66 @@ fn syscall_read(fd: usize, buf: usize, len: usize) -> isize {
     take as isize
 }
 
+fn syscall_writev(fd: usize, iov_ptr: usize, iovcnt: usize, quiet: bool) -> isize {
+    if iovcnt > 16 {
+        return EINVAL;
+    }
+    let mut total = 0isize;
+    let mut i = 0usize;
+    while i < iovcnt {
+        let base = match user_mem::read_user_usize(iov_ptr + i * 16) {
+            Ok(base) => base,
+            Err(_) => return EFAULT,
+        };
+        let len = match user_mem::read_user_usize(iov_ptr + i * 16 + 8) {
+            Ok(len) => len,
+            Err(_) => return EFAULT,
+        };
+        if len != 0 {
+            let ret = syscall_write(fd, base, len, quiet);
+            if ret < 0 {
+                return if total > 0 { total } else { ret };
+            }
+            total = total.saturating_add(ret);
+            if ret as usize != len {
+                return total;
+            }
+        }
+        i += 1;
+    }
+    total
+}
+
+fn syscall_readv(fd: usize, iov_ptr: usize, iovcnt: usize) -> isize {
+    if iovcnt > 16 {
+        return EINVAL;
+    }
+    let mut total = 0isize;
+    let mut i = 0usize;
+    while i < iovcnt {
+        let base = match user_mem::read_user_usize(iov_ptr + i * 16) {
+            Ok(base) => base,
+            Err(_) => return EFAULT,
+        };
+        let len = match user_mem::read_user_usize(iov_ptr + i * 16 + 8) {
+            Ok(len) => len,
+            Err(_) => return EFAULT,
+        };
+        if len != 0 {
+            let ret = syscall_read(fd, base, len);
+            if ret < 0 {
+                return if total > 0 { total } else { ret };
+            }
+            total = total.saturating_add(ret);
+            if ret == 0 || ret as usize != len {
+                return total;
+            }
+        }
+        i += 1;
+    }
+    total
+}
+
 fn syscall_openat(dirfd_raw: usize, path_ptr: usize, flags: usize, mode: usize) -> isize {
     let mut raw = [0u8; PATH_BUF_SIZE];
     let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
@@ -570,6 +654,47 @@ fn syscall_pipe2(pipefd_ptr: usize, flags: usize) -> isize {
         return EFAULT;
     }
     0
+}
+
+fn syscall_sendfile(out_fd: usize, in_fd: usize, offset_ptr: usize, count: usize) -> isize {
+    let entry = match fd_table::fd_entry(in_fd) {
+        Some(entry) if entry.kind == FD_REGULAR => entry,
+        Some(_) => return EINVAL,
+        None => return EBADF,
+    };
+    let path = match entry.path.as_str() {
+        Ok(path) => path,
+        Err(_) => return EINVAL,
+    };
+    let file = match unsafe { sdcard_ext4::load_path(path, fd_table::fd_io_buffer_mut()) } {
+        Ok(file) => file,
+        Err(_) => return ENOENT,
+    };
+    let start = if offset_ptr == 0 {
+        entry.offset
+    } else {
+        match user_mem::read_user_usize(offset_ptr) {
+            Ok(offset) => offset,
+            Err(_) => return EFAULT,
+        }
+    };
+    if start >= file.size {
+        return 0;
+    }
+    let take = core::cmp::min(count, core::cmp::min(file.size - start, FD_IO_BUFFER_SIZE));
+    let src = unsafe { &fd_table::fd_io_buffer_mut()[start..start + take] };
+    if out_fd == 1 || out_fd == 2 {
+        write_bytes(src);
+    } else {
+        return EBADF;
+    }
+    let next = start.saturating_add(take);
+    if offset_ptr == 0 {
+        let _ = fd_table::update_fd_offset(in_fd, next);
+    } else if real_elf::write_user_usize(offset_ptr, next).is_err() {
+        return EFAULT;
+    }
+    take as isize
 }
 
 fn syscall_execve(
@@ -916,13 +1041,28 @@ fn syscall_getdents64(fd: usize, buf: usize, len: usize) -> isize {
     if entry.kind != FD_DIRECTORY {
         return EINVAL;
     }
+    if entry.offset != 0 {
+        return 0;
+    }
+    let path = match entry.path.as_str() {
+        Ok(path) => path,
+        Err(_) => return EINVAL,
+    };
     let mut written = 0usize;
-    if write_dirent64(buf, len, &mut written, 2, DT_DIR, b".").is_err()
-        || write_dirent64(buf, len, &mut written, 20, DT_DIR, b"basic").is_err()
-        || write_dirent64(buf, len, &mut written, 49, DT_REG, b"text.txt").is_err()
-    {
+    let result = if path_eq(path, "/") {
+        write_dirent64(buf, len, &mut written, 12, DT_DIR, b"musl")
+    } else if path_eq(path, "/musl") {
+        write_dirent64(buf, len, &mut written, 20, DT_DIR, b"basic")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 59, DT_REG, b"busybox"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 60, DT_REG, b"busybox_cmd.txt"))
+    } else {
+        write_dirent64(buf, len, &mut written, 2, DT_DIR, b".")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 49, DT_REG, b"text.txt"))
+    };
+    if result.is_err() {
         return EINVAL;
     }
+    let _ = fd_table::update_fd_offset(fd, written);
     written as isize
 }
 
@@ -1174,6 +1314,22 @@ fn write_le64(dst: &mut [u8], off: usize, value: usize) {
         dst[off + i] = bytes[i];
         i += 1;
     }
+}
+
+fn path_eq(path: &str, expected: &str) -> bool {
+    let a = path.as_bytes();
+    let b = expected.as_bytes();
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut i = 0usize;
+    while i < a.len() {
+        if a[i] != b[i] {
+            return false;
+        }
+        i += 1;
+    }
+    true
 }
 
 fn next_time_tick() -> usize {

@@ -51,3 +51,11 @@ Added `src/arch/loongarch64/user_mmu.rs` as the focused LoongArch CSR/DMW/TLB ow
 The real `/musl/busybox true` command now loads from `sdcard-la.img`, enters at `0x1201b640c`, reaches syscall traps in the BusyBox fixed virtual range, and exits with code 0. Official BusyBox scoring remains disabled because only the bounded non-scoring smoke is stable.
 
 Local smoke preserved all 32 enabled LoongArch basic-musl cases. Official validation could not be refreshed because Docker was unavailable before kernel evaluation.
+
+## Iteration 09
+
+Expanded the non-scoring LoongArch BusyBox smoke to seven real commands: `true`, `false`, `echo hello`, `pwd`, `sh -c exit`, `ls`, and `cat /musl/busybox_cmd.txt`. All are loaded from the real `/musl/busybox` ET_EXEC on `sdcard-la.img` and run through PLV3 without official BusyBox group markers.
+
+Added a BusyBox-only syscall budget in `user.rs`, narrow compatibility in `syscall.rs` for `writev`, `readv`, `fcntl`, `sendfile`, and signal setup calls, and fixed `getdents64` EOF/path behavior for BusyBox `ls`.
+
+Local smoke preserved all 32 enabled LoongArch basic-musl cases and completed the BusyBox smoke with `completed=7 attempted=7 matched=7 failed=0`. Official validation was attempted but timed out before producing Docker evaluation output.

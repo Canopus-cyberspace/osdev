@@ -13,6 +13,10 @@ static mut USER_FAULT_ERA: usize = 0;
 static mut USER_FAULT_BADV: usize = 0;
 static mut MISSING_SYSCALL_ACTIVE: bool = false;
 static mut MISSING_SYSCALL_ID: usize = 0;
+static mut TIMEOUT_ACTIVE: bool = false;
+static mut SYSCALL_BUDGET_LIMIT: usize = 0;
+static mut SYSCALL_BUDGET_COUNT: usize = 0;
+static mut SYSCALL_BUDGET_LAST_ID: usize = 0;
 
 #[derive(Copy, Clone)]
 pub(crate) struct UserRunSnapshot {
@@ -24,6 +28,9 @@ pub(crate) struct UserRunSnapshot {
     pub(crate) fault_badv: usize,
     pub(crate) missing_syscall_active: bool,
     pub(crate) missing_syscall_id: usize,
+    pub(crate) timeout_active: bool,
+    pub(crate) timeout_syscalls: usize,
+    pub(crate) timeout_last_syscall_id: usize,
 }
 
 pub(crate) fn reset_case_state() {
@@ -43,6 +50,10 @@ fn reset_user_run_state() {
         USER_FAULT_BADV = 0;
         MISSING_SYSCALL_ACTIVE = false;
         MISSING_SYSCALL_ID = 0;
+        TIMEOUT_ACTIVE = false;
+        SYSCALL_BUDGET_LIMIT = 0;
+        SYSCALL_BUDGET_COUNT = 0;
+        SYSCALL_BUDGET_LAST_ID = 0;
     }
 }
 
@@ -85,6 +96,31 @@ pub(crate) fn record_missing_syscall(id: usize) {
     }
 }
 
+pub(crate) fn start_syscall_budget(limit: usize) {
+    unsafe {
+        TIMEOUT_ACTIVE = false;
+        SYSCALL_BUDGET_LIMIT = limit;
+        SYSCALL_BUDGET_COUNT = 0;
+        SYSCALL_BUDGET_LAST_ID = 0;
+    }
+}
+
+pub(crate) fn consume_syscall_budget(id: usize) -> bool {
+    unsafe {
+        if SYSCALL_BUDGET_LIMIT == 0 || TIMEOUT_ACTIVE {
+            return false;
+        }
+        SYSCALL_BUDGET_COUNT = SYSCALL_BUDGET_COUNT.saturating_add(1);
+        SYSCALL_BUDGET_LAST_ID = id;
+        if SYSCALL_BUDGET_COUNT > SYSCALL_BUDGET_LIMIT {
+            TIMEOUT_ACTIVE = true;
+            true
+        } else {
+            false
+        }
+    }
+}
+
 pub(crate) fn report_missing_syscall() {
     unsafe {
         if MISSING_SYSCALL_ACTIVE {
@@ -106,6 +142,9 @@ pub(crate) fn run_snapshot() -> UserRunSnapshot {
             fault_badv: USER_FAULT_BADV,
             missing_syscall_active: MISSING_SYSCALL_ACTIVE,
             missing_syscall_id: MISSING_SYSCALL_ID,
+            timeout_active: TIMEOUT_ACTIVE,
+            timeout_syscalls: SYSCALL_BUDGET_COUNT,
+            timeout_last_syscall_id: SYSCALL_BUDGET_LAST_ID,
         }
     }
 }

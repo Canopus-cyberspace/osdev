@@ -8,42 +8,101 @@ use crate::user;
 struct BusyboxCommand {
     name: &'static str,
     argv: &'static [&'static [u8]],
+    expected_exit: usize,
 }
 
 const COMMANDS: &[BusyboxCommand] = &[
     BusyboxCommand {
         name: "true",
         argv: &[b"busybox", b"true"],
+        expected_exit: 0,
+    },
+    BusyboxCommand {
+        name: "false",
+        argv: &[b"busybox", b"false"],
+        expected_exit: 1,
+    },
+    BusyboxCommand {
+        name: "echo",
+        argv: &[b"busybox", b"echo", b"hello"],
+        expected_exit: 0,
+    },
+    BusyboxCommand {
+        name: "pwd",
+        argv: &[b"busybox", b"pwd"],
+        expected_exit: 0,
+    },
+    BusyboxCommand {
+        name: "sh-exit",
+        argv: &[b"busybox", b"sh", b"-c", b"exit"],
+        expected_exit: 0,
+    },
+    BusyboxCommand {
+        name: "ls",
+        argv: &[b"busybox", b"ls"],
+        expected_exit: 0,
+    },
+    BusyboxCommand {
+        name: "cat",
+        argv: &[b"busybox", b"cat", b"/musl/busybox_cmd.txt"],
+        expected_exit: 0,
     },
 ];
 
 pub(crate) fn run_loongarch_busybox_loader_probe() {
     let mut completed = 0usize;
+    let mut matched = 0usize;
+    let mut failed = 0usize;
     let mut i = 0usize;
     while i < COMMANDS.len() {
-        if run_command(&COMMANDS[i]) {
+        let result = run_command(&COMMANDS[i]);
+        if result.completed {
             completed += 1;
-            i += 1;
-        } else {
-            break;
         }
+        if result.matched_expected {
+            matched += 1;
+        } else {
+            failed += 1;
+        }
+        i += 1;
     }
     early_console_write("[loongarch64-busybox] smoke completed=");
     write_usize_dec(completed);
     early_console_write(" attempted=");
-    write_usize_dec(i + if i < COMMANDS.len() { 1 } else { 0 });
+    write_usize_dec(i);
+    early_console_write(" matched=");
+    write_usize_dec(matched);
+    early_console_write(" failed=");
+    write_usize_dec(failed);
     early_console_write("\n");
 }
 
-fn run_command(command: &BusyboxCommand) -> bool {
+struct BusyboxRunResult {
+    completed: bool,
+    matched_expected: bool,
+}
+
+fn run_command(command: &BusyboxCommand) -> BusyboxRunResult {
     let mut argv = [ExecString::empty(); 4];
+    if command.argv.len() > argv.len() {
+        early_console_write("[loongarch64-busybox] blocker: too many argv entries command=");
+        early_console_write(command.name);
+        early_console_write("\n");
+        return BusyboxRunResult {
+            completed: false,
+            matched_expected: false,
+        };
+    }
     let mut i = 0usize;
     while i < command.argv.len() {
         if argv[i].set_from_slice(command.argv[i]).is_err() {
             early_console_write("[loongarch64-busybox] blocker: argv setup failed command=");
             early_console_write(command.name);
             early_console_write("\n");
-            return false;
+            return BusyboxRunResult {
+                completed: false,
+                matched_expected: false,
+            };
         }
         i += 1;
     }
@@ -63,19 +122,33 @@ fn run_command(command: &BusyboxCommand) -> bool {
             early_console_write(" command=");
             early_console_write(command.name);
             early_console_write("\n");
-            run_probe(command.name, load.entry, load.stack_pointer)
+            run_probe(
+                command.name,
+                command.expected_exit,
+                load.entry,
+                load.stack_pointer,
+            )
         }
         Err(err) => {
             early_console_write("[loongarch64-busybox] blocker: failed to load /musl/busybox: ");
             early_console_write(err);
             early_console_write("\n");
-            false
+            BusyboxRunResult {
+                completed: false,
+                matched_expected: false,
+            }
         }
     }
 }
 
-fn run_probe(command_name: &str, entry: usize, stack_pointer: usize) -> bool {
+fn run_probe(
+    command_name: &str,
+    expected_exit: usize,
+    entry: usize,
+    stack_pointer: usize,
+) -> BusyboxRunResult {
     user::reset_case_state();
+    user::start_syscall_budget(4096);
     let mut cwd = PathBuf::empty();
     let _ = cwd.set_from_slice(b"/musl");
     fd_table::set_cwd(&cwd);
@@ -93,7 +166,10 @@ fn run_probe(command_name: &str, entry: usize, stack_pointer: usize) -> bool {
             early_console_write("[loongarch64-busybox] blocker: failed to activate user mmu: ");
             early_console_write(err);
             early_console_write("\n");
-            return false;
+            return BusyboxRunResult {
+                completed: false,
+                matched_expected: false,
+            };
         }
     }
     trap::enter_user_entry(entry, stack_pointer);
@@ -105,7 +181,22 @@ fn run_probe(command_name: &str, entry: usize, stack_pointer: usize) -> bool {
         early_console_write(" exit_code=");
         write_usize_dec(report.exit_code);
         early_console_write("\n");
-        true
+        BusyboxRunResult {
+            completed: true,
+            matched_expected: report.exit_code == expected_exit,
+        }
+    } else if report.timeout_active {
+        early_console_write("[loongarch64-busybox] blocker: command timeout command=");
+        early_console_write(command_name);
+        early_console_write(" syscalls=");
+        write_usize_dec(report.timeout_syscalls);
+        early_console_write(" last_syscall=");
+        write_usize_dec(report.timeout_last_syscall_id);
+        early_console_write("\n");
+        BusyboxRunResult {
+            completed: false,
+            matched_expected: false,
+        }
     } else if report.fault_active {
         early_console_write("[loongarch64-busybox] blocker: user fault ecode=");
         write_usize_dec(report.fault_ecode);
@@ -115,14 +206,23 @@ fn run_probe(command_name: &str, entry: usize, stack_pointer: usize) -> bool {
         write_usize_hex(report.fault_badv);
         early_console_write("\n");
         real_elf::dump_user_regions("[loongarch64-busybox] ");
-        false
+        BusyboxRunResult {
+            completed: false,
+            matched_expected: false,
+        }
     } else if report.missing_syscall_active {
         early_console_write("[loongarch64-busybox] blocker: missing syscall id=");
         write_usize_dec(report.missing_syscall_id);
         early_console_write("\n");
-        false
+        BusyboxRunResult {
+            completed: false,
+            matched_expected: false,
+        }
     } else {
         early_console_write("[loongarch64-busybox] blocker: returned without exit status\n");
-        false
+        BusyboxRunResult {
+            completed: false,
+            matched_expected: false,
+        }
     }
 }

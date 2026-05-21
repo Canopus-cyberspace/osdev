@@ -81,6 +81,36 @@ Official validation was attempted but failed before kernel evaluation because Do
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
 ```
 
+## Iteration 09
+
+Local build, image generation, ELF checks, and LoongArch smoke validation passed.
+
+```text
+cargo build --target riscv64gc-unknown-none-elf: passed
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+kernel-la entry: 0x90000000
+LoongArch local smoke: attempted=32 completed=32 failed=none
+BusyBox smoke: completed=7 attempted=7 matched=7 failed=0
+```
+
+Final BusyBox command evidence:
+
+```text
+[loongarch64-busybox] command=true exit_code=0
+[loongarch64-busybox] command=false exit_code=1
+[loongarch64-busybox] command=echo exit_code=0
+[loongarch64-busybox] command=pwd exit_code=0
+[loongarch64-busybox] command=sh-exit exit_code=0
+[loongarch64-busybox] command=ls exit_code=0
+[loongarch64-busybox] command=cat exit_code=0
+```
+
+The final local LoongArch smoke log contained no `unsupported`, `missing syscall`, `timeout`, `user fault`, `panic`, `Failed to load ELF`, or `ENOSYS` marker.
+
+Official validation was attempted but timed out before producing Docker log output. The generated latest `docker_evaluate.log` was 0 bytes, so the official score was not refreshed.
+
 ## Iteration 06
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.
