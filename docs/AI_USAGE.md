@@ -95,3 +95,11 @@ AI was used to inspect the LoongArch BusyBox command table, public `judge_busybo
 Accepted changes only update direct BusyBox command descriptors in `busybox_runner.rs`. No syscall compatibility, fd-table, scratch-FS, redirection, pipeline, official script, or `runtime_dispatch.rs` change was added.
 
 No fake BusyBox output or hard-coded command success was accepted. Commands are scored only through the existing real-execution result path after expected exit-status matching.
+
+## Iteration 17
+
+AI was used to inspect the LoongArch BusyBox command table, direct/read-only command probes, local QEMU output, and official Docker score output.
+
+Accepted changes only promote `du` and document failed candidates in `busybox_runner.rs`. No syscall compatibility, fd-table, scratch-FS, redirection, pipeline, official script, or `runtime_dispatch.rs` change was added.
+
+No fake BusyBox output or hard-coded command success was accepted. The `dmesg` compatibility shim considered during probing was rejected and not shipped.

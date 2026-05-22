@@ -61,3 +61,7 @@ No third-party code, dependencies, binaries, disk images, or large logs were add
 ## Iteration 16
 
 No third-party code, dependencies, binaries, disk images, or large logs were added. The iteration reused existing project source, official sdcard content already present in the local evaluation environment, and the official local BusyBox judge script for command-key inspection. `qemu-system-loongarch64`, `docker`, `cargo`, `make`, `grep`, and `file` were used only as inspection and validation tools.
+
+## Iteration 17
+
+No third-party code, dependencies, binaries, disk images, or large logs were added. The iteration reused existing project source, official sdcard content already present in the local evaluation environment, and the existing official BusyBox command expectations. `qemu-system-loongarch64`, `docker`, `cargo`, `make`, `grep`, and `file` were used only as inspection and validation tools.

@@ -1,0 +1,27 @@
+promote loongarch busybox du applet
+
+Promote the direct read-only BusyBox `du` applet in the LoongArch BusyBox
+runner. The command is executed through the existing real `/musl/busybox`
+PLV3 path and emits an official testcase success line only after exiting
+with the expected status.
+
+Keep the following probed candidates disabled with explicit descriptors:
+- dmesg: klogctl support is not implemented
+- df: /proc/mounts is unavailable
+- ps: /proc is unavailable
+- hwclock: /dev/misc/rtc is unavailable
+
+No syscall, fd-table, scratch-FS, redirection, pipeline, shell-complex, or
+runtime dispatcher behavior is changed.
+
+Validation:
+- cargo build -j 16 --target riscv64gc-unknown-none-elf passed.
+- make -j 16 all passed with the known local jobserver warning.
+- make all passed.
+- kernel-rv remains a RISC-V ELF.
+- kernel-la remains a LoongArch ELF.
+- local LoongArch basic remains attempted=32 completed=32 failed=none.
+- local BusyBox runner reports completed=17 attempted=17 matched=17 failed=0 disabled=8.
+- official validation completed with Accpted, score 270, basic-musl-la 102.0,
+  busybox-musl-la 15.0.
+

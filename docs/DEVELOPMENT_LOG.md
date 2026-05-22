@@ -117,3 +117,11 @@ Promoted direct LoongArch BusyBox applets in `busybox_runner.rs` only. The newly
 The iteration deliberately avoided scratch-FS, redirection, pipeline, grep, syscall, fd-table, and `runtime_dispatch.rs` changes. Local probing rejected `which ls`, `free`, and `sleep 1`; they now remain explicit disabled commands alongside `ash -c exit`.
 
 Local validation preserved LoongArch basic 32/32 and produced BusyBox `completed=16 attempted=16 matched=16 failed=0 disabled=4`. Official validation completed with `Accpted`, score `269`, `basic-musl-la=102.0`, and `busybox-musl-la=14.0`.
+
+## Iteration 17
+
+Promoted the direct/read-only LoongArch BusyBox `du` applet in `busybox_runner.rs` only. The command runs the real `/musl/busybox` ELF in PLV3 and emits `testcase busybox du success` only after exiting with code 0 through the existing BusyBox runner.
+
+Primary candidates `dmesg`, `df`, `ps`, and `hwclock` were probed but kept disabled because they need missing read-only compatibility surfaces (`klogctl`, `/proc/mounts`, `/proc`, and `/dev/misc/rtc`). A temporary `dmesg` syscall shim was not shipped after probing showed stability risk.
+
+No scratch-FS, redirection, pipeline, grep, syscall, fd-table, or `runtime_dispatch.rs` changes were shipped. Local validation preserved LoongArch basic 32/32 and produced BusyBox `completed=17 attempted=17 matched=17 failed=0 disabled=8`. Official validation completed with `Accpted`, score `270`, `basic-musl-la=102.0`, and `busybox-musl-la=15.0`.

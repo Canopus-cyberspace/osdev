@@ -129,6 +129,13 @@ const RUN_COMMANDS: &[BusyboxCommand] = &[
         class: BusyboxCommandClass::Scoring,
     },
     BusyboxCommand {
+        name: "du",
+        argv: &[b"busybox", b"du"],
+        expected_exit: 0,
+        official_name: Some("du"),
+        class: BusyboxCommandClass::Scoring,
+    },
+    BusyboxCommand {
         name: "cat",
         argv: &[b"busybox", b"cat", b"/musl/busybox_cmd.txt"],
         expected_exit: 0,
@@ -157,6 +164,34 @@ const DISABLED_COMMANDS: &[BusyboxCommand] = &[
         argv: &[b"busybox", b"free"],
         expected_exit: 0,
         official_name: Some("free"),
+        class: BusyboxCommandClass::Disabled,
+    },
+    BusyboxCommand {
+        name: "dmesg",
+        argv: &[b"busybox", b"dmesg"],
+        expected_exit: 0,
+        official_name: Some("dmesg"),
+        class: BusyboxCommandClass::Disabled,
+    },
+    BusyboxCommand {
+        name: "df",
+        argv: &[b"busybox", b"df"],
+        expected_exit: 0,
+        official_name: Some("df"),
+        class: BusyboxCommandClass::Disabled,
+    },
+    BusyboxCommand {
+        name: "ps",
+        argv: &[b"busybox", b"ps"],
+        expected_exit: 0,
+        official_name: Some("ps"),
+        class: BusyboxCommandClass::Disabled,
+    },
+    BusyboxCommand {
+        name: "hwclock",
+        argv: &[b"busybox", b"hwclock"],
+        expected_exit: 0,
+        official_name: Some("hwclock"),
         class: BusyboxCommandClass::Disabled,
     },
     BusyboxCommand {

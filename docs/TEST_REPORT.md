@@ -307,6 +307,59 @@ Official validation was attempted but failed before kernel evaluation because Do
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
 ```
 
+## Iteration 17
+
+Local build, image generation, ELF checks, local LoongArch smoke, and official Docker validation passed after promoting the direct BusyBox `du` applet.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make -j 16 all: passed with the known local jobserver warning
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+LoongArch local basic smoke: attempted=32 completed=32 failed=none
+LoongArch local BusyBox smoke: completed=17 attempted=17 matched=17 failed=0 disabled=8
+```
+
+Promoted BusyBox scoring command:
+
+```text
+du: exit_code=0
+```
+
+Probed but disabled:
+
+```text
+dmesg: exit_code=1, klogctl not implemented
+df: exit_code=1, /proc/mounts unavailable
+ps: exit_code=1, /proc unavailable
+hwclock: exit_code=1, /dev/misc/rtc unavailable
+```
+
+Official validation:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260522_144845/docker_evaluate.log
+docker_evaluate.log size: 803263 bytes
+Verdict: Accpted
+Score: 270
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 102.0
+busybox-musl-la: 15.0
+```
+
+Official LoongArch evidence:
+
+```text
+[loongarch64-basic] attempted=32 completed=32 failed=none
+[loongarch64-busybox] smoke completed=17 attempted=17 matched=17 failed=0 disabled=8
+testcase busybox du success
+```
+
+The official log did not contain `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, a user fault, or a blocker marker.
+
 ## Iteration 09
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.
