@@ -360,6 +360,50 @@ testcase busybox du success
 
 The official log did not contain `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, a user fault, or a blocker marker.
 
+## Iteration 18
+
+Local build, image generation, ELF checks, and local LoongArch smoke passed after adding read-only `/proc` compatibility.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make -j 16 all: passed with the known local jobserver warning
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+LoongArch local basic smoke: attempted=32 completed=32 failed=none
+LoongArch local BusyBox smoke: completed=21 attempted=21 matched=21 failed=0 disabled=4
+```
+
+Newly promoted BusyBox scoring commands:
+
+```text
+dmesg: exit_code=0
+df: exit_code=0
+ps: exit_code=0
+free: exit_code=0
+```
+
+Official validation was attempted but did not complete:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260522_180412/docker_evaluate.log
+docker_evaluate.log size: 0 bytes
+result: timed out at outer 30-minute wrapper
+```
+
+The latest completed official validation remains:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260522_144845/docker_evaluate.log
+Verdict: Accpted
+Score: 270
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 102.0
+busybox-musl-la: 15.0
+```
+
 ## Iteration 09
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.

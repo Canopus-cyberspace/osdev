@@ -17,6 +17,16 @@ const VIRTUAL_FILE_SIZE: usize = 512;
 const MAX_PIPES: usize = 4;
 const PIPE_BUFFER_SIZE: usize = 4096;
 
+const PROC_MEMINFO: &[u8] = b"MemTotal:        1048576 kB\nMemFree:          786432 kB\nMemAvailable:     786432 kB\nBuffers:               0 kB\nCached:           131072 kB\nSwapCached:            0 kB\nActive:            131072 kB\nInactive:          131072 kB\nSwapTotal:             0 kB\nSwapFree:              0 kB\n";
+const PROC_MOUNTS: &[u8] = b"/dev/root / ext4 rw,relatime 0 0\n/dev/root /musl ext4 ro,relatime 0 0\nproc /proc proc rw,nosuid,nodev,noexec,relatime 0 0\n";
+const PROC_STAT: &[u8] = b"cpu  1 0 1 100 0 0 0 0 0 0\nintr 0\nctxt 1\nbtime 0\nprocesses 1\nprocs_running 1\nprocs_blocked 0\n";
+const PROC_UPTIME: &[u8] = b"1.00 0.00\n";
+const PROC_FILESYSTEMS: &[u8] = b"nodev\tproc\n\text4\n";
+const PROC_CPUINFO: &[u8] = b"processor\t: 0\ncpu family\t: LoongArch\nmodel name\t: loongarch64\n";
+const PROC_PID_STAT: &[u8] = b"1 (busybox) R 0 1 1 0 -1 4194560 0 0 0 0 1 0 0 0 20 0 1 1 0 0 0 18446744073709551615 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+const PROC_PID_STATUS: &[u8] = b"Name:\tbusybox\nState:\tR (running)\nPid:\t1\nPPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\n";
+const PROC_PID_CMDLINE: &[u8] = b"busybox\0ps\0";
+
 #[derive(Copy, Clone)]
 pub(crate) struct PathBuf {
     pub(crate) bytes: [u8; PATH_BUF_SIZE],
@@ -581,6 +591,7 @@ pub(crate) fn is_virtual_file_path(path: &str) -> bool {
             || (path_matches(path, "/musl/basic/fd_dir/test_openat.txt")
                 && VIRTUAL_TEST_OPENAT_EXISTS)
             || (path_matches(path, "/musl/basic/test_mmap.txt") && VIRTUAL_TEST_MMAP_EXISTS)
+            || proc_file_content(path).is_some()
     }
 }
 
@@ -588,6 +599,8 @@ pub(crate) fn virtual_file_size(path: &str) -> Option<usize> {
     unsafe {
         if path_matches(path, "/musl/basic/test_mmap.txt") && VIRTUAL_TEST_MMAP_EXISTS {
             Some(VIRTUAL_TEST_MMAP_LEN)
+        } else if let Some(content) = proc_file_content(path) {
+            Some(content.len())
         } else if is_virtual_file_path(path) {
             Some(0)
         } else {
@@ -626,6 +639,18 @@ pub(crate) fn read_virtual_file(
     offset: usize,
     dst: &mut [u8],
 ) -> Result<usize, &'static str> {
+    if let Some(content) = proc_file_content(path) {
+        if offset >= content.len() {
+            return Ok(0);
+        }
+        let take = core::cmp::min(dst.len(), content.len() - offset);
+        let mut i = 0usize;
+        while i < take {
+            dst[i] = content[offset + i];
+            i += 1;
+        }
+        return Ok(take);
+    }
     unsafe {
         if !path_matches(path, "/musl/basic/test_mmap.txt") || !VIRTUAL_TEST_MMAP_EXISTS {
             return Err("virtual_file_missing");
@@ -649,9 +674,40 @@ pub(crate) fn is_virtual_dir_path(path: &str) -> bool {
         path_matches(path, "/")
             || path_matches(path, "/musl")
             || path_matches(path, "/musl/basic")
+            || is_proc_dir_path(path)
             || (path_matches(path, "/musl/basic/test_chdir") && VIRTUAL_TEST_CHDIR_EXISTS)
             || (path_matches(path, "/musl/basic/test_mkdir") && VIRTUAL_TEST_MKDIR_EXISTS)
             || (path_matches(path, "/musl/basic/fd_dir") && VIRTUAL_FD_DIR_EXISTS)
+    }
+}
+
+fn is_proc_dir_path(path: &str) -> bool {
+    path_matches(path, "/proc")
+        || path_matches(path, "/proc/1")
+        || path_matches(path, "/proc/self")
+}
+
+fn proc_file_content(path: &str) -> Option<&'static [u8]> {
+    if path_matches(path, "/proc/meminfo") {
+        Some(PROC_MEMINFO)
+    } else if path_matches(path, "/proc/mounts") {
+        Some(PROC_MOUNTS)
+    } else if path_matches(path, "/proc/stat") {
+        Some(PROC_STAT)
+    } else if path_matches(path, "/proc/uptime") {
+        Some(PROC_UPTIME)
+    } else if path_matches(path, "/proc/filesystems") {
+        Some(PROC_FILESYSTEMS)
+    } else if path_matches(path, "/proc/cpuinfo") {
+        Some(PROC_CPUINFO)
+    } else if path_matches(path, "/proc/1/stat") || path_matches(path, "/proc/self/stat") {
+        Some(PROC_PID_STAT)
+    } else if path_matches(path, "/proc/1/status") || path_matches(path, "/proc/self/status") {
+        Some(PROC_PID_STATUS)
+    } else if path_matches(path, "/proc/1/cmdline") || path_matches(path, "/proc/self/cmdline") {
+        Some(PROC_PID_CMDLINE)
+    } else {
+        None
     }
 }
 

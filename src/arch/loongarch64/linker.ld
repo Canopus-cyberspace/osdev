@@ -10,17 +10,17 @@ SECTIONS
     *(.text .text.*)
   }
 
-  . = ALIGN(4096);
-  .rodata : {
-    *(.rodata .rodata.*)
-  }
-
-  . = ALIGN(4096);
+  . = 0x90010000;
   .user : {
     *(.user.text .user.text.*)
     *(.user.rodata .user.rodata.*)
     . = ALIGN(4096);
     *(.user.bss .user.bss.*)
+  }
+
+  . = ALIGN(4096);
+  .rodata : {
+    *(.rodata .rodata.*)
   }
 
   . = ALIGN(4096);

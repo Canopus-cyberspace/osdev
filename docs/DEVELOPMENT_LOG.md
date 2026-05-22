@@ -125,3 +125,11 @@ Promoted the direct/read-only LoongArch BusyBox `du` applet in `busybox_runner.r
 Primary candidates `dmesg`, `df`, `ps`, and `hwclock` were probed but kept disabled because they need missing read-only compatibility surfaces (`klogctl`, `/proc/mounts`, `/proc`, and `/dev/misc/rtc`). A temporary `dmesg` syscall shim was not shipped after probing showed stability risk.
 
 No scratch-FS, redirection, pipeline, grep, syscall, fd-table, or `runtime_dispatch.rs` changes were shipped. Local validation preserved LoongArch basic 32/32 and produced BusyBox `completed=17 attempted=17 matched=17 failed=0 disabled=8`. Official validation completed with `Accpted`, score `270`, `basic-musl-la=102.0`, and `busybox-musl-la=15.0`.
+
+## Iteration 18
+
+Added minimal read-only `/proc` compatibility in `fd_table.rs` and narrow read-only syscall compatibility in `syscall.rs` for LoongArch BusyBox direct applets. The promoted commands are `dmesg`, `df`, `ps`, and `free`; each runs the real `/musl/busybox` ELF in PLV3 and emits a testcase line only after exiting with code 0.
+
+`linker.ld` now pins the LoongArch `.user` section at `0x90010000` before `.rodata`. Local probing showed that proc metadata growth could otherwise move the user-return stub and destabilize pre-existing BusyBox commands.
+
+No scratch-FS, redirection, pipeline, grep, file-write, official script, or `runtime_dispatch.rs` change was made. Local validation preserved LoongArch basic 32/32 and produced BusyBox `completed=21 attempted=21 matched=21 failed=0 disabled=4`. Official validation was attempted but timed out at the outer 30-minute wrapper with a 0-byte `docker_evaluate.log`; the latest completed official score remains 270.

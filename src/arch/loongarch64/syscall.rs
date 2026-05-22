@@ -25,6 +25,9 @@ const ENOSYS: isize = -38;
 const ENAMETOOLONG: isize = -36;
 const DT_DIR: u8 = 4;
 const DT_REG: u8 = 8;
+const SEEK_SET: usize = 0;
+const SEEK_CUR: usize = 1;
+const SEEK_END: usize = 2;
 
 static mut TIME_TICK: usize = 1;
 
@@ -109,6 +112,10 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_readv(args[0], args[1], args[2]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_LSEEK => {
+            let ret = syscall_lseek(args[0], args[1] as isize, args[2]);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_OPENAT => {
             let ret = syscall_openat(args[0], args[1], args[2], args[3]);
             abi.set_return_value(ret);
@@ -157,6 +164,14 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
         }
         syscall_numbers::SYS_STATX => {
             let ret = syscall_statx(args[0], args[1], args[2], args[3], args[4]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_STATFS => {
+            let ret = syscall_statfs(args[0], args[1]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_FSTATFS => {
+            let ret = syscall_fstatfs(args[0], args[1]);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_NEWFSTATAT => {
@@ -243,6 +258,14 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
         }
         syscall_numbers::SYS_GETTIMEOFDAY => {
             let ret = syscall_gettimeofday(args[0]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_SYSINFO => {
+            let ret = syscall_sysinfo(args[0]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_SYSLOG => {
+            let ret = syscall_syslog(args[0], args[1], args[2]);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_IOCTL => {
@@ -445,6 +468,38 @@ fn syscall_read(fd: usize, buf: usize, len: usize) -> isize {
     }
     let _ = fd_table::update_fd_offset(fd, entry.offset.saturating_add(take));
     take as isize
+}
+
+fn syscall_lseek(fd: usize, offset: isize, whence: usize) -> isize {
+    let entry = match fd_table::fd_entry(fd) {
+        Some(entry) if entry.kind == FD_REGULAR => entry,
+        Some(entry) if entry.kind == FD_DIRECTORY => entry,
+        Some(_) => return EINVAL,
+        None => return EBADF,
+    };
+    let size = if entry.kind == FD_REGULAR {
+        match entry.path.as_str() {
+            Ok(path) => fd_table::virtual_file_size(path).unwrap_or(entry.size),
+            Err(_) => entry.size,
+        }
+    } else {
+        0
+    };
+    let base = match whence {
+        SEEK_SET => 0isize,
+        SEEK_CUR => entry.offset as isize,
+        SEEK_END => size as isize,
+        _ => return EINVAL,
+    };
+    let next = base.saturating_add(offset);
+    if next < 0 {
+        return EINVAL;
+    }
+    let next = next as usize;
+    if !fd_table::update_fd_offset(fd, next) {
+        return EBADF;
+    }
+    next as isize
 }
 
 fn syscall_writev(fd: usize, iov_ptr: usize, iovcnt: usize, quiet: bool) -> isize {
@@ -858,6 +913,39 @@ fn syscall_fstat(fd: usize, stat_ptr: usize) -> isize {
     write_stat(stat_ptr, entry.inode as usize, mode as usize, size)
 }
 
+fn syscall_statfs(path_ptr: usize, buf_ptr: usize) -> isize {
+    if buf_ptr == 0 {
+        return EFAULT;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(AT_FDCWD as usize, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    if !path_exists_like(path_str) {
+        return ENOENT;
+    }
+    write_statfs(buf_ptr)
+}
+
+fn syscall_fstatfs(fd: usize, buf_ptr: usize) -> isize {
+    if buf_ptr == 0 {
+        return EFAULT;
+    }
+    match fd_table::fd_entry(fd) {
+        Some(entry) if entry.kind != FD_CLOSED => write_statfs(buf_ptr),
+        _ => EBADF,
+    }
+}
+
 fn syscall_statx(
     dirfd_raw: usize,
     path_ptr: usize,
@@ -902,6 +990,7 @@ fn syscall_statx(
                 mode = (S_IFDIR | 0o755) as usize;
             } else if fd_table::is_virtual_file_path(path_str) {
                 mode = (S_IFREG | 0o644) as usize;
+                size = fd_table::virtual_file_size(path_str).unwrap_or(0);
             } else {
                 match sdcard_ext4::stat_path(path_str) {
                     Ok(stat) => {
@@ -1052,10 +1141,24 @@ fn syscall_getdents64(fd: usize, buf: usize, len: usize) -> isize {
     let mut written = 0usize;
     let result = if path_eq(path, "/") {
         write_dirent64(buf, len, &mut written, 12, DT_DIR, b"musl")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 13, DT_DIR, b"proc"))
     } else if path_eq(path, "/musl") {
         write_dirent64(buf, len, &mut written, 20, DT_DIR, b"basic")
             .and_then(|_| write_dirent64(buf, len, &mut written, 59, DT_REG, b"busybox"))
             .and_then(|_| write_dirent64(buf, len, &mut written, 60, DT_REG, b"busybox_cmd.txt"))
+    } else if path_eq(path, "/proc") {
+        write_dirent64(buf, len, &mut written, 101, DT_DIR, b"1")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 102, DT_DIR, b"self"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 103, DT_REG, b"meminfo"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 104, DT_REG, b"mounts"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 105, DT_REG, b"stat"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 106, DT_REG, b"uptime"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 107, DT_REG, b"filesystems"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 108, DT_REG, b"cpuinfo"))
+    } else if path_eq(path, "/proc/1") || path_eq(path, "/proc/self") {
+        write_dirent64(buf, len, &mut written, 111, DT_REG, b"stat")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 112, DT_REG, b"cmdline"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 113, DT_REG, b"status"))
     } else {
         write_dirent64(buf, len, &mut written, 2, DT_DIR, b".")
             .and_then(|_| write_dirent64(buf, len, &mut written, 49, DT_REG, b"text.txt"))
@@ -1167,6 +1270,45 @@ fn syscall_umount2(target_ptr: usize, flags: usize) -> isize {
     }
 }
 
+fn syscall_sysinfo(ptr: usize) -> isize {
+    if ptr == 0 {
+        return EFAULT;
+    }
+    let mut info = [0u8; 112];
+    write_le64(&mut info, 0, 1);
+    write_le64(&mut info, 8, 0);
+    write_le64(&mut info, 16, 0);
+    write_le64(&mut info, 24, 0);
+    write_le64(&mut info, 32, 1024 * 1024);
+    write_le64(&mut info, 40, 768 * 1024);
+    write_le64(&mut info, 48, 0);
+    write_le64(&mut info, 56, 128 * 1024);
+    write_le64(&mut info, 64, 0);
+    write_le64(&mut info, 72, 0);
+    write_le16(&mut info, 80, 1);
+    write_le64(&mut info, 88, 0);
+    write_le64(&mut info, 96, 0);
+    write_le32(&mut info, 104, 1024);
+    if user_mem::copy_to_user(ptr, &info).is_err() {
+        return EFAULT;
+    }
+    0
+}
+
+fn syscall_syslog(type_: usize, buf: usize, len: usize) -> isize {
+    match type_ {
+        2 | 3 | 4 => {
+            if len != 0 && buf != 0 && !user_mem::real_user_range_valid(buf, len) {
+                return EFAULT;
+            }
+            0
+        }
+        10 => 0,
+        0 | 5 | 6 | 7 | 8 | 9 => 0,
+        _ => EINVAL,
+    }
+}
+
 fn read_optional_user_string(ptr: usize) -> Result<(), ()> {
     if ptr == 0 {
         return Ok(());
@@ -1238,6 +1380,26 @@ fn write_stat(ptr: usize, inode: usize, mode: usize, size: usize) -> isize {
     write_le32(&mut stat, 56, 4096);
     write_le64(&mut stat, 64, 1);
     if user_mem::copy_to_user(ptr, &stat).is_err() {
+        return EFAULT;
+    }
+    0
+}
+
+fn write_statfs(ptr: usize) -> isize {
+    let mut statfs = [0u8; 120];
+    write_le64(&mut statfs, 0, 0xef53);
+    write_le64(&mut statfs, 8, 4096);
+    write_le64(&mut statfs, 16, 4096);
+    write_le64(&mut statfs, 24, 2048);
+    write_le64(&mut statfs, 32, 2048);
+    write_le64(&mut statfs, 40, 1024);
+    write_le64(&mut statfs, 48, 512);
+    write_le32(&mut statfs, 56, 1);
+    write_le32(&mut statfs, 60, 1);
+    write_le64(&mut statfs, 64, 255);
+    write_le64(&mut statfs, 72, 4096);
+    write_le64(&mut statfs, 80, 0);
+    if user_mem::copy_to_user(ptr, &statfs).is_err() {
         return EFAULT;
     }
     0

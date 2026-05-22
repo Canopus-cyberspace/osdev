@@ -103,3 +103,11 @@ AI was used to inspect the LoongArch BusyBox command table, direct/read-only com
 Accepted changes only promote `du` and document failed candidates in `busybox_runner.rs`. No syscall compatibility, fd-table, scratch-FS, redirection, pipeline, official script, or `runtime_dispatch.rs` change was added.
 
 No fake BusyBox output or hard-coded command success was accepted. The `dmesg` compatibility shim considered during probing was rejected and not shipped.
+
+## Iteration 18
+
+AI was used to inspect the LoongArch fd path, syscall compatibility path, BusyBox runner, linker layout, local QEMU output, and official wrapper logs.
+
+Accepted changes add only read-only `/proc` compatibility, narrow read-only syscall shims, BusyBox command promotion for real passing commands, and LoongArch-local `.user` section stabilization.
+
+No fake BusyBox output, hard-coded command success, scratch-FS, redirection, pipeline, file-write path, official script, or `runtime_dispatch.rs` change was added. Official validation is documented as timed out rather than passed.
