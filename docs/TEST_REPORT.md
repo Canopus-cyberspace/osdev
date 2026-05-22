@@ -202,6 +202,80 @@ testcase busybox ls success
 
 The final official log did not show `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, or diagnostic output. A previous official attempt in the same iteration hit a transient LoongArch `virtio_pci_timeout`/`virtio_pci_status` failure and was discarded as validation evidence after the final rerun passed.
 
+## Iteration 16
+
+Local build, image generation, ELF checks, local LoongArch smoke, and official Docker validation passed after promoting direct BusyBox applets.
+
+```text
+CPU_COUNT: 16
+cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+make -j 16 all: passed with the known local jobserver warning
+make all: passed
+kernel-rv: RISC-V ELF
+kernel-la: LoongArch ELF
+LoongArch local basic smoke: attempted=32 completed=32 failed=none
+LoongArch local BusyBox smoke: completed=16 attempted=16 matched=16 failed=0 disabled=4
+```
+
+Promoted BusyBox scoring commands:
+
+```text
+true
+false
+pwd
+sh -c exit
+basename /aaa/bbb
+printf "abc\n"
+uname
+dirname /aaa/bbb
+expr 1 + 1
+date
+uptime
+clear
+cal
+ls
+```
+
+Probed but not promoted:
+
+```text
+which ls: exit_code=1
+free: exit_code=1, /proc/meminfo unavailable
+sleep 1: user fault at era=0x12016f814
+ash -c exit: remains disabled from prior diagnostic fault
+```
+
+Official validation:
+
+```text
+log: /home/lenovo/oscomp-official-env/logs/evaluate_20260522_123151/docker_evaluate.log
+docker_evaluate.log size: 802896 bytes
+Verdict: Accpted
+Score: 269
+basic-musl-rv: 100.0
+busybox-musl-rv: 53.0
+basic-musl-la: 102.0
+busybox-musl-la: 14.0
+```
+
+Official LoongArch evidence:
+
+```text
+[loongarch64-basic] attempted=32 completed=32 failed=none
+[loongarch64-busybox] smoke completed=16 attempted=16 matched=16 failed=0 disabled=4
+testcase busybox basename /aaa/bbb success
+testcase busybox printf "abc\n" success
+testcase busybox uname success
+testcase busybox dirname /aaa/bbb success
+testcase busybox expr 1 + 1 success
+testcase busybox date success
+testcase busybox uptime success
+testcase busybox clear success
+testcase busybox cal success
+```
+
+The official log did not show `Failed to load ELF`, `ENOSYS`, a panic marker, a timeout, a user fault in enabled commands, or a blocker marker.
+
 ## Iteration 03
 
 Local build, image generation, ELF checks, and LoongArch smoke validation passed.

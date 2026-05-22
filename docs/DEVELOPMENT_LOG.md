@@ -109,3 +109,11 @@ Added a cfg-gated LoongArch BusyBox diagnostic mode for user-mode stall/fault in
 The isolated diagnostic build showed `basename /aaa/bbb`, `printf "abc\n"`, and `uname` can exit with code 0 when run as one-command probes, while `ash -c exit` faults reproducibly at `ERA=0x1201b64b8`, `BADV=0x1201b64b8`, `ECODE=15`. No diagnostic command was promoted to official BusyBox scoring.
 
 Normal local validation preserved LoongArch basic 32/32 and BusyBox smoke 7/7. Official validation completed with `Accpted`, score `260`, `basic-musl-la=102.0`, and `busybox-musl-la=5.0`.
+
+## Iteration 16
+
+Promoted direct LoongArch BusyBox applets in `busybox_runner.rs` only. The newly scoring commands are `basename /aaa/bbb`, `printf "abc\n"`, `uname`, `dirname /aaa/bbb`, `expr 1 + 1`, `date`, `uptime`, `clear`, and `cal`. These commands run the real `/musl/busybox` ELF in PLV3 and emit official testcase success lines only after matching the expected exit code.
+
+The iteration deliberately avoided scratch-FS, redirection, pipeline, grep, syscall, fd-table, and `runtime_dispatch.rs` changes. Local probing rejected `which ls`, `free`, and `sleep 1`; they now remain explicit disabled commands alongside `ash -c exit`.
+
+Local validation preserved LoongArch basic 32/32 and produced BusyBox `completed=16 attempted=16 matched=16 failed=0 disabled=4`. Official validation completed with `Accpted`, score `269`, `basic-musl-la=102.0`, and `busybox-musl-la=14.0`.

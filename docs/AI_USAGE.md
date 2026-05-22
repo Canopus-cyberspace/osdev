@@ -87,3 +87,11 @@ AI was used to inspect the LoongArch BusyBox runner, user run-state ownership, t
 Accepted changes add only cfg-gated non-scoring diagnostics for `basename /aaa/bbb`, `printf "abc\n"`, `uname`, and `ash -c exit`. The normal BusyBox scoring path remains limited to the five known-good commands, and the diagnostic mode is disabled unless `--cfg loongarch64_busybox_diag` is explicitly passed.
 
 No fake BusyBox output, hard-coded command success, scratch-FS reintroduction, official script change, or `runtime_dispatch.rs` change was added.
+
+## Iteration 16
+
+AI was used to inspect the LoongArch BusyBox command table, public `judge_busybox-musl.py` command keys, local direct-applet probe output, and official Docker score output.
+
+Accepted changes only update direct BusyBox command descriptors in `busybox_runner.rs`. No syscall compatibility, fd-table, scratch-FS, redirection, pipeline, official script, or `runtime_dispatch.rs` change was added.
+
+No fake BusyBox output or hard-coded command success was accepted. Commands are scored only through the existing real-execution result path after expected exit-status matching.
