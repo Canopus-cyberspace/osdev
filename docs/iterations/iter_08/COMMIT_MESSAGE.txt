@@ -1,0 +1,33 @@
+implement loongarch fixed-address user va mapping for busybox probe
+
+Add a focused LoongArch user_mmu module that owns CSR, DMW, TLB flush, and
+huge-page TLB install helpers. Use it to install fixed user virtual-address
+mappings for the current LoongArch user image, stack, heap, and mmap backing
+when probing ET_EXEC binaries.
+
+Extend the LoongArch real ELF loader metadata so static ET_EXEC images keep
+their real entry and PT_LOAD user virtual addresses. Build fixed-address stack,
+heap, and mmap ranges for ET_EXEC payloads while preserving the existing direct
+basic-musl PIE path and existing user-copy region translation.
+
+Update the non-scoring BusyBox probe to activate those mappings before entering
+PLV3 and deactivate them after returning. The probe still emits no official
+busybox-musl markers and does not fake command output or success. It now loads
+the real /musl/busybox from sdcard-la.img, enters at 0x1201b640c, and runs
+"busybox true" to exit code 0 through the LoongArch trap path.
+
+Keep runtime_dispatch.rs unchanged and preserve the 32 local LoongArch
+basic-musl cases.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf: passed
+- make all: passed
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU smoke: attempted=32 completed=32 failed=none
+- /musl/busybox true: loaded real ELF, mapped entry=0x1201b640c, exit_code=0
+- no ENOSYS, panic, Failed to load ELF, user fault, or missing syscall marker
+  in the final local smoke
+
+Official validation was attempted but blocked by local Docker API
+unavailability.

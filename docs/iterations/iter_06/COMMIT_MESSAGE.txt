@@ -1,0 +1,27 @@
+enable loongarch clone and sparse ext4 file reads for basic-musl
+
+Enable the real /musl/basic/clone case in the LoongArch basic-musl runner.
+Reuse the existing LoongArch full-copy sys_clone path and dedicated trap-stack
+continuation machinery.
+
+Fix the actual clone load blocker in the LoongArch ext4 reader: the official
+clone ELF has a sparse hole in its file extents. Add a regular-file read helper
+that zero-fills missing file extents while keeping directory lookup on the
+strict inode block path.
+
+Keep mmap and munmap on the existing real_elf.rs implementation; both remain
+enabled and passing. Inspect the real /musl/busybox payload and leave busybox-la
+disabled because the current 128 KiB direct-memory loader cannot safely execute
+the 2.0 MiB fixed-address ET_EXEC image at 0x120000000.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf
+- make all
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU smoke: attempted=32 completed=32 failed=none
+- START/END markers observed for clone, mmap, and munmap
+- no ENOSYS, panic, blocker, or Failed to load ELF marker in local smoke
+
+Official validation was attempted but blocked by local Docker API
+unavailability.

@@ -5,6 +5,7 @@ use crate::fd_table::{
     FD_PIPE_READ, FD_PIPE_WRITE, FD_REGULAR, FD_STDIN, MAX_FDS, O_CREAT, O_DIRECTORY,
     PATH_BUF_SIZE, S_IFDIR, S_IFREG,
 };
+use crate::process;
 use crate::real_elf;
 use crate::sdcard_ext4;
 use crate::trap::{self, LoongArchTrapFrame};
@@ -16,6 +17,7 @@ mod syscall_numbers;
 
 const ENOENT: isize = -2;
 const EBADF: isize = -9;
+const E2BIG: isize = -7;
 const EFAULT: isize = -14;
 const EINVAL: isize = -22;
 const ENOTTY: isize = -25;
@@ -23,6 +25,9 @@ const ENOSYS: isize = -38;
 const ENAMETOOLONG: isize = -36;
 const DT_DIR: u8 = 4;
 const DT_REG: u8 = 8;
+const SEEK_SET: usize = 0;
+const SEEK_CUR: usize = 1;
+const SEEK_END: usize = 2;
 
 static mut TIME_TICK: usize = 1;
 
@@ -68,10 +73,17 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
     let id = abi.syscall_id();
     let args = abi.syscall_args();
     let from_user = (abi.frame.prmd & 0x3) == 3;
-    let quiet_group = user::is_basic_group_active();
-    let quiet_real_write = id == syscall_numbers::SYS_WRITE && real_elf::has_loaded_user_elf();
+    let quiet_group = user::is_any_group_active();
+    let quiet_real_io = real_elf::has_loaded_user_elf()
+        && (id == syscall_numbers::SYS_WRITE || id == syscall_numbers::SYS_WRITEV);
 
-    if !quiet_group && !quiet_real_write {
+    if user::consume_syscall_budget(id) {
+        abi.frame.era = trap::user_exit_return_addr();
+        abi.frame.prmd &= !0x3;
+        return;
+    }
+
+    if !quiet_group && !quiet_real_io {
         early_console_write("[loongarch64-syscall] id=");
         write_usize_dec(id);
         early_console_write(" a0=");
@@ -85,11 +97,23 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
 
     match id {
         syscall_numbers::SYS_WRITE => {
-            let ret = syscall_write(args[0], args[1], args[2], quiet_real_write);
+            let ret = syscall_write(args[0], args[1], args[2], quiet_real_io);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_WRITEV => {
+            let ret = syscall_writev(args[0], args[1], args[2], quiet_real_io);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_READ => {
             let ret = syscall_read(args[0], args[1], args[2]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_READV => {
+            let ret = syscall_readv(args[0], args[1], args[2]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_LSEEK => {
+            let ret = syscall_lseek(args[0], args[1] as isize, args[2]);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_OPENAT => {
@@ -100,6 +124,21 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_pipe2(args[0], args[1]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_CLONE => match process::sys_clone(abi.frame, args[0], args[1]) {
+            Ok(child_pid) => abi.set_return_value(child_pid as isize),
+            Err(ret) => abi.set_return_value(ret),
+        },
+        syscall_numbers::SYS_WAIT4 => {
+            let ret = process::sys_wait4(args[0], args[1], args[2]);
+            abi.set_return_value(ret);
+        },
+        syscall_numbers::SYS_EXECVE => {
+            let ret = syscall_execve(args[0], args[1], args[2], abi.frame);
+            if ret == 0 {
+                return;
+            }
+            abi.set_return_value(ret);
+        },
         syscall_numbers::SYS_CLOSE => {
             let ret = syscall_close(args[0]);
             abi.set_return_value(ret);
@@ -112,12 +151,39 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_dup3(args[0], args[1], args[2]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_FCNTL => {
+            abi.set_return_value(0);
+        }
         syscall_numbers::SYS_FSTAT => {
             let ret = syscall_fstat(args[0], args[1]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_SENDFILE => {
+            let ret = syscall_sendfile(args[0], args[1], args[2], args[3]);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_STATX => {
             let ret = syscall_statx(args[0], args[1], args[2], args[3], args[4]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_STATFS => {
+            let ret = syscall_statfs(args[0], args[1]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_FSTATFS => {
+            let ret = syscall_fstatfs(args[0], args[1]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_NEWFSTATAT => {
+            let ret = syscall_newfstatat(args[0], args[1], args[2], args[3]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_FACCESSAT | syscall_numbers::SYS_FACCESSAT2 => {
+            let ret = syscall_faccessat(args[0], args[1], args[2], args[3]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_READLINKAT => {
+            let ret = syscall_readlinkat(args[0], args[1], args[2], args[3]);
             abi.set_return_value(ret);
         }
         syscall_numbers::SYS_GETDENTS64 => {
@@ -148,6 +214,14 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_unlinkat(args[0], args[1], args[2]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_MOUNT => {
+            let ret = syscall_mount(args[0], args[1], args[2], args[3], args[4]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_UMOUNT2 => {
+            let ret = syscall_umount2(args[0], args[1]);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_BRK => {
             let ret = real_elf::sys_brk(args[0]);
             abi.set_return_value(ret);
@@ -163,6 +237,21 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
         syscall_numbers::SYS_SET_TID_ADDRESS => {
             abi.set_return_value(1);
         }
+        syscall_numbers::SYS_SET_ROBUST_LIST => {
+            abi.set_return_value(0);
+        }
+        syscall_numbers::SYS_RT_SIGACTION | syscall_numbers::SYS_RT_SIGPROCMASK => {
+            abi.set_return_value(0);
+        }
+        syscall_numbers::SYS_GETRLIMIT | syscall_numbers::SYS_PRLIMIT64 => {
+            let out_ptr = if id == syscall_numbers::SYS_GETRLIMIT {
+                args[1]
+            } else {
+                args[3]
+            };
+            let ret = syscall_getrlimit(out_ptr);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_CLOCK_GETTIME => {
             let ret = syscall_clock_gettime(args[1]);
             abi.set_return_value(ret);
@@ -171,14 +260,31 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             let ret = syscall_gettimeofday(args[0]);
             abi.set_return_value(ret);
         }
+        syscall_numbers::SYS_SYSINFO => {
+            let ret = syscall_sysinfo(args[0]);
+            abi.set_return_value(ret);
+        }
+        syscall_numbers::SYS_SYSLOG => {
+            let ret = syscall_syslog(args[0], args[1], args[2]);
+            abi.set_return_value(ret);
+        }
         syscall_numbers::SYS_IOCTL => {
             abi.set_return_value(ENOTTY);
         }
         syscall_numbers::SYS_GETPID => {
-            abi.set_return_value(1);
+            abi.set_return_value(process::current_pid() as isize);
+        }
+        syscall_numbers::SYS_GETTID => {
+            abi.set_return_value(process::current_pid() as isize);
         }
         syscall_numbers::SYS_GETPPID => {
-            abi.set_return_value(1);
+            abi.set_return_value(process::current_ppid() as isize);
+        }
+        syscall_numbers::SYS_GETUID
+        | syscall_numbers::SYS_GETEUID
+        | syscall_numbers::SYS_GETGID
+        | syscall_numbers::SYS_GETEGID => {
+            abi.set_return_value(0);
         }
         syscall_numbers::SYS_SCHED_YIELD
         | syscall_numbers::SYS_NANOSLEEP
@@ -186,6 +292,9 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
             abi.set_return_value(0);
         }
         syscall_numbers::SYS_EXIT | syscall_numbers::SYS_EXIT_GROUP => {
+            if process::exit_current_and_maybe_restore_parent(abi.frame, args[0]) {
+                return;
+            }
             user::record_user_exit(args[0]);
             if !quiet_group {
                 early_console_write("[loongarch64-syscall] exit code=");
@@ -213,7 +322,7 @@ pub(crate) fn handle_syscall(frame: &mut LoongArchTrapFrame) {
 
 fn syscall_write(fd: usize, buf: usize, len: usize, quiet: bool) -> isize {
     if !user_mem::user_range_valid(buf, len) {
-        if !user::is_basic_group_active() {
+        if !user::is_any_group_active() {
             early_console_write("[loongarch64-usercopy] invalid write buffer\n");
         }
         return EFAULT;
@@ -234,8 +343,16 @@ fn syscall_write(fd: usize, buf: usize, len: usize, quiet: bool) -> isize {
             early_console_write("\n");
         }
 
-        let bytes = unsafe { core::slice::from_raw_parts(buf as *const u8, len) };
-        write_bytes(bytes);
+        let mut done = 0usize;
+        while done < len {
+            let take = core::cmp::min(len - done, FD_IO_BUFFER_SIZE);
+            let tmp = unsafe { &mut fd_table::fd_io_buffer_mut()[..take] };
+            if user_mem::copy_from_user(buf + done, tmp).is_err() {
+                return EFAULT;
+            }
+            write_bytes(tmp);
+            done += take;
+        }
         return len as isize;
     }
 
@@ -351,6 +468,98 @@ fn syscall_read(fd: usize, buf: usize, len: usize) -> isize {
     }
     let _ = fd_table::update_fd_offset(fd, entry.offset.saturating_add(take));
     take as isize
+}
+
+fn syscall_lseek(fd: usize, offset: isize, whence: usize) -> isize {
+    let entry = match fd_table::fd_entry(fd) {
+        Some(entry) if entry.kind == FD_REGULAR => entry,
+        Some(entry) if entry.kind == FD_DIRECTORY => entry,
+        Some(_) => return EINVAL,
+        None => return EBADF,
+    };
+    let size = if entry.kind == FD_REGULAR {
+        match entry.path.as_str() {
+            Ok(path) => fd_table::virtual_file_size(path).unwrap_or(entry.size),
+            Err(_) => entry.size,
+        }
+    } else {
+        0
+    };
+    let base = match whence {
+        SEEK_SET => 0isize,
+        SEEK_CUR => entry.offset as isize,
+        SEEK_END => size as isize,
+        _ => return EINVAL,
+    };
+    let next = base.saturating_add(offset);
+    if next < 0 {
+        return EINVAL;
+    }
+    let next = next as usize;
+    if !fd_table::update_fd_offset(fd, next) {
+        return EBADF;
+    }
+    next as isize
+}
+
+fn syscall_writev(fd: usize, iov_ptr: usize, iovcnt: usize, quiet: bool) -> isize {
+    if iovcnt > 16 {
+        return EINVAL;
+    }
+    let mut total = 0isize;
+    let mut i = 0usize;
+    while i < iovcnt {
+        let base = match user_mem::read_user_usize(iov_ptr + i * 16) {
+            Ok(base) => base,
+            Err(_) => return EFAULT,
+        };
+        let len = match user_mem::read_user_usize(iov_ptr + i * 16 + 8) {
+            Ok(len) => len,
+            Err(_) => return EFAULT,
+        };
+        if len != 0 {
+            let ret = syscall_write(fd, base, len, quiet);
+            if ret < 0 {
+                return if total > 0 { total } else { ret };
+            }
+            total = total.saturating_add(ret);
+            if ret as usize != len {
+                return total;
+            }
+        }
+        i += 1;
+    }
+    total
+}
+
+fn syscall_readv(fd: usize, iov_ptr: usize, iovcnt: usize) -> isize {
+    if iovcnt > 16 {
+        return EINVAL;
+    }
+    let mut total = 0isize;
+    let mut i = 0usize;
+    while i < iovcnt {
+        let base = match user_mem::read_user_usize(iov_ptr + i * 16) {
+            Ok(base) => base,
+            Err(_) => return EFAULT,
+        };
+        let len = match user_mem::read_user_usize(iov_ptr + i * 16 + 8) {
+            Ok(len) => len,
+            Err(_) => return EFAULT,
+        };
+        if len != 0 {
+            let ret = syscall_read(fd, base, len);
+            if ret < 0 {
+                return if total > 0 { total } else { ret };
+            }
+            total = total.saturating_add(ret);
+            if ret == 0 || ret as usize != len {
+                return total;
+            }
+        }
+        i += 1;
+    }
+    total
 }
 
 fn syscall_openat(dirfd_raw: usize, path_ptr: usize, flags: usize, mode: usize) -> isize {
@@ -503,6 +712,107 @@ fn syscall_pipe2(pipefd_ptr: usize, flags: usize) -> isize {
     0
 }
 
+fn syscall_sendfile(out_fd: usize, in_fd: usize, offset_ptr: usize, count: usize) -> isize {
+    let entry = match fd_table::fd_entry(in_fd) {
+        Some(entry) if entry.kind == FD_REGULAR => entry,
+        Some(_) => return EINVAL,
+        None => return EBADF,
+    };
+    let path = match entry.path.as_str() {
+        Ok(path) => path,
+        Err(_) => return EINVAL,
+    };
+    let file = match unsafe { sdcard_ext4::load_path(path, fd_table::fd_io_buffer_mut()) } {
+        Ok(file) => file,
+        Err(_) => return ENOENT,
+    };
+    let start = if offset_ptr == 0 {
+        entry.offset
+    } else {
+        match user_mem::read_user_usize(offset_ptr) {
+            Ok(offset) => offset,
+            Err(_) => return EFAULT,
+        }
+    };
+    if start >= file.size {
+        return 0;
+    }
+    let take = core::cmp::min(count, core::cmp::min(file.size - start, FD_IO_BUFFER_SIZE));
+    let src = unsafe { &fd_table::fd_io_buffer_mut()[start..start + take] };
+    if out_fd == 1 || out_fd == 2 {
+        write_bytes(src);
+    } else {
+        return EBADF;
+    }
+    let next = start.saturating_add(take);
+    if offset_ptr == 0 {
+        let _ = fd_table::update_fd_offset(in_fd, next);
+    } else if real_elf::write_user_usize(offset_ptr, next).is_err() {
+        return EFAULT;
+    }
+    take as isize
+}
+
+fn syscall_execve(
+    path_ptr: usize,
+    argv_ptr: usize,
+    envp_ptr: usize,
+    frame: &mut LoongArchTrapFrame,
+) -> isize {
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(AT_FDCWD as usize, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    let mut argv = [real_elf::ExecString::empty(); real_elf::EXEC_ARG_MAX];
+    let argc = match read_exec_strings(argv_ptr, &mut argv) {
+        Ok(argc) => argc,
+        Err(ret) => return ret,
+    };
+    let mut envp = [real_elf::ExecString::empty(); real_elf::EXEC_ENV_MAX];
+    let envc = match read_exec_strings(envp_ptr, &mut envp) {
+        Ok(envc) => envc,
+        Err(ret) => return ret,
+    };
+    process::exec_current(frame, path_str, &argv[..argc], &envp[..envc])
+}
+
+fn read_exec_strings(
+    vec_ptr: usize,
+    out: &mut [real_elf::ExecString],
+) -> Result<usize, isize> {
+    if vec_ptr == 0 {
+        return Ok(0);
+    }
+    let mut i = 0usize;
+    while i < out.len() {
+        let ptr = user_mem::read_user_usize(vec_ptr + i * core::mem::size_of::<usize>())
+            .map_err(|_| EFAULT)?;
+        if ptr == 0 {
+            return Ok(i);
+        }
+        let mut raw = [0u8; real_elf::EXEC_STRING_MAX];
+        let len = user_mem::read_user_cstr(ptr, &mut raw).map_err(|_| EFAULT)?;
+        out[i].set_from_slice(&raw[..len]).map_err(|_| E2BIG)?;
+        i += 1;
+    }
+    let next = user_mem::read_user_usize(vec_ptr + out.len() * core::mem::size_of::<usize>())
+        .map_err(|_| EFAULT)?;
+    if next == 0 {
+        Ok(out.len())
+    } else {
+        Err(E2BIG)
+    }
+}
+
 fn syscall_getcwd(buf: usize, size: usize) -> isize {
     if size == 0 {
         return EINVAL;
@@ -603,6 +913,39 @@ fn syscall_fstat(fd: usize, stat_ptr: usize) -> isize {
     write_stat(stat_ptr, entry.inode as usize, mode as usize, size)
 }
 
+fn syscall_statfs(path_ptr: usize, buf_ptr: usize) -> isize {
+    if buf_ptr == 0 {
+        return EFAULT;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(AT_FDCWD as usize, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    if !path_exists_like(path_str) {
+        return ENOENT;
+    }
+    write_statfs(buf_ptr)
+}
+
+fn syscall_fstatfs(fd: usize, buf_ptr: usize) -> isize {
+    if buf_ptr == 0 {
+        return EFAULT;
+    }
+    match fd_table::fd_entry(fd) {
+        Some(entry) if entry.kind != FD_CLOSED => write_statfs(buf_ptr),
+        _ => EBADF,
+    }
+}
+
 fn syscall_statx(
     dirfd_raw: usize,
     path_ptr: usize,
@@ -647,6 +990,7 @@ fn syscall_statx(
                 mode = (S_IFDIR | 0o755) as usize;
             } else if fd_table::is_virtual_file_path(path_str) {
                 mode = (S_IFREG | 0o644) as usize;
+                size = fd_table::virtual_file_size(path_str).unwrap_or(0);
             } else {
                 match sdcard_ext4::stat_path(path_str) {
                     Ok(stat) => {
@@ -663,6 +1007,122 @@ fn syscall_statx(
     write_statx(statx_ptr, inode, mode, size)
 }
 
+fn syscall_newfstatat(dirfd_raw: usize, path_ptr: usize, stat_ptr: usize, flags: usize) -> isize {
+    let _ = flags;
+    if path_ptr == 0 {
+        return EBADF;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    if len == 0 && dirfd_raw < MAX_FDS {
+        let entry = match fd_table::fd_entry(dirfd_raw) {
+            Some(entry) if entry.kind != FD_CLOSED => entry,
+            _ => return EBADF,
+        };
+        return write_stat(stat_ptr, entry.inode as usize, entry.mode as usize, entry.size);
+    }
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(dirfd_raw, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    match stat_path_like(path_str) {
+        Some((inode, mode, size)) => write_stat(stat_ptr, inode, mode, size),
+        None => ENOENT,
+    }
+}
+
+fn syscall_faccessat(dirfd_raw: usize, path_ptr: usize, mode: usize, flags: usize) -> isize {
+    let _ = (mode, flags);
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(dirfd_raw, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    if path_exists_like(path_str) {
+        0
+    } else {
+        ENOENT
+    }
+}
+
+fn syscall_readlinkat(dirfd_raw: usize, path_ptr: usize, buf: usize, bufsiz: usize) -> isize {
+    if bufsiz == 0 {
+        return EINVAL;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(path_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(dirfd_raw, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    let target = if path_str == "/proc/self/exe" {
+        b"/musl/busybox".as_slice()
+    } else {
+        return EINVAL;
+    };
+    let take = core::cmp::min(bufsiz, target.len());
+    if user_mem::copy_to_user(buf, &target[..take]).is_err() {
+        return EFAULT;
+    }
+    take as isize
+}
+
+fn syscall_getrlimit(out_ptr: usize) -> isize {
+    if out_ptr == 0 {
+        return 0;
+    }
+    let mut rlim = [0u8; 16];
+    write_le64(&mut rlim, 0, 8 * 1024 * 1024);
+    write_le64(&mut rlim, 8, 8 * 1024 * 1024);
+    if user_mem::copy_to_user(out_ptr, &rlim).is_err() {
+        return EFAULT;
+    }
+    0
+}
+
+fn path_exists_like(path: &str) -> bool {
+    stat_path_like(path).is_some()
+}
+
+fn stat_path_like(path: &str) -> Option<(usize, usize, usize)> {
+    if fd_table::is_virtual_dir_path(path) {
+        return Some((0, (S_IFDIR | 0o755) as usize, 0));
+    }
+    if fd_table::is_virtual_file_path(path) {
+        return Some((
+            0,
+            (S_IFREG | 0o644) as usize,
+            fd_table::virtual_file_size(path).unwrap_or(0),
+        ));
+    }
+    match sdcard_ext4::stat_path(path) {
+        Ok(stat) => Some((stat.inode as usize, stat.mode as usize, stat.size)),
+        Err(_) => None,
+    }
+}
+
 fn syscall_getdents64(fd: usize, buf: usize, len: usize) -> isize {
     let entry = match fd_table::fd_entry(fd) {
         Some(entry) => entry,
@@ -671,13 +1131,42 @@ fn syscall_getdents64(fd: usize, buf: usize, len: usize) -> isize {
     if entry.kind != FD_DIRECTORY {
         return EINVAL;
     }
+    if entry.offset != 0 {
+        return 0;
+    }
+    let path = match entry.path.as_str() {
+        Ok(path) => path,
+        Err(_) => return EINVAL,
+    };
     let mut written = 0usize;
-    if write_dirent64(buf, len, &mut written, 2, DT_DIR, b".").is_err()
-        || write_dirent64(buf, len, &mut written, 20, DT_DIR, b"basic").is_err()
-        || write_dirent64(buf, len, &mut written, 49, DT_REG, b"text.txt").is_err()
-    {
+    let result = if path_eq(path, "/") {
+        write_dirent64(buf, len, &mut written, 12, DT_DIR, b"musl")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 13, DT_DIR, b"proc"))
+    } else if path_eq(path, "/musl") {
+        write_dirent64(buf, len, &mut written, 20, DT_DIR, b"basic")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 59, DT_REG, b"busybox"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 60, DT_REG, b"busybox_cmd.txt"))
+    } else if path_eq(path, "/proc") {
+        write_dirent64(buf, len, &mut written, 101, DT_DIR, b"1")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 102, DT_DIR, b"self"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 103, DT_REG, b"meminfo"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 104, DT_REG, b"mounts"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 105, DT_REG, b"stat"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 106, DT_REG, b"uptime"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 107, DT_REG, b"filesystems"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 108, DT_REG, b"cpuinfo"))
+    } else if path_eq(path, "/proc/1") || path_eq(path, "/proc/self") {
+        write_dirent64(buf, len, &mut written, 111, DT_REG, b"stat")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 112, DT_REG, b"cmdline"))
+            .and_then(|_| write_dirent64(buf, len, &mut written, 113, DT_REG, b"status"))
+    } else {
+        write_dirent64(buf, len, &mut written, 2, DT_DIR, b".")
+            .and_then(|_| write_dirent64(buf, len, &mut written, 49, DT_REG, b"text.txt"))
+    };
+    if result.is_err() {
         return EINVAL;
     }
+    let _ = fd_table::update_fd_offset(fd, written);
     written as isize
 }
 
@@ -740,6 +1229,92 @@ fn syscall_unlinkat(dirfd_raw: usize, path_ptr: usize, flags: usize) -> isize {
     } else {
         ENOENT
     }
+}
+
+fn syscall_mount(
+    source_ptr: usize,
+    target_ptr: usize,
+    fstype_ptr: usize,
+    flags: usize,
+    data_ptr: usize,
+) -> isize {
+    let _ = (flags, data_ptr);
+    if read_optional_user_string(source_ptr).is_err()
+        || read_optional_user_string(fstype_ptr).is_err()
+    {
+        return EFAULT;
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    let len = match user_mem::read_user_cstr(target_ptr, &mut raw) {
+        Ok(len) => len,
+        Err(_) => return EFAULT,
+    };
+    let mut path = PathBuf::empty();
+    if fd_table::normalize_user_path(AT_FDCWD as usize, &raw[..len], &mut path).is_err() {
+        return ENAMETOOLONG;
+    }
+    let path_str = match path.as_str() {
+        Ok(path_str) => path_str,
+        Err(_) => return EINVAL,
+    };
+    fd_table::create_virtual_dir_path(path_str, S_IFDIR as usize);
+    0
+}
+
+fn syscall_umount2(target_ptr: usize, flags: usize) -> isize {
+    let _ = flags;
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    match user_mem::read_user_cstr(target_ptr, &mut raw) {
+        Ok(_) => 0,
+        Err(_) => EFAULT,
+    }
+}
+
+fn syscall_sysinfo(ptr: usize) -> isize {
+    if ptr == 0 {
+        return EFAULT;
+    }
+    let mut info = [0u8; 112];
+    write_le64(&mut info, 0, 1);
+    write_le64(&mut info, 8, 0);
+    write_le64(&mut info, 16, 0);
+    write_le64(&mut info, 24, 0);
+    write_le64(&mut info, 32, 1024 * 1024);
+    write_le64(&mut info, 40, 768 * 1024);
+    write_le64(&mut info, 48, 0);
+    write_le64(&mut info, 56, 128 * 1024);
+    write_le64(&mut info, 64, 0);
+    write_le64(&mut info, 72, 0);
+    write_le16(&mut info, 80, 1);
+    write_le64(&mut info, 88, 0);
+    write_le64(&mut info, 96, 0);
+    write_le32(&mut info, 104, 1024);
+    if user_mem::copy_to_user(ptr, &info).is_err() {
+        return EFAULT;
+    }
+    0
+}
+
+fn syscall_syslog(type_: usize, buf: usize, len: usize) -> isize {
+    match type_ {
+        2 | 3 | 4 => {
+            if len != 0 && buf != 0 && !user_mem::real_user_range_valid(buf, len) {
+                return EFAULT;
+            }
+            0
+        }
+        10 => 0,
+        0 | 5 | 6 | 7 | 8 | 9 => 0,
+        _ => EINVAL,
+    }
+}
+
+fn read_optional_user_string(ptr: usize) -> Result<(), ()> {
+    if ptr == 0 {
+        return Ok(());
+    }
+    let mut raw = [0u8; PATH_BUF_SIZE];
+    user_mem::read_user_cstr(ptr, &mut raw).map(|_| ()).map_err(|_| ())
 }
 
 fn syscall_mmap(
@@ -805,6 +1380,26 @@ fn write_stat(ptr: usize, inode: usize, mode: usize, size: usize) -> isize {
     write_le32(&mut stat, 56, 4096);
     write_le64(&mut stat, 64, 1);
     if user_mem::copy_to_user(ptr, &stat).is_err() {
+        return EFAULT;
+    }
+    0
+}
+
+fn write_statfs(ptr: usize) -> isize {
+    let mut statfs = [0u8; 120];
+    write_le64(&mut statfs, 0, 0xef53);
+    write_le64(&mut statfs, 8, 4096);
+    write_le64(&mut statfs, 16, 4096);
+    write_le64(&mut statfs, 24, 2048);
+    write_le64(&mut statfs, 32, 2048);
+    write_le64(&mut statfs, 40, 1024);
+    write_le64(&mut statfs, 48, 512);
+    write_le32(&mut statfs, 56, 1);
+    write_le32(&mut statfs, 60, 1);
+    write_le64(&mut statfs, 64, 255);
+    write_le64(&mut statfs, 72, 4096);
+    write_le64(&mut statfs, 80, 0);
+    if user_mem::copy_to_user(ptr, &statfs).is_err() {
         return EFAULT;
     }
     0
@@ -882,6 +1477,22 @@ fn write_le64(dst: &mut [u8], off: usize, value: usize) {
         dst[off + i] = bytes[i];
         i += 1;
     }
+}
+
+fn path_eq(path: &str, expected: &str) -> bool {
+    let a = path.as_bytes();
+    let b = expected.as_bytes();
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut i = 0usize;
+    while i < a.len() {
+        if a[i] != b[i] {
+            return false;
+        }
+        i += 1;
+    }
+    true
 }
 
 fn next_time_tick() -> usize {

@@ -6,12 +6,15 @@ use core::arch::global_asm;
 #[path = "../../kernel_early.rs"]
 mod kernel_early;
 mod basic_runner;
+mod busybox_runner;
 mod console;
 mod fd_table;
+mod process;
 mod real_elf;
 mod sdcard_ext4;
 mod syscall;
 mod trap;
+mod user_mmu;
 mod user;
 mod user_mem;
 mod virtio_blk_pci;
@@ -48,7 +51,21 @@ extern "C" fn loongarch64_early_entry() {
         early_console_write,
     );
     trap::install_trap_vector();
+    early_console_write("[loongarch64] basic phase begin\n");
     basic_runner::run_loongarch_basic_musl_group();
+    early_console_write("[loongarch64] basic phase end\n");
+    #[cfg(not(loongarch64_busybox_diag))]
+    {
+        early_console_write("[loongarch64] busybox phase begin\n");
+        busybox_runner::run_loongarch_busybox_loader_probe();
+        early_console_write("[loongarch64] busybox phase end\n");
+    }
+    #[cfg(loongarch64_busybox_diag)]
+    {
+        early_console_write("[loongarch64] busybox diagnostic phase begin\n");
+        busybox_runner::run_loongarch_busybox_diagnostics();
+        early_console_write("[loongarch64] busybox diagnostic phase end\n");
+    }
 }
 
 pub(crate) fn early_console_write(s: &str) {

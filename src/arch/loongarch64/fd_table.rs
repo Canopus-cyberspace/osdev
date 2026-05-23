@@ -14,7 +14,18 @@ pub(crate) const FD_PIPE_WRITE: u8 = 6;
 pub(crate) const S_IFDIR: u16 = 0o040000;
 pub(crate) const S_IFREG: u16 = 0o100000;
 const VIRTUAL_FILE_SIZE: usize = 512;
-const PIPE_BUFFER_SIZE: usize = 512;
+const MAX_PIPES: usize = 4;
+const PIPE_BUFFER_SIZE: usize = 4096;
+
+const PROC_MEMINFO: &[u8] = b"MemTotal:        1048576 kB\nMemFree:          786432 kB\nMemAvailable:     786432 kB\nBuffers:               0 kB\nCached:           131072 kB\nSwapCached:            0 kB\nActive:            131072 kB\nInactive:          131072 kB\nSwapTotal:             0 kB\nSwapFree:              0 kB\n";
+const PROC_MOUNTS: &[u8] = b"/dev/root / ext4 rw,relatime 0 0\n/dev/root /musl ext4 ro,relatime 0 0\nproc /proc proc rw,nosuid,nodev,noexec,relatime 0 0\n";
+const PROC_STAT: &[u8] = b"cpu  1 0 1 100 0 0 0 0 0 0\nintr 0\nctxt 1\nbtime 0\nprocesses 1\nprocs_running 1\nprocs_blocked 0\n";
+const PROC_UPTIME: &[u8] = b"1.00 0.00\n";
+const PROC_FILESYSTEMS: &[u8] = b"nodev\tproc\n\text4\n";
+const PROC_CPUINFO: &[u8] = b"processor\t: 0\ncpu family\t: LoongArch\nmodel name\t: loongarch64\n";
+const PROC_PID_STAT: &[u8] = b"1 (busybox) R 0 1 1 0 -1 4194560 0 0 0 0 1 0 0 0 20 0 1 1 0 0 0 18446744073709551615 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+const PROC_PID_STATUS: &[u8] = b"Name:\tbusybox\nState:\tR (running)\nPid:\t1\nPPid:\t0\nUid:\t0\t0\t0\t0\nGid:\t0\t0\t0\t0\n";
+const PROC_PID_CMDLINE: &[u8] = b"busybox\0ps\0";
 
 #[derive(Copy, Clone)]
 pub(crate) struct PathBuf {
@@ -81,9 +92,34 @@ pub(crate) const CLOSED_FD: LaFd = LaFd {
     path: PathBuf::empty(),
 };
 
+#[derive(Copy, Clone)]
+struct PipeState {
+    active: bool,
+    buffer: [u8; PIPE_BUFFER_SIZE],
+    read_pos: usize,
+    write_pos: usize,
+    read_refs: usize,
+    write_refs: usize,
+}
+
+impl PipeState {
+    const fn empty() -> Self {
+        Self {
+            active: false,
+            buffer: [0; PIPE_BUFFER_SIZE],
+            read_pos: 0,
+            write_pos: 0,
+            read_refs: 0,
+            write_refs: 0,
+        }
+    }
+}
+
 static mut FD_TABLE: [LaFd; MAX_FDS] = [CLOSED_FD; MAX_FDS];
+static mut FD_TABLE_BACKUP: [LaFd; MAX_FDS] = [CLOSED_FD; MAX_FDS];
 static mut FD_IO_BUFFER: [u8; FD_IO_BUFFER_SIZE] = [0; FD_IO_BUFFER_SIZE];
 static mut CWD: PathBuf = PathBuf::empty();
+static mut CWD_BACKUP: PathBuf = PathBuf::empty();
 static mut VIRTUAL_TEST_CLOSE_EXISTS: bool = false;
 static mut VIRTUAL_TEST_CHDIR_EXISTS: bool = false;
 static mut VIRTUAL_TEST_MKDIR_EXISTS: bool = false;
@@ -93,10 +129,16 @@ static mut VIRTUAL_TEST_OPENAT_EXISTS: bool = false;
 static mut VIRTUAL_TEST_MMAP_EXISTS: bool = false;
 static mut VIRTUAL_TEST_MMAP_DATA: [u8; VIRTUAL_FILE_SIZE] = [0; VIRTUAL_FILE_SIZE];
 static mut VIRTUAL_TEST_MMAP_LEN: usize = 0;
-static mut PIPE_ACTIVE: bool = false;
-static mut PIPE_BUFFER: [u8; PIPE_BUFFER_SIZE] = [0; PIPE_BUFFER_SIZE];
-static mut PIPE_READ_POS: usize = 0;
-static mut PIPE_WRITE_POS: usize = 0;
+static mut VIRTUAL_TEST_CLOSE_EXISTS_BACKUP: bool = false;
+static mut VIRTUAL_TEST_CHDIR_EXISTS_BACKUP: bool = false;
+static mut VIRTUAL_TEST_MKDIR_EXISTS_BACKUP: bool = false;
+static mut VIRTUAL_TEST_UNLINK_EXISTS_BACKUP: bool = false;
+static mut VIRTUAL_FD_DIR_EXISTS_BACKUP: bool = false;
+static mut VIRTUAL_TEST_OPENAT_EXISTS_BACKUP: bool = false;
+static mut VIRTUAL_TEST_MMAP_EXISTS_BACKUP: bool = false;
+static mut VIRTUAL_TEST_MMAP_DATA_BACKUP: [u8; VIRTUAL_FILE_SIZE] = [0; VIRTUAL_FILE_SIZE];
+static mut VIRTUAL_TEST_MMAP_LEN_BACKUP: usize = 0;
+static mut PIPES: [PipeState; MAX_PIPES] = [PipeState::empty(); MAX_PIPES];
 
 pub(crate) fn reset_case_fd_state() {
     let mut cwd = PathBuf::empty();
@@ -111,9 +153,11 @@ pub(crate) fn reset_case_fd_state() {
         VIRTUAL_TEST_OPENAT_EXISTS = false;
         VIRTUAL_TEST_MMAP_EXISTS = false;
         VIRTUAL_TEST_MMAP_LEN = 0;
-        PIPE_ACTIVE = false;
-        PIPE_READ_POS = 0;
-        PIPE_WRITE_POS = 0;
+        let mut pipe = 0usize;
+        while pipe < MAX_PIPES {
+            PIPES[pipe] = PipeState::empty();
+            pipe += 1;
+        }
 
         let mut i = 0usize;
         while i < MAX_FDS {
@@ -147,12 +191,48 @@ pub(crate) fn fd_entry(fd: usize) -> Option<LaFd> {
     unsafe { Some(FD_TABLE[fd]) }
 }
 
+pub(crate) fn save_fd_snapshot() {
+    unsafe {
+        FD_TABLE_BACKUP = FD_TABLE;
+        CWD_BACKUP = CWD;
+        VIRTUAL_TEST_CLOSE_EXISTS_BACKUP = VIRTUAL_TEST_CLOSE_EXISTS;
+        VIRTUAL_TEST_CHDIR_EXISTS_BACKUP = VIRTUAL_TEST_CHDIR_EXISTS;
+        VIRTUAL_TEST_MKDIR_EXISTS_BACKUP = VIRTUAL_TEST_MKDIR_EXISTS;
+        VIRTUAL_TEST_UNLINK_EXISTS_BACKUP = VIRTUAL_TEST_UNLINK_EXISTS;
+        VIRTUAL_FD_DIR_EXISTS_BACKUP = VIRTUAL_FD_DIR_EXISTS;
+        VIRTUAL_TEST_OPENAT_EXISTS_BACKUP = VIRTUAL_TEST_OPENAT_EXISTS;
+        VIRTUAL_TEST_MMAP_EXISTS_BACKUP = VIRTUAL_TEST_MMAP_EXISTS;
+        VIRTUAL_TEST_MMAP_DATA_BACKUP = VIRTUAL_TEST_MMAP_DATA;
+        VIRTUAL_TEST_MMAP_LEN_BACKUP = VIRTUAL_TEST_MMAP_LEN;
+        add_pipe_refs_for_current_table();
+    }
+}
+
+pub(crate) fn restore_fd_snapshot_after_child() {
+    unsafe {
+        release_pipe_refs_for_current_table();
+        FD_TABLE = FD_TABLE_BACKUP;
+        CWD = CWD_BACKUP;
+        VIRTUAL_TEST_CLOSE_EXISTS = VIRTUAL_TEST_CLOSE_EXISTS_BACKUP;
+        VIRTUAL_TEST_CHDIR_EXISTS = VIRTUAL_TEST_CHDIR_EXISTS_BACKUP;
+        VIRTUAL_TEST_MKDIR_EXISTS = VIRTUAL_TEST_MKDIR_EXISTS_BACKUP;
+        VIRTUAL_TEST_UNLINK_EXISTS = VIRTUAL_TEST_UNLINK_EXISTS_BACKUP;
+        VIRTUAL_FD_DIR_EXISTS = VIRTUAL_FD_DIR_EXISTS_BACKUP;
+        VIRTUAL_TEST_OPENAT_EXISTS = VIRTUAL_TEST_OPENAT_EXISTS_BACKUP;
+        VIRTUAL_TEST_MMAP_EXISTS = VIRTUAL_TEST_MMAP_EXISTS_BACKUP;
+        VIRTUAL_TEST_MMAP_DATA = VIRTUAL_TEST_MMAP_DATA_BACKUP;
+        VIRTUAL_TEST_MMAP_LEN = VIRTUAL_TEST_MMAP_LEN_BACKUP;
+    }
+}
+
 pub(crate) fn set_fd(fd: usize, entry: LaFd) -> bool {
     if fd >= MAX_FDS {
         return false;
     }
     unsafe {
+        release_pipe_ref_for_entry(FD_TABLE[fd]);
         FD_TABLE[fd] = entry;
+        add_pipe_ref_for_entry(entry);
     }
     true
 }
@@ -162,9 +242,11 @@ pub(crate) fn close_fd(fd: usize) -> bool {
         return false;
     }
     unsafe {
-        if FD_TABLE[fd].kind == FD_CLOSED {
+        let entry = FD_TABLE[fd];
+        if entry.kind == FD_CLOSED {
             return false;
         }
+        release_pipe_ref_for_entry(entry);
         FD_TABLE[fd] = CLOSED_FD;
     }
     true
@@ -211,18 +293,17 @@ pub(crate) fn alloc_fd() -> Option<usize> {
 
 pub(crate) fn create_pipe_pair() -> Option<(usize, usize)> {
     let read_fd = alloc_fd()?;
+    let pipe_id = unsafe { alloc_pipe()? };
     unsafe {
-        PIPE_ACTIVE = true;
-        PIPE_READ_POS = 0;
-        PIPE_WRITE_POS = 0;
         FD_TABLE[read_fd] = LaFd {
             kind: FD_PIPE_READ,
-            inode: 0,
+            inode: pipe_id as u32,
             mode: 0,
             size: 0,
             offset: 0,
             path: PathBuf::empty(),
         };
+        add_pipe_ref_for_entry(FD_TABLE[read_fd]);
     }
     let write_fd = match alloc_fd() {
         Some(fd) => fd,
@@ -234,12 +315,13 @@ pub(crate) fn create_pipe_pair() -> Option<(usize, usize)> {
     unsafe {
         FD_TABLE[write_fd] = LaFd {
             kind: FD_PIPE_WRITE,
-            inode: 0,
+            inode: pipe_id as u32,
             mode: 0,
             size: 0,
             offset: 0,
             path: PathBuf::empty(),
         };
+        add_pipe_ref_for_entry(FD_TABLE[write_fd]);
     }
     Some((read_fd, write_fd))
 }
@@ -249,18 +331,24 @@ pub(crate) fn write_pipe(fd: usize, src: &[u8]) -> Result<usize, &'static str> {
     if entry.kind != FD_PIPE_WRITE {
         return Err("pipe_not_write");
     }
+    let pipe_id = pipe_id_for_entry(entry).ok_or("pipe_id")?;
     unsafe {
-        if !PIPE_ACTIVE {
+        let pipe = &mut PIPES[pipe_id];
+        if !pipe.active {
             return Err("pipe_inactive");
         }
-        let space = PIPE_BUFFER_SIZE.saturating_sub(PIPE_WRITE_POS);
+        if pipe.read_refs == 0 {
+            return Err("pipe_no_reader");
+        }
+        compact_pipe(pipe);
+        let space = PIPE_BUFFER_SIZE.saturating_sub(pipe.write_pos);
         let take = core::cmp::min(src.len(), space);
         let mut i = 0usize;
         while i < take {
-            PIPE_BUFFER[PIPE_WRITE_POS + i] = src[i];
+            pipe.buffer[pipe.write_pos + i] = src[i];
             i += 1;
         }
-        PIPE_WRITE_POS += take;
+        pipe.write_pos += take;
         Ok(take)
     }
 }
@@ -270,18 +358,24 @@ pub(crate) fn read_pipe(fd: usize, dst: &mut [u8]) -> Result<usize, &'static str
     if entry.kind != FD_PIPE_READ {
         return Err("pipe_not_read");
     }
+    let pipe_id = pipe_id_for_entry(entry).ok_or("pipe_id")?;
     unsafe {
-        if !PIPE_ACTIVE {
+        let pipe = &mut PIPES[pipe_id];
+        if !pipe.active {
             return Err("pipe_inactive");
         }
-        let available = PIPE_WRITE_POS.saturating_sub(PIPE_READ_POS);
+        let available = pipe.write_pos.saturating_sub(pipe.read_pos);
         let take = core::cmp::min(dst.len(), available);
         let mut i = 0usize;
         while i < take {
-            dst[i] = PIPE_BUFFER[PIPE_READ_POS + i];
+            dst[i] = pipe.buffer[pipe.read_pos + i];
             i += 1;
         }
-        PIPE_READ_POS += take;
+        pipe.read_pos += take;
+        if pipe.read_pos == pipe.write_pos {
+            pipe.read_pos = 0;
+            pipe.write_pos = 0;
+        }
         Ok(take)
     }
 }
@@ -497,6 +591,7 @@ pub(crate) fn is_virtual_file_path(path: &str) -> bool {
             || (path_matches(path, "/musl/basic/fd_dir/test_openat.txt")
                 && VIRTUAL_TEST_OPENAT_EXISTS)
             || (path_matches(path, "/musl/basic/test_mmap.txt") && VIRTUAL_TEST_MMAP_EXISTS)
+            || proc_file_content(path).is_some()
     }
 }
 
@@ -504,6 +599,8 @@ pub(crate) fn virtual_file_size(path: &str) -> Option<usize> {
     unsafe {
         if path_matches(path, "/musl/basic/test_mmap.txt") && VIRTUAL_TEST_MMAP_EXISTS {
             Some(VIRTUAL_TEST_MMAP_LEN)
+        } else if let Some(content) = proc_file_content(path) {
+            Some(content.len())
         } else if is_virtual_file_path(path) {
             Some(0)
         } else {
@@ -542,6 +639,18 @@ pub(crate) fn read_virtual_file(
     offset: usize,
     dst: &mut [u8],
 ) -> Result<usize, &'static str> {
+    if let Some(content) = proc_file_content(path) {
+        if offset >= content.len() {
+            return Ok(0);
+        }
+        let take = core::cmp::min(dst.len(), content.len() - offset);
+        let mut i = 0usize;
+        while i < take {
+            dst[i] = content[offset + i];
+            i += 1;
+        }
+        return Ok(take);
+    }
     unsafe {
         if !path_matches(path, "/musl/basic/test_mmap.txt") || !VIRTUAL_TEST_MMAP_EXISTS {
             return Err("virtual_file_missing");
@@ -565,9 +674,40 @@ pub(crate) fn is_virtual_dir_path(path: &str) -> bool {
         path_matches(path, "/")
             || path_matches(path, "/musl")
             || path_matches(path, "/musl/basic")
+            || is_proc_dir_path(path)
             || (path_matches(path, "/musl/basic/test_chdir") && VIRTUAL_TEST_CHDIR_EXISTS)
             || (path_matches(path, "/musl/basic/test_mkdir") && VIRTUAL_TEST_MKDIR_EXISTS)
             || (path_matches(path, "/musl/basic/fd_dir") && VIRTUAL_FD_DIR_EXISTS)
+    }
+}
+
+fn is_proc_dir_path(path: &str) -> bool {
+    path_matches(path, "/proc")
+        || path_matches(path, "/proc/1")
+        || path_matches(path, "/proc/self")
+}
+
+fn proc_file_content(path: &str) -> Option<&'static [u8]> {
+    if path_matches(path, "/proc/meminfo") {
+        Some(PROC_MEMINFO)
+    } else if path_matches(path, "/proc/mounts") {
+        Some(PROC_MOUNTS)
+    } else if path_matches(path, "/proc/stat") {
+        Some(PROC_STAT)
+    } else if path_matches(path, "/proc/uptime") {
+        Some(PROC_UPTIME)
+    } else if path_matches(path, "/proc/filesystems") {
+        Some(PROC_FILESYSTEMS)
+    } else if path_matches(path, "/proc/cpuinfo") {
+        Some(PROC_CPUINFO)
+    } else if path_matches(path, "/proc/1/stat") || path_matches(path, "/proc/self/stat") {
+        Some(PROC_PID_STAT)
+    } else if path_matches(path, "/proc/1/status") || path_matches(path, "/proc/self/status") {
+        Some(PROC_PID_STATUS)
+    } else if path_matches(path, "/proc/1/cmdline") || path_matches(path, "/proc/self/cmdline") {
+        Some(PROC_PID_CMDLINE)
+    } else {
+        None
     }
 }
 
@@ -587,4 +727,91 @@ fn bytes_eq(a: &[u8], b: &[u8]) -> bool {
         i += 1;
     }
     true
+}
+
+unsafe fn alloc_pipe() -> Option<usize> {
+    let mut id = 0usize;
+    while id < MAX_PIPES {
+        if !PIPES[id].active {
+            PIPES[id] = PipeState::empty();
+            PIPES[id].active = true;
+            return Some(id);
+        }
+        id += 1;
+    }
+    None
+}
+
+fn pipe_id_for_entry(entry: LaFd) -> Option<usize> {
+    if entry.kind != FD_PIPE_READ && entry.kind != FD_PIPE_WRITE {
+        return None;
+    }
+    let id = entry.inode as usize;
+    if id < MAX_PIPES {
+        Some(id)
+    } else {
+        None
+    }
+}
+
+unsafe fn add_pipe_ref_for_entry(entry: LaFd) {
+    if let Some(id) = pipe_id_for_entry(entry) {
+        if PIPES[id].active {
+            if entry.kind == FD_PIPE_READ {
+                PIPES[id].read_refs = PIPES[id].read_refs.saturating_add(1);
+            } else {
+                PIPES[id].write_refs = PIPES[id].write_refs.saturating_add(1);
+            }
+        }
+    }
+}
+
+unsafe fn release_pipe_ref_for_entry(entry: LaFd) {
+    if let Some(id) = pipe_id_for_entry(entry) {
+        if PIPES[id].active {
+            if entry.kind == FD_PIPE_READ {
+                PIPES[id].read_refs = PIPES[id].read_refs.saturating_sub(1);
+            } else {
+                PIPES[id].write_refs = PIPES[id].write_refs.saturating_sub(1);
+            }
+            if PIPES[id].read_refs == 0 && PIPES[id].write_refs == 0 {
+                PIPES[id] = PipeState::empty();
+            }
+        }
+    }
+}
+
+unsafe fn add_pipe_refs_for_current_table() {
+    let mut fd = 0usize;
+    while fd < MAX_FDS {
+        add_pipe_ref_for_entry(FD_TABLE[fd]);
+        fd += 1;
+    }
+}
+
+unsafe fn release_pipe_refs_for_current_table() {
+    let mut fd = 0usize;
+    while fd < MAX_FDS {
+        release_pipe_ref_for_entry(FD_TABLE[fd]);
+        fd += 1;
+    }
+}
+
+fn compact_pipe(pipe: &mut PipeState) {
+    if pipe.read_pos == 0 {
+        return;
+    }
+    if pipe.read_pos == pipe.write_pos {
+        pipe.read_pos = 0;
+        pipe.write_pos = 0;
+        return;
+    }
+    let remaining = pipe.write_pos - pipe.read_pos;
+    let mut i = 0usize;
+    while i < remaining {
+        pipe.buffer[i] = pipe.buffer[pipe.read_pos + i];
+        i += 1;
+    }
+    pipe.read_pos = 0;
+    pipe.write_pos = remaining;
 }

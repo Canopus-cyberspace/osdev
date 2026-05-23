@@ -1,0 +1,30 @@
+enable loongarch fork-dependent basic-musl cases safely
+
+Add nested LoongArch trap stack cursor support so a child trap can run while
+the parent syscall handler is still live on the trap stack. Each trap reserves
+a 16 KiB stack slice and records the previous slice top in the trap frame so
+return restores the cursor without corrupting parent kernel state.
+
+Reuse the existing LoongArch process lifecycle scaffolding for full-copy
+fork-style clone execution, child exit recording, wait4 status writeback,
+user memory snapshots, fd/cwd snapshots, and safe user-copy helpers.
+
+Enable the real PLV3 basic-musl cases:
+- exit
+- wait
+- waitpid
+- yield
+- fork
+
+Do not enable clone, execve, or pipe in this iteration. Do not change
+runtime_dispatch.rs.
+
+Validation:
+- cargo build --target riscv64gc-unknown-none-elf
+- make all
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch QEMU smoke: attempted=29 completed=29 failed=none
+
+Official validation was attempted but blocked by local Docker API
+unavailability.

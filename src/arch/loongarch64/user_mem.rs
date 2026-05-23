@@ -31,6 +31,12 @@ pub(crate) fn read_user_cstr(ptr: usize, out: &mut [u8]) -> Result<usize, &'stat
     real_elf::read_user_cstr(ptr, out)
 }
 
+pub(crate) fn read_user_usize(ptr: usize) -> Result<usize, &'static str> {
+    let mut bytes = [0u8; core::mem::size_of::<usize>()];
+    real_elf::copy_from_user(ptr, &mut bytes)?;
+    Ok(usize::from_le_bytes(bytes))
+}
+
 pub(crate) fn write_user_usize_pair(
     ptr: usize,
     first: usize,

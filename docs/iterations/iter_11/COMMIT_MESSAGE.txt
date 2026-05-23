@@ -1,0 +1,30 @@
+fix loongarch waitpid status encoding for full basic-musl score
+
+Close the LoongArch basic-musl scoring gap by fixing wait status writeback in
+the LoongArch process subsystem. Child exits now record only the low 8-bit
+exit code, and wait4 writes Linux-compatible normal-exit status
+((exit_code & 0xff) << 8) through the existing user-copy path. This lets the
+real /musl/basic/waitpid program observe WEXITSTATUS(status) == 3 and print
+the expected success output.
+
+Add a narrow LoongArch user-entry synchronization path for the fixed-address
+BusyBox ET_EXEC runner. The now-successful waitpid path exposed timing
+sensitivity when BusyBox command tracing was quiet; user_mmu.rs now provides a
+silent ibar/dbar settle loop, real_elf.rs calls it after activating fixed user
+mappings, and trap.rs calls it before returning to PLV3.
+
+Keep runtime_dispatch.rs unchanged and preserve the existing BusyBox-la safe
+command set.
+
+Validation:
+- CPU_COUNT=16
+- cargo build -j 16 --target riscv64gc-unknown-none-elf: passed
+- make -j 16 all: passed with local jobserver warning
+- make all: passed without warnings
+- kernel-rv remains a RISC-V ELF
+- kernel-la remains a LoongArch ELF
+- local LoongArch basic smoke: attempted=32 completed=32 failed=none
+- local BusyBox smoke: completed=7 attempted=7 matched=7 failed=0
+- official Docker: Accpted, score 260
+- official rank: basic-musl-rv 100.0, busybox-musl-rv 53.0,
+  basic-musl-la 102.0, busybox-musl-la 5.0

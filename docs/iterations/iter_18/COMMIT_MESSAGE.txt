@@ -1,0 +1,51 @@
+add loongarch proc compatibility for busybox read-only applets
+
+Add a minimal read-only virtual /proc surface to the LoongArch fd path:
+- /proc
+- /proc/meminfo
+- /proc/mounts
+- /proc/stat
+- /proc/uptime
+- /proc/filesystems
+- /proc/cpuinfo
+- /proc/1/{stat,status,cmdline}
+- /proc/self/{stat,status,cmdline}
+
+Add narrow LoongArch syscall compatibility for direct/read-only BusyBox
+commands:
+- lseek
+- statfs
+- fstatfs
+- sysinfo
+- syslog with empty-log behavior for dmesg
+
+Promote real PLV3 BusyBox commands that now pass locally:
+- dmesg
+- df
+- ps
+- free
+
+Keep risky commands disabled:
+- ash -c exit
+- which ls
+- hwclock
+- sleep 1
+
+Pin the LoongArch .user section at 0x90010000 before .rodata so adding
+read-only kernel metadata does not move the user-return stub and destabilize
+existing BusyBox commands.
+
+No scratch-FS, redirection, pipeline, grep, file-write path, official script,
+or runtime_dispatch.rs behavior is changed.
+
+Validation:
+- cargo build -j 16 --target riscv64gc-unknown-none-elf passed.
+- make -j 16 all passed with the known local jobserver warning.
+- make all passed.
+- kernel-rv remains a RISC-V ELF.
+- kernel-la remains a LoongArch ELF.
+- local LoongArch basic remains attempted=32 completed=32 failed=none.
+- local BusyBox runner reports completed=21 attempted=21 matched=21 failed=0 disabled=4.
+- official validation was attempted but timed out at the 30-minute wrapper with
+  a 0-byte docker_evaluate.log, so no refreshed official score is claimed.
+

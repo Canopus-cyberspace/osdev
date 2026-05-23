@@ -58,13 +58,58 @@ const CASES: &[LaBasicCase] = &[
         enabled: true,
     },
     LaBasicCase {
+        name: "exit",
+        path: "/musl/basic/exit",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "wait",
+        path: "/musl/basic/wait",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "waitpid",
+        path: "/musl/basic/waitpid",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "yield",
+        path: "/musl/basic/yield",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "fork",
+        path: "/musl/basic/fork",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "clone",
+        path: "/musl/basic/clone",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "execve",
+        path: "/musl/basic/execve",
+        enabled: true,
+    },
+    LaBasicCase {
         name: "mmap",
         path: "/musl/basic/mmap",
         enabled: true,
     },
     LaBasicCase {
+        name: "mount",
+        path: "/musl/basic/mount",
+        enabled: true,
+    },
+    LaBasicCase {
         name: "munmap",
         path: "/musl/basic/munmap",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "umount",
+        path: "/musl/basic/umount",
         enabled: true,
     },
     LaBasicCase {
@@ -80,6 +125,11 @@ const CASES: &[LaBasicCase] = &[
     LaBasicCase {
         name: "dup2",
         path: "/musl/basic/dup2",
+        enabled: true,
+    },
+    LaBasicCase {
+        name: "pipe",
+        path: "/musl/basic/pipe",
         enabled: true,
     },
     LaBasicCase {

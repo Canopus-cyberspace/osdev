@@ -1,0 +1,14 @@
+implement loongarch mount and umount basic-musl cases with process syscall groundwork
+
+Add LoongArch-local syscall support for the next basic-musl expansion pass.
+Enable real PLV3 execution of /musl/basic/mount and /musl/basic/umount from
+the official LoongArch sdcard image, bringing the local LoongArch basic runner
+to 24 attempted and 24 completed real ELF cases.
+
+Add focused process lifecycle scaffolding for future fork/clone/wait/execve
+work, plus user image and fd snapshot hooks. Keep fork-dependent cases disabled
+because the current LoongArch trap path runs Rust on the user stack; enabling
+those cases safely needs a dedicated trap/kernel stack or equivalent scheduler
+continuation model.
+
+Preserve RISC-V behavior and leave runtime_dispatch.rs untouched.

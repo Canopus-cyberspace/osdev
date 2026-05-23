@@ -1,0 +1,49 @@
+promote direct loongarch busybox applets
+
+Promote direct BusyBox applets that have no scratch-FS, redirection,
+pipeline, or shell-complexity dependency. The promoted commands are real
+/musl/busybox executions in LoongArch PLV3 and emit official testcase success
+lines only after the command exits with the expected status.
+
+New LoongArch BusyBox scoring commands:
+- basename /aaa/bbb
+- printf "abc\n"
+- uname
+- dirname /aaa/bbb
+- expr 1 + 1
+- date
+- uptime
+- clear
+- cal
+
+Keep existing scoring commands:
+- true
+- false
+- pwd
+- sh -c exit
+- ls
+
+Keep smoke-only commands:
+- echo hello
+- cat /musl/busybox_cmd.txt
+
+Keep disabled commands:
+- ash -c exit: known user fault from diagnostics
+- which ls: local probe returned exit code 1
+- free: local probe returned exit code 1 because /proc/meminfo is unavailable
+- sleep 1: local probe hit a user fault
+
+No syscall, fd-table, scratch-FS, redirection, pipeline, or runtime dispatcher
+behavior is changed.
+
+Validation:
+- cargo build -j 16 --target riscv64gc-unknown-none-elf passed.
+- make -j 16 all passed with the known local jobserver warning.
+- make all passed.
+- kernel-rv remains a RISC-V ELF.
+- kernel-la remains a LoongArch ELF.
+- local LoongArch basic remains attempted=32 completed=32 failed=none.
+- local BusyBox runner reports completed=16 attempted=16 matched=16 failed=0 disabled=4.
+- official validation completed with Accpted, score 269, basic-musl-la 102.0,
+  busybox-musl-la 14.0.
+

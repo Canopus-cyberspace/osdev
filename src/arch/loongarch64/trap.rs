@@ -6,18 +6,47 @@ use crate::console::{write_usize_dec, write_usize_hex};
 use crate::early_console_write;
 use crate::syscall;
 use crate::user;
+use crate::user_mmu;
 
 const LOONGARCH_ECODE_SYS: usize = 11;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_ECODE_INT: usize = 0;
 const LOONGARCH_ESTAT_ECODE_SHIFT: usize = 16;
 const LOONGARCH_ESTAT_ECODE_MASK: usize = 0x3f;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_ESTAT_TIMER_INT: usize = 1 << 11;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_CRMD_IE: usize = 1 << 2;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_ECFG_TIMER_INT: usize = 1 << 11;
+#[cfg(loongarch64_busybox_diag)]
+const LOONGARCH_TIMER_INITVAL: usize = 200_000;
+
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_TIMER_SAVED_CRMD: usize = 0;
+#[cfg(loongarch64_busybox_diag)]
+static mut DIAGNOSTIC_TIMER_SAVED_ECFG: usize = 0;
 
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct LoongArchTrapFrame {
     pub regs: [usize; 32],
     pub era: usize,
     pub estat: usize,
     pub badv: usize,
     pub prmd: usize,
+    trap_stack_top: usize,
+}
+
+#[repr(C)]
+pub(crate) struct KernelReturnState {
+    words: [usize; 12],
+}
+
+impl KernelReturnState {
+    pub(crate) const fn empty() -> Self {
+        Self { words: [0; 12] }
+    }
 }
 
 global_asm!(
@@ -26,14 +55,22 @@ global_asm!(
     .balign 4
     .globl __loongarch64_trap_entry
 __loongarch64_trap_entry:
-    addi.d $sp, $sp, -288
+    csrwr $sp, 0x30
+    csrwr $r12, 0x31
+    csrwr $r13, 0x32
+    la.local $r13, loongarch64_trap_stack_cursor
+    ld.d $sp, $r13, 0
+    li.d $r12, -16384
+    add.d $r12, $sp, $r12
+    st.d $r12, $r13, 0
+    addi.d $sp, $sp, -304
+    addi.d $r12, $sp, 304
+    st.d $r12, $sp, 288
 
     st.d $r1,  $sp, 8
     st.d $r2,  $sp, 16
-    st.d $r12, $sp, 96
-    addi.d $r12, $sp, 288
+    csrrd $r12, 0x30
     st.d $r12, $sp, 24
-    ld.d $r12, $sp, 96
 
     st.d $r4,  $sp, 32
     st.d $r5,  $sp, 40
@@ -43,6 +80,9 @@ __loongarch64_trap_entry:
     st.d $r9,  $sp, 72
     st.d $r10, $sp, 80
     st.d $r11, $sp, 88
+    csrrd $r12, 0x31
+    st.d $r12, $sp, 96
+    csrrd $r13, 0x32
     st.d $r13, $sp, 104
     st.d $r14, $sp, 112
     st.d $r15, $sp, 120
@@ -74,6 +114,10 @@ __loongarch64_trap_entry:
 
     or $a0, $sp, $zero
     bl loongarch64_trap_handler
+
+    ld.d $r12, $sp, 288
+    la.local $r13, loongarch64_trap_stack_cursor
+    st.d $r12, $r13, 0
 
     ld.d $r12, $sp, 280
     csrwr $r12, 0x1
@@ -173,6 +217,63 @@ loongarch64_enter_user_entry:
     csrwr $t0, 0x1
     ertn
 
+    .globl loongarch64_enter_user_frame
+loongarch64_enter_user_frame:
+    la.local $t0, loongarch64_kernel_sp_slot
+    st.d $sp, $t0, 0
+    la.local $t0, loongarch64_kernel_ra_slot
+    st.d $ra, $t0, 0
+    la.local $t0, loongarch64_kernel_saved_slot
+    st.d $r22, $t0, 0
+    st.d $r23, $t0, 8
+    st.d $r24, $t0, 16
+    st.d $r25, $t0, 24
+    st.d $r26, $t0, 32
+    st.d $r27, $t0, 40
+    st.d $r28, $t0, 48
+    st.d $r29, $t0, 56
+    st.d $r30, $t0, 64
+    st.d $r31, $t0, 72
+
+    or $r20, $a0, $zero
+    ld.d $t0, $r20, 256
+    csrwr $t0, 0x6
+    li.d $t0, 0x3
+    csrwr $t0, 0x1
+
+    ld.d $r1,  $r20, 8
+    ld.d $r2,  $r20, 16
+    ld.d $r4,  $r20, 32
+    ld.d $r5,  $r20, 40
+    ld.d $r6,  $r20, 48
+    ld.d $r7,  $r20, 56
+    ld.d $r8,  $r20, 64
+    ld.d $r9,  $r20, 72
+    ld.d $r10, $r20, 80
+    ld.d $r11, $r20, 88
+    ld.d $r12, $r20, 96
+    ld.d $r13, $r20, 104
+    ld.d $r14, $r20, 112
+    ld.d $r15, $r20, 120
+    ld.d $r16, $r20, 128
+    ld.d $r17, $r20, 136
+    ld.d $r18, $r20, 144
+    ld.d $r19, $r20, 152
+    ld.d $r22, $r20, 176
+    ld.d $r23, $r20, 184
+    ld.d $r24, $r20, 192
+    ld.d $r25, $r20, 200
+    ld.d $r26, $r20, 208
+    ld.d $r27, $r20, 216
+    ld.d $r28, $r20, 224
+    ld.d $r29, $r20, 232
+    ld.d $r30, $r20, 240
+    ld.d $r31, $r20, 248
+    ld.d $r21, $r20, 168
+    ld.d $sp,  $r20, 24
+    ld.d $r20, $r20, 160
+    ertn
+
     .globl loongarch64_user_exit_return
 loongarch64_user_exit_return:
     la.local $t0, loongarch64_kernel_saved_slot
@@ -192,6 +293,68 @@ loongarch64_user_exit_return:
     ld.d $ra, $t0, 0
     ret
 
+    .globl loongarch64_save_kernel_return_state
+loongarch64_save_kernel_return_state:
+    la.local $t0, loongarch64_kernel_sp_slot
+    ld.d $t1, $t0, 0
+    st.d $t1, $a0, 0
+    la.local $t0, loongarch64_kernel_ra_slot
+    ld.d $t1, $t0, 0
+    st.d $t1, $a0, 8
+    la.local $t0, loongarch64_kernel_saved_slot
+    ld.d $t1, $t0, 0
+    st.d $t1, $a0, 16
+    ld.d $t1, $t0, 8
+    st.d $t1, $a0, 24
+    ld.d $t1, $t0, 16
+    st.d $t1, $a0, 32
+    ld.d $t1, $t0, 24
+    st.d $t1, $a0, 40
+    ld.d $t1, $t0, 32
+    st.d $t1, $a0, 48
+    ld.d $t1, $t0, 40
+    st.d $t1, $a0, 56
+    ld.d $t1, $t0, 48
+    st.d $t1, $a0, 64
+    ld.d $t1, $t0, 56
+    st.d $t1, $a0, 72
+    ld.d $t1, $t0, 64
+    st.d $t1, $a0, 80
+    ld.d $t1, $t0, 72
+    st.d $t1, $a0, 88
+    ret
+
+    .globl loongarch64_restore_kernel_return_state
+loongarch64_restore_kernel_return_state:
+    la.local $t0, loongarch64_kernel_sp_slot
+    ld.d $t1, $a0, 0
+    st.d $t1, $t0, 0
+    la.local $t0, loongarch64_kernel_ra_slot
+    ld.d $t1, $a0, 8
+    st.d $t1, $t0, 0
+    la.local $t0, loongarch64_kernel_saved_slot
+    ld.d $t1, $a0, 16
+    st.d $t1, $t0, 0
+    ld.d $t1, $a0, 24
+    st.d $t1, $t0, 8
+    ld.d $t1, $a0, 32
+    st.d $t1, $t0, 16
+    ld.d $t1, $a0, 40
+    st.d $t1, $t0, 24
+    ld.d $t1, $a0, 48
+    st.d $t1, $t0, 32
+    ld.d $t1, $a0, 56
+    st.d $t1, $t0, 40
+    ld.d $t1, $a0, 64
+    st.d $t1, $t0, 48
+    ld.d $t1, $a0, 72
+    st.d $t1, $t0, 56
+    ld.d $t1, $a0, 80
+    st.d $t1, $t0, 64
+    ld.d $t1, $a0, 88
+    st.d $t1, $t0, 72
+    ret
+
     .section .bss, "aw", @nobits
     .align 3
 loongarch64_kernel_sp_slot:
@@ -200,6 +363,18 @@ loongarch64_kernel_ra_slot:
     .space 8
 loongarch64_kernel_saved_slot:
     .space 80
+
+    .section .trap_stack, "aw", @nobits
+    .align 12
+loongarch64_trap_stack:
+    .space 65536
+    .globl loongarch64_trap_stack_top
+loongarch64_trap_stack_top:
+
+    .section .data, "aw"
+    .align 3
+loongarch64_trap_stack_cursor:
+    .dword loongarch64_trap_stack_top
 
     .section .user.text, "ax"
     .balign 4
@@ -233,12 +408,63 @@ loongarch64_user_region_end:
 "#
 );
 
+#[cfg(loongarch64_busybox_diag)]
+global_asm!(
+    r#"
+    .section .text
+    .balign 4
+    .globl loongarch64_diag_read_crmd
+loongarch64_diag_read_crmd:
+    csrrd $a0, 0x0
+    ret
+
+    .globl loongarch64_diag_write_crmd
+loongarch64_diag_write_crmd:
+    csrwr $a0, 0x0
+    ret
+
+    .globl loongarch64_diag_read_ecfg
+loongarch64_diag_read_ecfg:
+    csrrd $a0, 0x4
+    ret
+
+    .globl loongarch64_diag_write_ecfg
+loongarch64_diag_write_ecfg:
+    csrwr $a0, 0x4
+    ret
+
+    .globl loongarch64_diag_write_tcfg
+loongarch64_diag_write_tcfg:
+    csrwr $a0, 0x41
+    ret
+
+    .globl loongarch64_diag_clear_timer
+loongarch64_diag_clear_timer:
+    li.d $a0, 1
+    csrwr $a0, 0x44
+    ret
+"#
+);
+
 extern "C" {
     fn loongarch64_install_trap_vector();
     fn loongarch64_trigger_syscall_probe();
     fn loongarch64_enter_user_smoke();
     fn loongarch64_enter_user_entry(entry: usize, stack_pointer: usize);
+    fn loongarch64_enter_user_frame(frame: *const LoongArchTrapFrame);
     fn loongarch64_user_exit_return();
+    fn loongarch64_save_kernel_return_state(state: *mut KernelReturnState);
+    fn loongarch64_restore_kernel_return_state(state: *const KernelReturnState);
+}
+
+#[cfg(loongarch64_busybox_diag)]
+extern "C" {
+    fn loongarch64_diag_read_crmd() -> usize;
+    fn loongarch64_diag_write_crmd(value: usize);
+    fn loongarch64_diag_read_ecfg() -> usize;
+    fn loongarch64_diag_write_ecfg(value: usize);
+    fn loongarch64_diag_write_tcfg(value: usize);
+    fn loongarch64_diag_clear_timer();
 }
 
 pub fn install_trap_vector() {
@@ -262,8 +488,48 @@ pub(crate) fn enter_user_entry(entry: usize, stack_pointer: usize) {
     }
 }
 
+pub(crate) fn enter_user_frame(frame: &LoongArchTrapFrame) {
+    unsafe {
+        loongarch64_enter_user_frame(frame as *const LoongArchTrapFrame);
+    }
+}
+
+pub(crate) fn save_kernel_return_state(state: &mut KernelReturnState) {
+    unsafe {
+        loongarch64_save_kernel_return_state(state as *mut KernelReturnState);
+    }
+}
+
+pub(crate) fn restore_kernel_return_state(state: &KernelReturnState) {
+    unsafe {
+        loongarch64_restore_kernel_return_state(state as *const KernelReturnState);
+    }
+}
+
 pub(crate) fn user_exit_return_addr() -> usize {
     loongarch64_user_exit_return as *const () as usize
+}
+
+#[cfg(loongarch64_busybox_diag)]
+pub(crate) fn start_diagnostic_timer() {
+    unsafe {
+        DIAGNOSTIC_TIMER_SAVED_CRMD = loongarch64_diag_read_crmd();
+        DIAGNOSTIC_TIMER_SAVED_ECFG = loongarch64_diag_read_ecfg();
+        loongarch64_diag_clear_timer();
+        loongarch64_diag_write_ecfg(DIAGNOSTIC_TIMER_SAVED_ECFG | LOONGARCH_ECFG_TIMER_INT);
+        loongarch64_diag_write_crmd(DIAGNOSTIC_TIMER_SAVED_CRMD | LOONGARCH_CRMD_IE);
+        loongarch64_diag_write_tcfg((LOONGARCH_TIMER_INITVAL << 2) | 0x3);
+    }
+}
+
+#[cfg(loongarch64_busybox_diag)]
+pub(crate) fn stop_diagnostic_timer() {
+    unsafe {
+        loongarch64_diag_write_tcfg(0);
+        loongarch64_diag_clear_timer();
+        loongarch64_diag_write_ecfg(DIAGNOSTIC_TIMER_SAVED_ECFG);
+        loongarch64_diag_write_crmd(DIAGNOSTIC_TIMER_SAVED_CRMD);
+    }
 }
 
 pub fn run_user_mode_smoke() {
@@ -281,7 +547,8 @@ pub fn run_user_mode_smoke() {
 #[no_mangle]
 extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
     let ecode = (frame.estat >> LOONGARCH_ESTAT_ECODE_SHIFT) & LOONGARCH_ESTAT_ECODE_MASK;
-    let quiet_group = user::is_basic_group_active();
+    user::record_trap_observation(ecode, frame.era, frame.badv);
+    let quiet_group = user::is_any_group_active() || user::diagnostic_active();
     let quiet_real_write = ecode == LOONGARCH_ECODE_SYS && syscall::is_quiet_real_write(frame);
     if !quiet_group && !quiet_real_write {
         early_console_write("[loongarch64-trap] ecode=");
@@ -293,11 +560,23 @@ extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
         early_console_write("\n");
     }
 
+    #[cfg(loongarch64_busybox_diag)]
+    if ecode == LOONGARCH_ECODE_INT && (frame.estat & LOONGARCH_ESTAT_TIMER_INT) != 0 {
+        unsafe {
+            loongarch64_diag_clear_timer();
+        }
+        if (frame.prmd & 0x3) == 3 && user::diagnostic_timer_tick_should_abort() {
+            frame.era = user_exit_return_addr();
+            frame.prmd &= !0x3;
+        }
+        return;
+    }
+
     if ecode == LOONGARCH_ECODE_SYS {
         syscall::handle_syscall(frame);
     } else {
         if (frame.prmd & 0x3) == 3 {
-            user::record_user_fault(ecode, frame.era);
+            user::record_user_fault(ecode, frame.era, frame.badv);
             frame.era = user_exit_return_addr();
             frame.prmd &= !0x3;
         } else {
@@ -307,5 +586,8 @@ extern "C" fn loongarch64_trap_handler(frame: &mut LoongArchTrapFrame) {
             frame.era = frame.era.wrapping_add(4);
         }
     }
-}
 
+    if (frame.prmd & 0x3) == 3 {
+        user_mmu::sync_user_entry();
+    }
+}

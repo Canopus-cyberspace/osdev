@@ -1,0 +1,34 @@
+add loongarch busybox non-scoring stall diagnostics
+
+Add a cfg-gated LoongArch BusyBox diagnostic mode for investigating
+commands that can stall or fault before clean exit. The diagnostic runner
+executes one real /musl/busybox command at a time without emitting official
+testcase success/fail lines, then reports entry PC, last observed ERA/BADV,
+ECODE, syscall count, trap count, same-ERA count, timer ticks, and outcome.
+
+Add diagnostic state ownership to the LoongArch user run-state module and a
+trap observation/timer hook in the LoongArch trap module. Add a small
+LOONGARCH_RUSTFLAGS Makefile hook so local diagnostics can build a separate
+kernel-la-diag with --cfg loongarch64_busybox_diag while normal make all and
+official scoring builds remain unchanged.
+
+Diagnostic findings:
+- basename /aaa/bbb exits with code 0 in the isolated diagnostic path.
+- printf "abc\n" exits with code 0 in the isolated diagnostic path.
+- uname exits with code 0 in the isolated diagnostic path.
+- ash -c exit faults at ERA/BADV 0x1201b64b8 with ECODE 15.
+
+No BusyBox command is promoted to scoring. The official BusyBox allowlist
+remains true, false, pwd, sh -c exit, and ls. runtime_dispatch.rs is unchanged.
+
+Validation:
+- cargo build -j 16 --target riscv64gc-unknown-none-elf passed.
+- make -j 16 all passed with the known local jobserver warning.
+- make all passed.
+- kernel-rv remains a RISC-V ELF.
+- kernel-la remains a LoongArch ELF.
+- local LoongArch basic remains attempted=32 completed=32 failed=none.
+- local BusyBox smoke remains completed=7 attempted=7 matched=7 failed=0 disabled=3.
+- official validation completed with Accpted, score 260, basic-musl-la 102.0,
+  busybox-musl-la 5.0.
+

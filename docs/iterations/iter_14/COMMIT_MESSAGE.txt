@@ -1,0 +1,28 @@
+preserve loongarch busybox baseline after gated scratch-fs attempt
+
+Attempt an aggressive LoongArch BusyBox file-operation expansion, then
+apply the fallback policy after scratch-fs and reduced command probes
+showed user-mode stall risk.
+
+- inspect BusyBox runner, fd table, syscall, user, process, and MMU ownership
+- attempt BusyBox-only Virtual Scratch FS support for file commands
+- attempt a reduced printf-only gated probe
+- preserve risky patches outside the repository for later analysis
+- revert all source changes after touch and printf stalled and directory probes
+  destabilized known-good command execution
+- keep true, false, pwd, sh -c exit, and ls as scoring commands
+- keep echo and cat as non-scoring smoke commands
+- keep basename, uname, and ash disabled
+- clean stale official Docker containers before validation
+- preserve LoongArch basic 32/32 and official score-260 baseline
+- leave runtime_dispatch.rs unchanged
+
+Validation:
+- cargo build -j 16 --target riscv64gc-unknown-none-elf
+- make -j 16 all
+- make all
+- file kernel-rv kernel-la
+- local LoongArch basic smoke: attempted=32 completed=32 failed=none
+- local BusyBox smoke: completed=7 attempted=7 matched=7 failed=0 disabled=3
+- official validation: Accpted, score 260
+- official ranks: basic-musl-rv 100.0, busybox-musl-rv 53.0, basic-musl-la 102.0, busybox-musl-la 5.0
