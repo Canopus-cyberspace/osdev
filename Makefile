@@ -35,7 +35,9 @@ cargo-build:
 		rustup component add rust-src || true; \
 	fi; \
 	$(PYTHON) user/build_init_elf.py; \
-	$(CARGO) build --target "$(TARGET)" 2>&1 | tee "$(MAKE_BUILD_LOG)"; \
+# 	$(CARGO) build --target "$(TARGET)" 2>&1 | tee "$(MAKE_BUILD_LOG)"; \
+	RUSTFLAGS="-C link-arg=-Tlinker/riscv64.ld -C force-frame-pointers=yes $${RUSTFLAGS:-}" \
+		$(CARGO) build --target "$(TARGET)" 2>&1 | tee "$(MAKE_BUILD_LOG)"; \
 	if grep -nE '$(FORBIDDEN_BUILD_RE)' "$(MAKE_BUILD_LOG)" >/dev/null; then \
 		echo "[make] forbidden build output observed"; \
 		grep -nE '$(FORBIDDEN_BUILD_RE)' "$(MAKE_BUILD_LOG)"; \
