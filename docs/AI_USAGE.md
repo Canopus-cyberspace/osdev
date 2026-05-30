@@ -111,3 +111,9 @@ AI was used to inspect the LoongArch fd path, syscall compatibility path, BusyBo
 Accepted changes add only read-only `/proc` compatibility, narrow read-only syscall shims, BusyBox command promotion for real passing commands, and LoongArch-local `.user` section stabilization.
 
 No fake BusyBox output, hard-coded command success, scratch-FS, redirection, pipeline, file-write path, official script, or `runtime_dispatch.rs` change was added. Official validation is documented as timed out rather than passed.
+
+## Iteration 19
+
+AI was used to run the requested grep-first reference discovery, determine that `legacy_fd_runtime.rs` is syscall-runtime reachable through the SV39 include path, silence historical debug logs through the existing `legacy_fd_debug!` guard, and run build-only validation.
+
+No fake official output, hard-coded PASS output, official marker change, QEMU run, official validation run, LoongArch file edit, Makefile edit, or `runtime_dispatch.rs` edit was performed.

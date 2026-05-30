@@ -1,0 +1,24 @@
+[package]
+name = "uestc-kernel-source"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[lib]
+path = "lib.rs"
+
+[[bin]]
+name = "source-riscv64-kernel"
+path = "bin/riscv64_kernel.rs"
+
+[[bin]]
+name = "source-loongarch64-kernel"
+path = "bin/loongarch64_kernel.rs"
+
+[dependencies]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"

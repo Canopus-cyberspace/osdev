@@ -751,3 +751,22 @@ Official validation was attempted but failed before kernel evaluation because Do
 ```text
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
 ```
+
+## Iteration 19
+
+Build-only validation was run. QEMU and official validation were not run.
+
+```text
+cargo build --target riscv64gc-unknown-none-elf: passed
+make all: failed
+```
+
+`make all` failed during the LoongArch build:
+
+```text
+error[E0425]: cannot find function `debug_trace_enabled` in module `crate::console`
+error: aborting due to 18 previous errors
+make: *** [Makefile:48: loongarch-kernel] Error 1
+```
+
+The failure is in pre-existing LoongArch worktree edits that were outside this task's allowed edit scope. No score changed.

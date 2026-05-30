@@ -133,3 +133,11 @@ Added minimal read-only `/proc` compatibility in `fd_table.rs` and narrow read-o
 `linker.ld` now pins the LoongArch `.user` section at `0x90010000` before `.rodata`. Local probing showed that proc metadata growth could otherwise move the user-return stub and destabilize pre-existing BusyBox commands.
 
 No scratch-FS, redirection, pipeline, grep, file-write, official script, or `runtime_dispatch.rs` change was made. Local validation preserved LoongArch basic 32/32 and produced BusyBox `completed=21 attempted=21 matched=21 failed=0 disabled=4`. Official validation was attempted but timed out at the outer 30-minute wrapper with a 0-byte `docker_evaluate.log`; the latest completed official score remains 270.
+
+## Iteration 19
+
+Silenced historical debug output in `src/compat/legacy_fd_runtime.rs` only. Grep showed no direct `mod legacy_fd_runtime`, `legacy_fd_runtime::`, or `use .*legacy_fd_runtime` references, but `rg legacy_fd_runtime` showed the file is text-included by `src/mm/sv39_init_exec.rs`.
+
+UCOMPAT/ucompat symbols are referenced by syscall runtime files, so the legacy FD runtime was not cfg-disabled. Active debug `crate::println!("[...-v...")` calls in `legacy_fd_runtime.rs` now route through the existing `legacy_fd_debug!` guard.
+
+`cargo build --target riscv64gc-unknown-none-elf` passed. `make all` failed in the LoongArch build on pre-existing references to `crate::console::debug_trace_enabled()` from LoongArch files; those files were not edited.
