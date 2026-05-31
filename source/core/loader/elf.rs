@@ -14,16 +14,33 @@ const PROGRAM_HEADER_SIZE: usize = 56;
 const ET_EXEC: u16 = 2;
 const ET_DYN: u16 = 3;
 const PT_LOAD: u32 = 1;
+const PT_DYNAMIC: u32 = 2;
 const PT_INTERP: u32 = 3;
 const PF_X: u32 = 1;
 const PF_W: u32 = 2;
 const PF_R: u32 = 4;
+const DT_NULL: u64 = 0;
+const DT_NEEDED: u64 = 1;
+const DT_PLTRELSZ: u64 = 2;
+const DT_RELA: u64 = 7;
+const DT_RELASZ: u64 = 8;
+const DT_REL: u64 = 17;
+const DT_RELSZ: u64 = 18;
+const DT_TEXTREL: u64 = 22;
+const DT_JMPREL: u64 = 23;
+const DT_RELRSZ: u64 = 35;
 const USER_STACK_TOP: usize = 1usize << 37;
+const USER_STACK_PAGES: usize = 8;
+const USER_STACK_BYTE_LEN: usize = USER_STACK_PAGES * PAGE_SIZE;
 const MAX_LOAD_SEGMENTS: usize = 8;
 const MAX_ARG_STRINGS: usize = 8;
 const MAX_ENV_STRINGS: usize = 8;
 const MAX_AUX_ENTRIES: usize = 16;
 const AT_NULL: usize = 0;
+const AT_RANDOM: usize = 25;
+const AUX_RANDOM_BYTES: [u8; 16] = [
+    0x4b, 0x23, 0x91, 0x5d, 0xa7, 0x0c, 0x6e, 0x38, 0xd2, 0x19, 0xf4, 0x80, 0x3a, 0xc5, 0x72, 0x0f,
+];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExecutableAbi {
@@ -208,6 +225,17 @@ impl AuxEntry {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ElfInterpreter<'a> {
+    path: &'a [u8],
+}
+
+impl<'a> ElfInterpreter<'a> {
+    pub const fn path(self) -> &'a [u8] {
+        self.path
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct AuxVectorPlan {
     entries: [Option<AuxEntry>; MAX_AUX_ENTRIES],
     len: usize,
@@ -337,6 +365,19 @@ pub fn prepare_executable_entry<'a>(
     prepare_executable_image(source, kernel_globals, abi, &[], &[], &[])
 }
 
+pub fn executable_interpreter<'a>(
+    source: Option<&'a [u8]>,
+    abi: ExecutableAbi,
+) -> Result<Option<ElfInterpreter<'a>>, LoaderBlocker> {
+    let bytes = match source {
+        Some(bytes) if !bytes.is_empty() => bytes,
+        Some(_) | None => return Err(LoaderBlocker::LegitimatePayloadMissing),
+    };
+    let image = ExecutableImage::new(bytes)?;
+    let header = ElfHeader::parse(image.bytes(), abi)?;
+    interpreter_from_program_headers(image.bytes(), header)
+}
+
 pub fn prepare_executable_image<'a>(
     source: Option<&'a [u8]>,
     kernel_globals: KernelGlobalMappings,
@@ -368,7 +409,7 @@ pub fn prepare_executable_image<'a>(
     )
     .map_err(LoaderBlocker::UserMemory)?;
     let stack = UserMemoryRegion::new(
-        USER_STACK_TOP - PAGE_SIZE,
+        USER_STACK_TOP - USER_STACK_BYTE_LEN,
         USER_STACK_TOP,
         MappingFlags::USER_STACK,
     )
@@ -407,6 +448,10 @@ fn load_segments(
     if table_end > bytes.len() {
         return Err(LoaderBlocker::MalformedExecutable);
     }
+    let dynamic = dynamic_profile(bytes, header)?;
+    if dynamic.requires_interpreter_runtime() {
+        return Err(LoaderBlocker::UnsupportedExecutable);
+    }
 
     let mut segments = ExecutableSegmentPlanSet::empty();
     let mut index = 0usize;
@@ -418,7 +463,7 @@ fn load_segments(
                 let segment = segment_from_program(bytes, program, kernel_globals)?;
                 segments.push(segment)?;
             }
-            PT_INTERP => return Err(LoaderBlocker::UnsupportedExecutable),
+            PT_DYNAMIC | PT_INTERP => {}
             _ => {}
         }
         index += 1;
@@ -429,6 +474,142 @@ fn load_segments(
     } else {
         Ok(segments)
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct DynamicProfile {
+    interpreter: bool,
+    external_dependencies: bool,
+    relocations: bool,
+}
+
+impl DynamicProfile {
+    const fn empty() -> Self {
+        Self {
+            interpreter: false,
+            external_dependencies: false,
+            relocations: false,
+        }
+    }
+
+    const fn requires_interpreter_runtime(self) -> bool {
+        self.interpreter && (self.external_dependencies || self.relocations)
+    }
+}
+
+fn dynamic_profile(bytes: &[u8], header: ElfHeader) -> Result<DynamicProfile, LoaderBlocker> {
+    let mut profile = DynamicProfile::empty();
+    let mut index = 0usize;
+    while index < header.program_header_count {
+        let offset = header.program_header_offset + index * header.program_header_entry_size;
+        let program = ProgramHeader::parse(bytes, offset)?;
+        match program.kind {
+            PT_INTERP => profile.interpreter = true,
+            PT_DYNAMIC => parse_dynamic_segment(bytes, program, &mut profile)?,
+            _ => {}
+        }
+        index += 1;
+    }
+
+    Ok(profile)
+}
+
+fn parse_dynamic_segment(
+    bytes: &[u8],
+    program: ProgramHeader,
+    profile: &mut DynamicProfile,
+) -> Result<(), LoaderBlocker> {
+    let end = program
+        .file_offset
+        .checked_add(program.file_size)
+        .ok_or(LoaderBlocker::MalformedExecutable)?;
+    if end > bytes.len() || program.file_size % 16 != 0 {
+        return Err(LoaderBlocker::MalformedExecutable);
+    }
+
+    let mut offset = program.file_offset;
+    while offset < end {
+        let tag = read_u64(bytes, offset)?;
+        let value = read_u64(bytes, offset + 8)?;
+        match tag {
+            DT_NULL => return Ok(()),
+            DT_NEEDED | DT_TEXTREL => profile.external_dependencies = true,
+            DT_PLTRELSZ | DT_RELASZ | DT_RELSZ | DT_RELRSZ if value != 0 => {
+                profile.relocations = true;
+            }
+            DT_RELA | DT_REL | DT_JMPREL if value != 0 => {}
+            _ => {}
+        }
+        offset += 16;
+    }
+
+    Err(LoaderBlocker::MalformedExecutable)
+}
+
+fn interpreter_from_program_headers<'a>(
+    bytes: &'a [u8],
+    header: ElfHeader,
+) -> Result<Option<ElfInterpreter<'a>>, LoaderBlocker> {
+    let table_size = header
+        .program_header_entry_size
+        .checked_mul(header.program_header_count)
+        .ok_or(LoaderBlocker::MalformedExecutable)?;
+    let table_end = header
+        .program_header_offset
+        .checked_add(table_size)
+        .ok_or(LoaderBlocker::MalformedExecutable)?;
+    if table_end > bytes.len() {
+        return Err(LoaderBlocker::MalformedExecutable);
+    }
+
+    let mut interpreter = None;
+    let mut index = 0usize;
+    while index < header.program_header_count {
+        let offset = header.program_header_offset + index * header.program_header_entry_size;
+        let program = ProgramHeader::parse(bytes, offset)?;
+        if program.kind == PT_INTERP {
+            if interpreter.is_some() {
+                return Err(LoaderBlocker::MalformedExecutable);
+            }
+            interpreter = Some(interpreter_from_program(bytes, program)?);
+        }
+        index += 1;
+    }
+
+    Ok(interpreter)
+}
+
+fn interpreter_from_program<'a>(
+    bytes: &'a [u8],
+    program: ProgramHeader,
+) -> Result<ElfInterpreter<'a>, LoaderBlocker> {
+    let end = program
+        .file_offset
+        .checked_add(program.file_size)
+        .ok_or(LoaderBlocker::MalformedExecutable)?;
+    if program.file_size < 2 || end > bytes.len() {
+        return Err(LoaderBlocker::MalformedExecutable);
+    }
+    let raw = &bytes[program.file_offset..end];
+    let mut path_len = 0usize;
+    while path_len < raw.len() && raw[path_len] != 0 {
+        path_len += 1;
+    }
+    if path_len == 0 || path_len == raw.len() {
+        return Err(LoaderBlocker::MalformedExecutable);
+    }
+
+    let mut trailing = path_len + 1;
+    while trailing < raw.len() {
+        if raw[trailing] != 0 {
+            return Err(LoaderBlocker::MalformedExecutable);
+        }
+        trailing += 1;
+    }
+
+    Ok(ElfInterpreter {
+        path: &raw[..path_len],
+    })
 }
 
 fn segment_from_program(
@@ -506,30 +687,50 @@ fn materialize_user_stack(
     if argv.len() > MAX_ARG_STRINGS || envp.len() > MAX_ENV_STRINGS {
         return Err(LoaderBlocker::StackLayoutOverflow);
     }
-    let aux_plan = AuxVectorPlan::from_entries(auxv)?;
-    let stack_start = USER_STACK_TOP - PAGE_SIZE;
+    let stack_page_start = USER_STACK_TOP - PAGE_SIZE;
     let mut bytes = [0u8; PAGE_SIZE];
     let mut cursor = PAGE_SIZE;
     let mut argv_ptrs = [0usize; MAX_ARG_STRINGS];
     let mut envp_ptrs = [0usize; MAX_ENV_STRINGS];
+    let mut stack_auxv = [AuxEntry::new(AT_NULL, 0); MAX_AUX_ENTRIES];
+    let mut aux_len = 0usize;
+
+    while aux_len < auxv.len() {
+        if aux_len >= stack_auxv.len() {
+            return Err(LoaderBlocker::StackLayoutOverflow);
+        }
+        stack_auxv[aux_len] = auxv[aux_len];
+        aux_len += 1;
+    }
+
+    let random_ptr =
+        push_stack_bytes(&mut bytes, &mut cursor, stack_page_start, &AUX_RANDOM_BYTES)?;
+    if aux_len >= stack_auxv.len() {
+        return Err(LoaderBlocker::StackLayoutOverflow);
+    }
+    stack_auxv[aux_len] = AuxEntry::new(AT_RANDOM, random_ptr);
+    aux_len += 1;
+    let aux_plan = AuxVectorPlan::from_entries(&stack_auxv[..aux_len])?;
 
     let mut index = 0usize;
     while index < argv.len() {
-        argv_ptrs[index] = push_stack_string(&mut bytes, &mut cursor, stack_start, argv[index])?;
+        argv_ptrs[index] =
+            push_stack_string(&mut bytes, &mut cursor, stack_page_start, argv[index])?;
         index += 1;
     }
     index = 0;
     while index < envp.len() {
-        envp_ptrs[index] = push_stack_string(&mut bytes, &mut cursor, stack_start, envp[index])?;
+        envp_ptrs[index] =
+            push_stack_string(&mut bytes, &mut cursor, stack_page_start, envp[index])?;
         index += 1;
     }
 
     cursor = align_down(cursor, 16);
-    let word_count = 1 + argv.len() + 1 + envp.len() + 1 + 2 * (auxv.len() + 1);
+    let word_count = 1 + argv.len() + 1 + envp.len() + 1 + 2 * (aux_len + 1);
     let final_cursor = cursor
         .checked_sub(word_count * core::mem::size_of::<usize>())
         .ok_or(LoaderBlocker::StackLayoutOverflow)?;
-    let final_sp = stack_start
+    let final_sp = stack_page_start
         .checked_add(final_cursor)
         .ok_or(LoaderBlocker::AddressOverflow)?;
     if final_sp % 16 != 0 {
@@ -540,11 +741,11 @@ fn materialize_user_stack(
 
     push_usize(&mut bytes, &mut cursor, 0)?;
     push_usize(&mut bytes, &mut cursor, AT_NULL)?;
-    index = auxv.len();
+    index = aux_len;
     while index > 0 {
         index -= 1;
-        push_usize(&mut bytes, &mut cursor, auxv[index].value())?;
-        push_usize(&mut bytes, &mut cursor, auxv[index].kind())?;
+        push_usize(&mut bytes, &mut cursor, stack_auxv[index].value())?;
+        push_usize(&mut bytes, &mut cursor, stack_auxv[index].kind())?;
     }
     push_usize(&mut bytes, &mut cursor, 0)?;
     index = envp.len();
@@ -558,18 +759,18 @@ fn materialize_user_stack(
         index -= 1;
         push_usize(&mut bytes, &mut cursor, argv_ptrs[index])?;
     }
-    let argv_pointer = stack_start
+    let argv_pointer = stack_page_start
         .checked_add(cursor)
         .ok_or(LoaderBlocker::AddressOverflow)?;
     push_usize(&mut bytes, &mut cursor, argv.len())?;
-    let stack_pointer = stack_start
+    let stack_pointer = stack_page_start
         .checked_add(cursor)
         .ok_or(LoaderBlocker::AddressOverflow)?;
     if stack_pointer % 16 != 0 {
         return Err(LoaderBlocker::StackAlignmentInvalid);
     }
 
-    let region = UserMemoryRegion::new(stack_start, USER_STACK_TOP, MappingFlags::USER_STACK)
+    let region = UserMemoryRegion::new(stack_page_start, USER_STACK_TOP, MappingFlags::USER_STACK)
         .map_err(LoaderBlocker::UserMemory)?;
     Ok((
         UserPageInit::new(region, bytes).map_err(LoaderBlocker::UserMemory)?,
@@ -577,6 +778,22 @@ fn materialize_user_stack(
         argv_pointer,
         aux_plan,
     ))
+}
+
+fn push_stack_bytes(
+    page: &mut [u8; PAGE_SIZE],
+    cursor: &mut usize,
+    stack_start: usize,
+    value: &[u8],
+) -> Result<usize, LoaderBlocker> {
+    let next = cursor
+        .checked_sub(value.len())
+        .ok_or(LoaderBlocker::StackLayoutOverflow)?;
+    page[next..*cursor].copy_from_slice(value);
+    *cursor = next;
+    stack_start
+        .checked_add(next)
+        .ok_or(LoaderBlocker::AddressOverflow)
 }
 
 fn push_stack_string(
@@ -739,7 +956,7 @@ fn segment_permissions(flags: u32) -> Result<MappingFlags, LoaderBlocker> {
     let read = flags & PF_R != 0;
     let write = flags & PF_W != 0;
     let execute = flags & PF_X != 0;
-    if !read || (write && execute) {
+    if !read {
         return Err(LoaderBlocker::UnsupportedSegmentPermissions);
     }
     Ok(MappingFlags::user(read, write, execute))

@@ -1,3 +1,5 @@
+use super::page_table::MappingFlags;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum UserCopyError {
     AddressOverflow,
@@ -28,6 +30,37 @@ pub enum UserMapError {
 
 pub trait UserMemoryMapper {
     fn map_zeroed_user_pages(&self, start: usize, byte_len: usize) -> Result<(), UserMapError>;
+
+    fn map_zeroed_user_pages_with_flags(
+        &self,
+        start: usize,
+        byte_len: usize,
+        _flags: MappingFlags,
+    ) -> Result<(), UserMapError> {
+        self.map_zeroed_user_pages(start, byte_len)
+    }
+
+    fn replace_zeroed_user_pages_with_flags(
+        &self,
+        start: usize,
+        byte_len: usize,
+        flags: MappingFlags,
+    ) -> Result<(), UserMapError> {
+        self.map_zeroed_user_pages_with_flags(start, byte_len, flags)
+    }
+
+    fn protect_user_pages_with_flags(
+        &self,
+        _start: usize,
+        _byte_len: usize,
+        _flags: MappingFlags,
+    ) -> Result<(), UserMapError> {
+        Err(UserMapError::Unsupported)
+    }
+
+    fn unmap_user_pages(&self, _start: usize, _byte_len: usize) -> Result<(), UserMapError> {
+        Err(UserMapError::Unsupported)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -1,10 +1,19 @@
+use core::sync::atomic::{AtomicUsize, Ordering};
+
 use crate::arch::contract::{
     BoundaryMode, FatalReason, HaltReason, HardwareReadiness, ReadinessReason, TrapInstallState,
     TrapVector,
 };
-use crate::core::syscall::{SyscallFrame, SyscallOutcome};
-use crate::core::task::{ExitState, Process};
-use crate::kernel::syscall_runtime::{dispatch_single_with_memory, dispatch_with_memory};
+use crate::core::mm::{copy_to_user, PageTableRoot, PhysFrame};
+use crate::core::syscall::{ForkRequest, SyscallError, SyscallFrame, SyscallOutcome};
+use crate::core::task::{
+    single_begin_child, single_enter_child, single_enter_pid, single_is_active_child, single_pid,
+    single_set_tid_address, ExitState, Process,
+};
+use crate::kernel::syscall_runtime::{
+    active_runtime_snapshot, dispatch_single_with_memory, dispatch_with_memory,
+    restore_active_runtime_snapshot, ActiveRuntimeSnapshot,
+};
 
 #[cfg(target_arch = "riscv64")]
 core::arch::global_asm!(
@@ -22,6 +31,8 @@ __riscv64_trap_vector:
     sd t5, 240(t6)
     csrr t5, sscratch
     sd t5, 16(t6)
+    la t5, __riscv64_user_trap_stack_top
+    csrw sscratch, t5
     sd gp, 24(t6)
     sd tp, 32(t6)
     sd t0, 40(t6)
@@ -115,7 +126,7 @@ __riscv64_trap_vector:
     .align 12
     .globl __riscv64_user_trap_stack
 __riscv64_user_trap_stack:
-    .space 16384
+    .space 65536
     .globl __riscv64_user_trap_stack_top
 __riscv64_user_trap_stack_top:
 "#
@@ -131,10 +142,39 @@ const SSTATUS_SPP: usize = 1 << 8;
 const USER_TRAP_ACTION_RETURN: usize = 0;
 const USER_TRAP_ACTION_EXIT: usize = 1;
 const USER_TRAP_ACTION_FATAL: usize = 2;
+const PENDING_PARENT_DEPTH: usize = 8;
+
+macro_rules! atomic_usize_parent_slots {
+    () => {
+        [
+            AtomicUsize::new(0),
+            AtomicUsize::new(0),
+            AtomicUsize::new(0),
+            AtomicUsize::new(0),
+            AtomicUsize::new(0),
+            AtomicUsize::new(0),
+            AtomicUsize::new(0),
+            AtomicUsize::new(0),
+        ]
+    };
+}
 
 #[cfg(target_arch = "riscv64")]
 #[no_mangle]
 static mut RISCV64_USER_TRAP_FRAME: RiscvUserTrapFrame = RiscvUserTrapFrame::empty();
+
+static mut PENDING_PARENT_TRAP_FRAMES: [RiscvUserTrapFrame; PENDING_PARENT_DEPTH] =
+    [RiscvUserTrapFrame::empty(); PENDING_PARENT_DEPTH];
+
+static PENDING_PARENT_ROOT_FRAMES: [AtomicUsize; PENDING_PARENT_DEPTH] =
+    atomic_usize_parent_slots!();
+
+static PENDING_PARENT_PIDS: [AtomicUsize; PENDING_PARENT_DEPTH] = atomic_usize_parent_slots!();
+
+static mut PENDING_PARENT_RUNTIMES: [ActiveRuntimeSnapshot; PENDING_PARENT_DEPTH] =
+    [ActiveRuntimeSnapshot::empty(); PENDING_PARENT_DEPTH];
+
+static PENDING_PARENT_STACK_DEPTH: AtomicUsize = AtomicUsize::new(0);
 
 pub const fn readiness() -> HardwareReadiness {
     HardwareReadiness::NotReady(ReadinessReason::TrapVectorNotInstalled)
@@ -235,6 +275,8 @@ pub fn handle_user_ecall(trap: &mut RiscvUserTrapFrame, process: &mut Process) -
             RiscvTrapAction::ReturnToUser
         }
         SyscallOutcome::Exit(exit) => RiscvTrapAction::ProcessExited(exit),
+        SyscallOutcome::Fork(request) => start_child_after_fork(trap, request),
+        SyscallOutcome::Exec(request) => start_exec_from_syscall(trap, request),
     }
 }
 
@@ -253,10 +295,157 @@ pub fn dispatch_user_trap(trap: &mut RiscvUserTrapFrame) -> RiscvTrapAction {
                     trap.write_return(value);
                     RiscvTrapAction::ReturnToUser
                 }
-                SyscallOutcome::Exit(exit) => RiscvTrapAction::ProcessExited(exit),
+                SyscallOutcome::Exit(exit) => {
+                    if resume_parent_after_child_exit(trap, exit) {
+                        RiscvTrapAction::ReturnToUser
+                    } else {
+                        RiscvTrapAction::ProcessExited(exit)
+                    }
+                }
+                SyscallOutcome::Fork(request) => start_child_after_fork(trap, request),
+                SyscallOutcome::Exec(request) => start_exec_from_syscall(trap, request),
             }
         }
         _ => RiscvTrapAction::UnsupportedTrap(RiscvTrapBlocker::UnsupportedTrapCause),
+    }
+}
+
+fn start_exec_from_syscall(
+    trap: &mut RiscvUserTrapFrame,
+    request: crate::core::syscall::ExecRequest,
+) -> RiscvTrapAction {
+    match crate::kernel::syscall_runtime::exec_from_syscall(request) {
+        Ok(pending) => {
+            trap.write_exec_entry(pending);
+            RiscvTrapAction::ReturnToUser
+        }
+        Err(errno) => {
+            trap.advance_after_ecall();
+            trap.write_return(errno);
+            RiscvTrapAction::ReturnToUser
+        }
+    }
+}
+
+fn start_child_after_fork(trap: &mut RiscvUserTrapFrame, request: ForkRequest) -> RiscvTrapAction {
+    let parent_depth = PENDING_PARENT_STACK_DEPTH.load(Ordering::Acquire);
+    if parent_depth >= PENDING_PARENT_DEPTH {
+        trap.advance_after_ecall();
+        trap.write_return(SyscallError::NoMemory.errno());
+        return RiscvTrapAction::ReturnToUser;
+    }
+
+    let parent_root = match super::mmu::active_user_root() {
+        Ok(root) => root,
+        Err(error) => {
+            trap.advance_after_ecall();
+            trap.write_return(map_user_map_error(error));
+            return RiscvTrapAction::ReturnToUser;
+        }
+    };
+    let child_root = match super::mmu::clone_active_user_root() {
+        Ok(root) => root,
+        Err(error) => {
+            trap.advance_after_ecall();
+            trap.write_return(map_user_map_error(error));
+            return RiscvTrapAction::ReturnToUser;
+        }
+    };
+    let child_pid = match single_begin_child() {
+        Some(pid) => pid,
+        None => {
+            trap.advance_after_ecall();
+            trap.write_return(SyscallError::NoMemory.errno());
+            return RiscvTrapAction::ReturnToUser;
+        }
+    };
+
+    let mut parent_frame = *trap;
+    parent_frame.advance_after_ecall();
+    parent_frame.write_return(child_pid.value() as isize);
+    let parent_runtime = active_runtime_snapshot();
+
+    let mut child_frame = *trap;
+    child_frame.advance_after_ecall();
+    child_frame.write_return(0);
+    if request.child_stack() != 0 {
+        child_frame.write_stack_pointer(request.child_stack());
+    }
+
+    unsafe {
+        core::ptr::addr_of_mut!(PENDING_PARENT_TRAP_FRAMES)
+            .cast::<RiscvUserTrapFrame>()
+            .add(parent_depth)
+            .write(parent_frame);
+    }
+    PENDING_PARENT_ROOT_FRAMES[parent_depth].store(parent_root.frame().start(), Ordering::Release);
+    PENDING_PARENT_PIDS[parent_depth].store(single_pid().value(), Ordering::Release);
+    unsafe {
+        core::ptr::addr_of_mut!(PENDING_PARENT_RUNTIMES)
+            .cast::<ActiveRuntimeSnapshot>()
+            .add(parent_depth)
+            .write(parent_runtime);
+    }
+    PENDING_PARENT_STACK_DEPTH.store(parent_depth + 1, Ordering::Release);
+    single_enter_child(child_pid);
+    super::mmu::switch_to_user_root(child_root);
+    if request.clear_child_tid() {
+        single_set_tid_address(request.child_tid());
+    }
+    if request.set_child_tid() {
+        let tid = (child_pid.value() as u32).to_le_bytes();
+        let memory = super::mmu::ActiveUserMemory;
+        let _ = copy_to_user(&memory, request.child_tid(), &tid);
+    }
+    *trap = child_frame;
+    RiscvTrapAction::ReturnToUser
+}
+
+fn resume_parent_after_child_exit(trap: &mut RiscvUserTrapFrame, exit: ExitState) -> bool {
+    if !single_is_active_child(exit.pid()) {
+        return false;
+    }
+
+    let depth = PENDING_PARENT_STACK_DEPTH.load(Ordering::Acquire);
+    if depth == 0 {
+        return false;
+    }
+    let index = depth - 1;
+    let parent_frame = unsafe {
+        core::ptr::addr_of!(PENDING_PARENT_TRAP_FRAMES)
+            .cast::<RiscvUserTrapFrame>()
+            .add(index)
+            .read()
+    };
+    let parent_root =
+        match PhysFrame::new(PENDING_PARENT_ROOT_FRAMES[index].swap(0, Ordering::AcqRel)) {
+            Ok(frame) => PageTableRoot::new(frame),
+            Err(_) => return false,
+        };
+    let parent_pid = PENDING_PARENT_PIDS[index].swap(0, Ordering::AcqRel);
+    let parent_runtime = unsafe {
+        core::ptr::addr_of!(PENDING_PARENT_RUNTIMES)
+            .cast::<ActiveRuntimeSnapshot>()
+            .add(index)
+            .read()
+    };
+    PENDING_PARENT_STACK_DEPTH.store(index, Ordering::Release);
+    single_enter_pid(crate::core::task::Pid::new(parent_pid));
+    restore_active_runtime_snapshot(parent_runtime);
+    super::mmu::switch_to_user_root(parent_root);
+    *trap = parent_frame;
+    true
+}
+
+const fn map_user_map_error(error: crate::core::mm::UserMapError) -> isize {
+    match error {
+        crate::core::mm::UserMapError::FrameExhausted => SyscallError::NoMemory.errno(),
+        crate::core::mm::UserMapError::NotReady => SyscallError::NoDevice.errno(),
+        crate::core::mm::UserMapError::Unsupported => SyscallError::NotSupported.errno(),
+        crate::core::mm::UserMapError::AddressOverflow
+        | crate::core::mm::UserMapError::AlreadyMapped
+        | crate::core::mm::UserMapError::InvalidRange
+        | crate::core::mm::UserMapError::PermissionDenied => SyscallError::Invalid.errno(),
     }
 }
 
@@ -429,6 +618,20 @@ impl RiscvUserTrapFrame {
 
     pub fn write_return(&mut self, value: isize) {
         self.registers[10] = value as usize;
+    }
+
+    pub fn write_stack_pointer(&mut self, value: usize) {
+        self.registers[2] = value;
+    }
+
+    pub fn write_exec_entry(&mut self, pending: crate::core::task::PendingUserEntry) {
+        let address_space = pending.address_space();
+        let layout = address_space.plan();
+        let registers = pending.registers();
+        self.exception_pc = layout.entry().value();
+        self.write_stack_pointer(layout.initial_stack_pointer());
+        self.registers[10] = registers.arg0();
+        self.registers[11] = registers.arg1();
     }
 }
 

@@ -1,9 +1,6 @@
-[package]
-name = "uestc-kernel"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
+[workspace]
+members = ["source"]
+resolver = "2"
 
 [profile.dev]
 panic = "abort"

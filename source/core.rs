@@ -6,3 +6,4 @@ pub mod loader;
 pub mod mm;
 pub mod syscall;
 pub mod task;
+pub mod time;

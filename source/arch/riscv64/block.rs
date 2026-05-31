@@ -50,7 +50,7 @@ const PFN_USED_OFFSET: usize = 4096;
 const VRING_DESC_F_NEXT: u16 = 1;
 const VRING_DESC_F_WRITE: u16 = 2;
 const VIRTIO_BLK_T_IN: u32 = 0;
-const COMPLETION_SPIN_LIMIT: usize = 10_000_000;
+const COMPLETION_SPIN_LIMIT: usize = 100_000_000;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -212,6 +212,7 @@ fn read_sector_inner(sector: u64, out: &mut BlockSector) -> Result<(), BlockIoEr
         while core::ptr::read_volatile(core::ptr::addr_of!((*used).idx)) == start
             && spin < COMPLETION_SPIN_LIMIT
         {
+            core::hint::spin_loop();
             spin += 1;
         }
         let used_idx = core::ptr::read_volatile(core::ptr::addr_of!((*used).idx));

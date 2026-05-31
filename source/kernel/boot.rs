@@ -1,7 +1,8 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::arch::contract::{
-    BootInitPath, BoundaryMode, BspServices, HaltReason, KernelMmuRequest, BOOT_INIT_ARG_COUNT,
+    BootInitBlocker, BootInitPath, BoundaryMode, BspServices, HaltReason, KernelMmuRequest,
+    BOOT_INIT_ARG_COUNT,
 };
 use crate::core::mm::{KernelGlobalMappings, MemoryFoundation};
 use crate::kernel::exec::drive_boot_init_exec;
@@ -121,6 +122,9 @@ pub fn kernel_start(bsp: BspServices) -> ! {
             record_init_trace(path);
             BOOT_STAGE.store(5, Ordering::Relaxed);
         }
+        Err(BootInitBlocker::NoBootInitPath) => {
+            BOOT_STAGE.store(15, Ordering::Relaxed);
+        }
         Err(_) => {
             BOOT_STAGE.store(14, Ordering::Relaxed);
         }
@@ -128,6 +132,11 @@ pub fn kernel_start(bsp: BspServices) -> ! {
 
     let _boot_init_exec = match boot_init_path {
         Ok(init_path) => Some(drive_boot_init_exec(bsp, &mut memory, init_path)),
+        Err(BootInitBlocker::NoBootInitPath) => {
+            let default_path = build_default_official_init_path();
+            record_init_trace(&default_path);
+            Some(drive_boot_init_exec(bsp, &mut memory, default_path))
+        }
         Err(_) => None,
     };
     let _closure_summary = (
@@ -140,6 +149,16 @@ pub fn kernel_start(bsp: BspServices) -> ! {
     );
 
     bsp.halt(HaltReason::NoRunnableWork)
+}
+
+fn build_default_official_init_path() -> BootInitPath {
+    let mut path =
+        BootInitPath::new(b"/musl/busybox").expect("default official init path must be valid");
+    path.push_arg(b"sh")
+        .expect("default official init arg sh must be valid");
+    path.push_arg(b"/musl/basic_testcode.sh")
+        .expect("default official init arg test script must be valid");
+    path
 }
 
 fn record_init_trace(path: &BootInitPath) {

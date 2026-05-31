@@ -3,7 +3,7 @@
 Current factual status of the `source/` kernel implementation. This document
 reports what is, not what is planned. See `source/ROADMAP.md` for the plan.
 
-Last updated: 2026-05-29 (BusyBox `newfstatat` evidence pass).
+Last updated: 2026-05-31 (L0 official no-init RISC-V musl runner default path).
 
 ---
 
@@ -140,7 +140,8 @@ surface reaches the minimal breadth required for real user program execution.
 | Block provider | RISC-V virtio-mmio read path build-valid | typed unsupported | `core::block::BlockProvider` | Real sector data is read only through provider completion; no fake sectors |
 | Block cache | architecture-neutral | architecture-neutral | `core::block::BlockCache` | Read-only hit/miss split; misses commit only after completed provider read |
 | Rootfs reader | ext4 bytes over block cache | typed unsupported provider | `core::fs::MountedRootfs` | Read-only ext4 mount, path lookup, inode identity, and file read for caller-requested paths |
-| File-backed exec connection | bootargs-selected path drives ext4/VFS -> loader -> user-MMU -> `Process::commit_exec` -> `PendingUserEntry` -> `sret` | typed unsupported at user-MMU/user-entry hardware | `kernel::exec` | Reads executable bytes from VFS, feeds existing loader, materializes user MMU, commits process-owned `PendingUserEntry`; missing paths fail honestly and no default executable path is hardcoded |
+| File-backed exec connection | bootargs-selected path drives ext4/VFS -> loader -> user-MMU -> `Process::commit_exec` -> `PendingUserEntry` -> `sret` | typed unsupported at user-MMU/user-entry hardware | `kernel::exec` | Reads executable bytes from VFS, feeds existing loader, materializes user MMU, commits process-owned `PendingUserEntry`; when bootargs lacks `init=`, defaults to `/musl/busybox sh /musl/basic_testcode.sh` for official evaluation |
+| Default no-init runner (L0) | implemented — `kernel::boot::build_default_official_init_path()` provides the default init path when no `init=` bootarg is present | `discover_boot_init_path` returns `UnsupportedBootInput`, so default is not applied; halts with `NoRunnableWork` | `kernel::boot::kernel_start()` applies default on `BootInitBlocker::NoBootInitPath` | When official QEMU provides no `-append`/bootargs, the kernel defaults to the musl BusyBox shell executing the basic test script; all output comes from real user-space `write` syscalls — no fake markers |
 
 ---
 
@@ -153,7 +154,7 @@ P0 = no user-mode execution is possible until resolved.
 | Verified QEMU boot/MMU/trap log | obtained for Closure 1 RISC-V boot/MMU/trap; no official score claimed |
 | Loader-backed user address space | bootargs-selected file-backed static ELF path reached loader, user-MMU materialization, and process exec commit on RISC-V |
 | PendingUserEntry / UserReturnPlan | process commit implemented; pending entry is replaced only after `LoadedUserImage` validation |
-| Legitimate user payload source | RISC-V ext4-over-virtio path supplied real file bytes selected by FDT `/chosen/bootargs init=...` |
+| Legitimate user payload source | RISC-V ext4-over-virtio path supplied real file bytes selected by FDT `/chosen/bootargs init=...`, or the default `/musl/busybox` path when no `init=` is present |
 | Controlled user return (`sret`/`ertn`) | RISC-V `sret` executed for the file-backed static ELF; LoongArch typed unsupported |
 | Return-capable user trapframe save/restore | RISC-V user trapframe path observed saving user `sepc`, `sstatus`, `scause`, args, and return registers |
 | Syscall trap round trip | RISC-V user ecall reached kernel; `write(64)` now copies user bytes and returns written byte counts for fd 1/2; exit/exit_group record kernel-owned exit state |
@@ -222,28 +223,46 @@ uncertainty produces typed non-ready or unsupported status, not fake success.
 
 ---
 
+## L0: Official No-Init RISC-V Musl Runner Path (2026-05-31)
+
+**Status: implemented — not yet runtime-validated.**
+
+When the FDT `/chosen/bootargs` contains no `init=<path>` token (the official
+QEMU scenario), `kernel::boot::kernel_start()` constructs a default
+`BootInitPath` for `/musl/busybox` with arguments `sh` and
+`/musl/basic_testcode.sh`. This flows through the same VFS → loader → user-MMU
+→ exec commit → `sret` pipeline as the manual `init=` path. No fake markers are
+emitted — all judge-visible output comes from the user-space script's real
+`write` syscalls through the `user_output` sink.
+
+When `init=` IS present in bootargs, the existing manual path is preserved
+unchanged.
+
+The default path lives in exactly one function,
+`kernel::boot::build_default_official_init_path()`, which is called only on
+`BootInitBlocker::NoBootInitPath`.
+
+On LoongArch, `discover_boot_init_path` returns `UnsupportedBootInput` (not
+`NoBootInitPath`), so the default is not applied — LoongArch halts honestly
+with `NoRunnableWork`.
+
 ## Current Next Task
 
 Earliest real blockers:
 
+- L0 default path not yet runtime-validated in QEMU (QEMU runs only when
+  explicitly requested).
 - For bootargs `init=/bin/busybox`, VFS correctly fails because the current
   image has no `/bin` directory.
-- For bootargs `init=/musl/busybox`, VFS open/read, loader validation,
-  streaming PT_LOAD materialization, `Process::commit_exec`,
+- For bootargs `init=/musl/busybox` (or the L0 default), VFS open/read, loader
+  validation, streaming PT_LOAD materialization, `Process::commit_exec`,
   `PendingUserEntry`, `sret`, user ecall, and exit state all have bounded
   RISC-V QEMU/GDB evidence. The no-arg BusyBox path records 851 syscalls and
-  exits 0 after real fd 2 writes. `init.arg=true` records `96,174,94` and
-  exits 0. `init.arg=echo init.arg=hello` records
-  `96,174,214,214,64,94`, writes `hello\n`, and exits 0.
-- `init.arg=ls init.arg=/` now handles time and heap setup, copies the user
-  path `/`, resolves `/` through the mounted ext4 rootfs, writes a truthful
-  Linux stat buffer for the root directory, then stops at syscall 56
-  (`openat`) with `AT_FDCWD`, the same user path pointer, flags `0x98000`, and
-  mode 0. It is not implemented yet because truthful progress requires a real
-  FD/OFD owner plus directory iteration rather than a fake directory handle.
-- Broader BusyBox applet behavior still requires real FD/VFS/process syscall
-  breadth; the no-argument BusyBox path reaches clean exit but Closure 2-4
-  remain incomplete.
+  exits 0 after real fd 2 writes.
+- `init.arg=ls init.arg=/` handles time and heap setup, copies the user path
+  `/`, resolves `/` through the mounted ext4 rootfs, writes a truthful Linux
+  stat buffer for the root directory, then stops at `openat` with `-ENOSYS`.
+  Truthful progress requires a real FD/OFD owner plus directory iteration.
 
 Next work should add only syscall/process/VFS behavior required by legitimate
 runtime evidence from a selected real program path, likely beginning with

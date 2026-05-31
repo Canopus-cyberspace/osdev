@@ -7,7 +7,7 @@ use crate::arch::contract::{
     UserMmuState, UserMmuUnsupported, BOOT_INIT_ARG_COUNT,
 };
 use crate::core::block::BlockIoError;
-use crate::core::fs::{FileIdentity, MountedRootfs, VfsError, VfsPath};
+use crate::core::fs::{FileIdentity, MountedRootfs, VfsError, VfsPath, VfsPathBuffer};
 use crate::core::loader::{prepare_executable_image, AuxEntry, ExecutableAbi, LoaderBlocker};
 use crate::core::mm::{MemoryFoundation, PAGE_SIZE};
 use crate::core::task::{
@@ -169,6 +169,7 @@ pub fn drive_boot_init_exec(
     let abi = executable_abi(bsp.snapshot().boot().architecture());
     let file_buffer = unsafe { boot_exec_buffer() };
     let (argv_storage, argv_len) = boot_argv(&init_path);
+    let initial_cwd = boot_initial_cwd(&init_path);
     let file_exec = commit_file_backed_exec(
         bsp,
         memory,
@@ -187,7 +188,15 @@ pub fn drive_boot_init_exec(
         .take_pending_entry()
         .map_err(|_| BootInitExecBlocker::PendingEntryMissing)?;
     EXEC_STAGE.store(7, Ordering::Relaxed);
-    crate::kernel::syscall_runtime::install_rootfs(&mut rootfs);
+    let initial_exec_path =
+        VfsPathBuffer::from_absolute(init_path.bytes()).map_err(BootInitExecBlocker::VfsPath)?;
+    crate::kernel::syscall_runtime::install_rootfs(
+        bsp,
+        memory,
+        &mut rootfs,
+        initial_cwd,
+        initial_exec_path,
+    );
     let state = bsp.enter_user(pending, BoundaryMode::ApplyUnsafe);
     crate::kernel::syscall_runtime::clear_rootfs();
     Err(BootInitExecBlocker::UserEntryReturned { file_exec, state })
@@ -218,15 +227,18 @@ const fn file_exec_blocker_code(blocker: FileExecBlocker) -> usize {
 
 const fn vfs_error_code(error: VfsError) -> usize {
     match error {
+        VfsError::AlreadyExists => 12,
         VfsError::Block(error) => 100 + block_error_code(error),
         VfsError::DirectoryExpected => 1,
         VfsError::EmptyFile => 2,
         VfsError::FileTooLarge => 3,
         VfsError::InvalidPath => 4,
         VfsError::MetadataCorrupt => 5,
+        VfsError::NoSpace => 13,
         VfsError::NotExecutable => 6,
         VfsError::NotRegularFile => 7,
         VfsError::PathNotFound => 8,
+        VfsError::PermissionDenied => 14,
         VfsError::RootfsSourceMissing => 9,
         VfsError::UnsupportedPath => 10,
         VfsError::UnsupportedRootfs => 11,
@@ -265,7 +277,23 @@ fn boot_argv(init_path: &BootInitPath) -> ([&[u8]; BOOT_INIT_ARG_COUNT + 1], usi
     (argv, len)
 }
 
-fn executable_abi(architecture: Architecture) -> ExecutableAbi {
+fn boot_initial_cwd(init_path: &BootInitPath) -> VfsPathBuffer {
+    let mut index = 0usize;
+    while index < init_path.arg_count() {
+        if let Some(arg) = init_path.arg(index) {
+            if !arg.is_empty() && arg[0] == b'/' {
+                if let Ok(parent) = VfsPathBuffer::parent_of_absolute(arg) {
+                    return parent;
+                }
+            }
+        }
+        index += 1;
+    }
+
+    VfsPathBuffer::root()
+}
+
+pub(crate) fn executable_abi(architecture: Architecture) -> ExecutableAbi {
     match architecture {
         Architecture::Riscv64 => ExecutableAbi::new(EM_RISCV),
         Architecture::LoongArch64 => ExecutableAbi::new(EM_LOONGARCH),

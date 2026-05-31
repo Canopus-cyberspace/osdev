@@ -16,9 +16,3 @@ name = "source-loongarch64-kernel"
 path = "bin/loongarch64_kernel.rs"
 
 [dependencies]
-
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"

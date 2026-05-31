@@ -440,7 +440,7 @@ pub struct UserAddressSpaceLoadPlan<'a> {
     address_space: UserAddressSpacePlan,
     source: &'a [u8],
     segments: UserLoadSegmentSet,
-    stack: UserPageInit,
+    stack_init: UserPageInit,
 }
 
 impl<'a> UserAddressSpaceLoadPlan<'a> {
@@ -448,7 +448,7 @@ impl<'a> UserAddressSpaceLoadPlan<'a> {
         address_space: UserAddressSpacePlan,
         source: &'a [u8],
         segments: UserLoadSegmentSet,
-        stack: UserPageInit,
+        stack_init: UserPageInit,
     ) -> Result<Self, UserMemoryBlocker> {
         if source.is_empty() || segments.len() == 0 {
             Err(UserMemoryBlocker::UserPayloadMissing)
@@ -456,7 +456,8 @@ impl<'a> UserAddressSpaceLoadPlan<'a> {
             Err(UserMemoryBlocker::KernelRangeViolation)
         } else if !segments.contains_address(address_space.entry().value()) {
             Err(UserMemoryBlocker::EntryOutsideText)
-        } else if stack.region() != address_space.stack() || stack.region().byte_len() != PAGE_SIZE
+        } else if !address_space.stack().covers(stack_init.region())
+            || stack_init.region().byte_len() != PAGE_SIZE
         {
             Err(UserMemoryBlocker::StackPointerOutsideStack)
         } else if segments.overlaps_region(address_space.stack()) {
@@ -466,7 +467,7 @@ impl<'a> UserAddressSpaceLoadPlan<'a> {
                 address_space,
                 source,
                 segments,
-                stack,
+                stack_init,
             })
         }
     }
@@ -484,11 +485,15 @@ impl<'a> UserAddressSpaceLoadPlan<'a> {
     }
 
     pub const fn stack_region(&self) -> UserMemoryRegion {
-        self.stack.region()
+        self.address_space.stack()
     }
 
-    pub const fn stack_bytes(&self) -> &[u8; PAGE_SIZE] {
-        self.stack.bytes_ref()
+    pub const fn stack_init_region(&self) -> UserMemoryRegion {
+        self.stack_init.region()
+    }
+
+    pub const fn stack_init_bytes(&self) -> &[u8; PAGE_SIZE] {
+        self.stack_init.bytes_ref()
     }
 }
 

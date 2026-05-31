@@ -64,6 +64,37 @@ impl UserMemoryMapper for ActiveUserMemory {
     fn map_zeroed_user_pages(&self, start: usize, byte_len: usize) -> Result<(), UserMapError> {
         unsafe { map_active_zeroed_user_pages(start, byte_len) }
     }
+
+    fn map_zeroed_user_pages_with_flags(
+        &self,
+        start: usize,
+        byte_len: usize,
+        flags: MappingFlags,
+    ) -> Result<(), UserMapError> {
+        unsafe { map_active_zeroed_user_pages_with_flags(start, byte_len, flags) }
+    }
+
+    fn replace_zeroed_user_pages_with_flags(
+        &self,
+        start: usize,
+        byte_len: usize,
+        flags: MappingFlags,
+    ) -> Result<(), UserMapError> {
+        unsafe { replace_active_zeroed_user_pages_with_flags(start, byte_len, flags) }
+    }
+
+    fn protect_user_pages_with_flags(
+        &self,
+        start: usize,
+        byte_len: usize,
+        flags: MappingFlags,
+    ) -> Result<(), UserMapError> {
+        unsafe { protect_active_user_pages_with_flags(start, byte_len, flags) }
+    }
+
+    fn unmap_user_pages(&self, start: usize, byte_len: usize) -> Result<(), UserMapError> {
+        unsafe { unmap_active_user_pages(start, byte_len) }
+    }
 }
 
 pub const fn readiness() -> HardwareReadiness {
@@ -155,8 +186,8 @@ fn validate_user_load(load: &UserAddressSpaceLoadPlan<'_>) -> Result<(), UserMmu
         return Err(UserMmuBlocker::KernelMappingsMissing);
     }
 
-    validate_single_page_region(plan.stack())?;
-    validate_single_page_region(load.stack_region())?;
+    validate_page_aligned_region(plan.stack())?;
+    validate_single_page_region(load.stack_init_region())?;
 
     let segments = load.segments();
     let mut index = 0usize;
@@ -221,7 +252,7 @@ fn materialize_user_root(
         return UserMmuState::NotReady(blocker);
     }
     if let Err(blocker) =
-        unsafe { materialize_stack_page(frames, root_frame, &load, &mut mapped_regions) }
+        unsafe { materialize_stack_pages(frames, root_frame, &load, &mut mapped_regions) }
     {
         return UserMmuState::NotReady(blocker);
     }
@@ -323,18 +354,29 @@ unsafe fn materialize_segment_pages(
     Ok(())
 }
 
-unsafe fn materialize_stack_page(
+unsafe fn materialize_stack_pages(
     frames: &mut BootFrameAllocator,
     root_frame: PhysFrame,
     load: &UserAddressSpaceLoadPlan<'_>,
     mapped_regions: &mut UserMappedRegionSet,
 ) -> Result<(), UserMmuBlocker> {
-    let data_frame = alloc_frame(frames)?;
-    zero_frame(data_frame);
-    copy_page_bytes(data_frame, load.stack_bytes());
-    map_user_page_allocating(frames, root_frame, load.stack_region(), data_frame)?;
+    let stack = load.stack_region();
+    let stack_init = load.stack_init_region();
+    let mut page = stack.start();
+    while page < stack.end() {
+        let data_frame = alloc_frame(frames)?;
+        zero_frame(data_frame);
+        if page == stack_init.start() {
+            copy_page_bytes(data_frame, load.stack_init_bytes());
+        }
+        let page_region = UserMemoryRegion::new(page, page + PAGE_SIZE, stack.permissions())
+            .map_err(UserMmuBlocker::Permissions)?;
+        map_user_page_allocating(frames, root_frame, page_region, data_frame)?;
+        page += PAGE_SIZE;
+    }
+
     mapped_regions
-        .push(load.stack_region())
+        .push(stack)
         .map_err(UserMmuBlocker::Permissions)
 }
 
@@ -589,6 +631,14 @@ unsafe fn translate_active_user_write(address: usize) -> Result<usize, UserCopyE
 }
 
 unsafe fn map_active_zeroed_user_pages(start: usize, byte_len: usize) -> Result<(), UserMapError> {
+    map_active_zeroed_user_pages_with_flags(start, byte_len, MappingFlags::USER_DATA)
+}
+
+unsafe fn map_active_zeroed_user_pages_with_flags(
+    start: usize,
+    byte_len: usize,
+    flags: MappingFlags,
+) -> Result<(), UserMapError> {
     if byte_len == 0 || start % PAGE_SIZE != 0 || byte_len % PAGE_SIZE != 0 {
         return Err(UserMapError::InvalidRange);
     }
@@ -623,10 +673,119 @@ unsafe fn map_active_zeroed_user_pages(start: usize, byte_len: usize) -> Result<
     while page < end {
         let data_frame = frames.allocate().map_err(frame_alloc_error_to_map)?;
         zero_frame(data_frame);
-        let region = UserMemoryRegion::new(page, page + PAGE_SIZE, MappingFlags::USER_DATA)
+        let region = UserMemoryRegion::new(page, page + PAGE_SIZE, flags)
             .map_err(user_memory_blocker_to_map)?;
         map_user_page_allocating(frames, root_frame, region, data_frame)
             .map_err(user_mmu_blocker_to_map)?;
+        page += PAGE_SIZE;
+    }
+
+    sfence_vma();
+    Ok(())
+}
+
+unsafe fn replace_active_zeroed_user_pages_with_flags(
+    start: usize,
+    byte_len: usize,
+    flags: MappingFlags,
+) -> Result<(), UserMapError> {
+    if byte_len == 0 || start % PAGE_SIZE != 0 || byte_len % PAGE_SIZE != 0 {
+        return Err(UserMapError::InvalidRange);
+    }
+    let end = start
+        .checked_add(byte_len)
+        .ok_or(UserMapError::AddressOverflow)?;
+    if start >= USER_TOP || end > USER_TOP {
+        return Err(UserMapError::InvalidRange);
+    }
+
+    let satp = read_satp();
+    if satp >> SATP_MODE_SHIFT != 8 {
+        return Err(UserMapError::NotReady);
+    }
+    let root_start = (satp & SATP_PPN_MASK) << 12;
+    let root_frame = PhysFrame::new(root_start).map_err(|_| UserMapError::NotReady)?;
+    let frames_ptr = ACTIVE_USER_FRAME_ALLOCATOR.load(Ordering::Acquire) as *mut BootFrameAllocator;
+    if frames_ptr.is_null() {
+        return Err(UserMapError::NotReady);
+    }
+
+    let frames = &mut *frames_ptr;
+    let mut page = start;
+    while page < end {
+        match active_user_leaf_entry(root_frame, page)? {
+            Some(entry) => {
+                let frame = PhysFrame::new(pte_phys(entry.read_volatile()))
+                    .map_err(|_| UserMapError::NotReady)?;
+                zero_frame(frame);
+                entry.write_volatile(leaf_pte(frame.start(), user_pte_flags(flags)));
+            }
+            None => {
+                let data_frame = frames.allocate().map_err(frame_alloc_error_to_map)?;
+                zero_frame(data_frame);
+                let region = UserMemoryRegion::new(page, page + PAGE_SIZE, flags)
+                    .map_err(user_memory_blocker_to_map)?;
+                map_user_page_allocating(frames, root_frame, region, data_frame)
+                    .map_err(user_mmu_blocker_to_map)?;
+            }
+        }
+        page += PAGE_SIZE;
+    }
+
+    sfence_vma();
+    Ok(())
+}
+
+unsafe fn protect_active_user_pages_with_flags(
+    start: usize,
+    byte_len: usize,
+    flags: MappingFlags,
+) -> Result<(), UserMapError> {
+    if byte_len == 0 || start % PAGE_SIZE != 0 || byte_len % PAGE_SIZE != 0 {
+        return Err(UserMapError::InvalidRange);
+    }
+    let end = start
+        .checked_add(byte_len)
+        .ok_or(UserMapError::AddressOverflow)?;
+    if start >= USER_TOP || end > USER_TOP {
+        return Err(UserMapError::InvalidRange);
+    }
+    let root_frame = active_user_root()?.frame();
+
+    let mut page = start;
+    while page < end {
+        match active_user_leaf_entry(root_frame, page)? {
+            Some(entry) => {
+                let frame = PhysFrame::new(pte_phys(entry.read_volatile()))
+                    .map_err(|_| UserMapError::NotReady)?;
+                entry.write_volatile(leaf_pte(frame.start(), user_pte_flags(flags)));
+            }
+            None => return Err(UserMapError::InvalidRange),
+        }
+        page += PAGE_SIZE;
+    }
+
+    sfence_vma();
+    Ok(())
+}
+
+unsafe fn unmap_active_user_pages(start: usize, byte_len: usize) -> Result<(), UserMapError> {
+    if byte_len == 0 || start % PAGE_SIZE != 0 || byte_len % PAGE_SIZE != 0 {
+        return Err(UserMapError::InvalidRange);
+    }
+    let end = start
+        .checked_add(byte_len)
+        .ok_or(UserMapError::AddressOverflow)?;
+    if start >= USER_TOP || end > USER_TOP {
+        return Err(UserMapError::InvalidRange);
+    }
+    let root_frame = active_user_root()?.frame();
+
+    let mut page = start;
+    while page < end {
+        if let Some(entry) = active_user_leaf_entry(root_frame, page)? {
+            entry.write_volatile(0);
+        }
         page += PAGE_SIZE;
     }
 
@@ -645,7 +804,7 @@ unsafe fn active_user_page_mapped(
         if entry & PTE_V == 0 {
             return Ok(false);
         }
-        if pte_is_leaf(entry) {
+        if pte_is_leaf(entry) || pte_is_protected_user_leaf(entry, level) {
             return Ok(true);
         }
         if level == 0 {
@@ -654,6 +813,154 @@ unsafe fn active_user_page_mapped(
 
         table = pte_phys(entry) as *const usize;
         level -= 1;
+    }
+}
+
+unsafe fn active_user_leaf_entry(
+    root_frame: PhysFrame,
+    address: usize,
+) -> Result<Option<*mut usize>, UserMapError> {
+    let mut table = root_frame.start() as *mut usize;
+    let mut level = 2usize;
+    loop {
+        let entry = table.add(level_index(address, level));
+        let raw = entry.read_volatile();
+        if raw & PTE_V == 0 {
+            return Ok(None);
+        }
+        if pte_is_leaf(raw) || pte_is_protected_user_leaf(raw, level) {
+            if level == 0 && raw & PTE_U != 0 {
+                return Ok(Some(entry));
+            }
+            return Err(UserMapError::Unsupported);
+        }
+        if level == 0 {
+            return Ok(None);
+        }
+
+        table = pte_phys(raw) as *mut usize;
+        level -= 1;
+    }
+}
+
+pub fn active_user_root() -> Result<PageTableRoot, UserMapError> {
+    let satp = unsafe { read_satp() };
+    if satp >> SATP_MODE_SHIFT != 8 {
+        return Err(UserMapError::NotReady);
+    }
+    let root_start = (satp & SATP_PPN_MASK) << 12;
+    PhysFrame::new(root_start)
+        .map(PageTableRoot::new)
+        .map_err(|_| UserMapError::NotReady)
+}
+
+pub fn clone_active_user_root() -> Result<PageTableRoot, UserMapError> {
+    let source_root = active_user_root()?;
+    let frames_ptr = ACTIVE_USER_FRAME_ALLOCATOR.load(Ordering::Acquire) as *mut BootFrameAllocator;
+    if frames_ptr.is_null() {
+        return Err(UserMapError::NotReady);
+    }
+
+    let frames = unsafe { &mut *frames_ptr };
+    let cloned_root = frames.allocate().map_err(frame_alloc_error_to_map)?;
+    unsafe {
+        zero_frame(cloned_root);
+        map_kernel_globals(frames, cloned_root).map_err(user_mmu_blocker_to_map)?;
+        clone_user_table(
+            frames,
+            source_root.frame().start() as *const usize,
+            cloned_root,
+            2,
+            0,
+        )?;
+    }
+    Ok(PageTableRoot::new(cloned_root))
+}
+
+pub fn switch_to_user_root(root: PageTableRoot) {
+    apply_user_root(root);
+}
+
+unsafe fn clone_user_table(
+    frames: &mut BootFrameAllocator,
+    source_table: *const usize,
+    destination_root: PhysFrame,
+    level: usize,
+    prefix: usize,
+) -> Result<(), UserMapError> {
+    let mut index = 0usize;
+    while index < SV39_ROOT_ENTRIES {
+        let entry = source_table.add(index).read_volatile();
+        if entry & PTE_V != 0 {
+            let virtual_prefix = prefix | (index << (12 + level * 9));
+            if pte_is_leaf(entry) {
+                if entry & PTE_U != 0 {
+                    if level != 0 || virtual_prefix >= USER_TOP {
+                        return Err(UserMapError::Unsupported);
+                    }
+                    clone_user_leaf(frames, destination_root, virtual_prefix, entry)?;
+                }
+            } else if level > 0 {
+                clone_user_table(
+                    frames,
+                    pte_phys(entry) as *const usize,
+                    destination_root,
+                    level - 1,
+                    virtual_prefix,
+                )?;
+            }
+        }
+        index += 1;
+    }
+
+    Ok(())
+}
+
+unsafe fn clone_user_leaf(
+    frames: &mut BootFrameAllocator,
+    destination_root: PhysFrame,
+    virtual_address: usize,
+    source_pte: usize,
+) -> Result<(), UserMapError> {
+    let data_frame = frames.allocate().map_err(frame_alloc_error_to_map)?;
+    copy_frame_bytes(data_frame, pte_phys(source_pte));
+    map_user_page_raw_flags(
+        frames,
+        destination_root,
+        virtual_address,
+        data_frame,
+        source_pte & (PTE_R | PTE_W | PTE_X | PTE_U),
+    )
+}
+
+unsafe fn map_user_page_raw_flags(
+    frames: &mut BootFrameAllocator,
+    root_frame: PhysFrame,
+    virtual_address: usize,
+    data_frame: PhysFrame,
+    flags: usize,
+) -> Result<(), UserMapError> {
+    let root = root_frame.start() as *mut usize;
+    let l1 = ensure_table(frames, root.add(root_index(virtual_address)))
+        .map_err(user_mmu_blocker_to_map)?;
+    let l0 = ensure_table(frames, l1.add(level1_index(virtual_address)))
+        .map_err(user_mmu_blocker_to_map)?;
+    let entry = l0.add(level0_index(virtual_address));
+    if entry.read() & PTE_V != 0 {
+        return Err(UserMapError::AlreadyMapped);
+    }
+
+    entry.write(leaf_pte(data_frame.start(), flags));
+    Ok(())
+}
+
+unsafe fn copy_frame_bytes(destination: PhysFrame, source: usize) {
+    let target = destination.start() as *mut u8;
+    let source = source as *const u8;
+    let mut index = 0usize;
+    while index < PAGE_SIZE {
+        target.add(index).write(source.add(index).read());
+        index += 1;
     }
 }
 
@@ -757,6 +1064,10 @@ const fn pte_phys(pte: usize) -> usize {
 
 const fn pte_is_leaf(pte: usize) -> bool {
     pte & (PTE_R | PTE_W | PTE_X) != 0
+}
+
+const fn pte_is_protected_user_leaf(pte: usize, level: usize) -> bool {
+    level == 0 && pte & PTE_V != 0 && pte & PTE_U != 0 && !pte_is_leaf(pte)
 }
 
 const fn root_index(virt: usize) -> usize {
