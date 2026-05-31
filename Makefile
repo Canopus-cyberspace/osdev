@@ -31,7 +31,7 @@ cargo-build:
 		rustup target add "$(LOONGARCH_TARGET)" || true; \
 		rustup component add rust-src || true; \
 	fi; \
-	$(PYTHON) user/build_init_elf.py; \
+# 	$(PYTHON) user/build_init_elf.py; \
 	RUSTFLAGS="-C force-frame-pointers=yes $${RUSTFLAGS:-}" \
 		$(CARGO) build --target "$(TARGET)" --target "$(LOONGARCH_TARGET)" 2>&1 | tee "$(MAKE_BUILD_LOG)"; \
 	if grep -nE '$(FORBIDDEN_BUILD_RE)' "$(MAKE_BUILD_LOG)" >/dev/null; then \
