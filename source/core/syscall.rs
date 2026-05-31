@@ -13,7 +13,7 @@ use crate::core::task::{
     process_resource_limit, single_heap_base, single_mmap_cursor, single_parent_pid, single_pid,
     single_program_break, single_record_exit, single_set_mmap_cursor, single_set_program_break,
     single_set_robust_list, single_set_tid_address, single_signal_process, single_wait_for_child,
-    ExitCode, ExitState, Pid, Process, ResourceLimitKind,
+    ExitCode, ExitState, ForkRequest, ForkRequestError, Pid, Process, ResourceLimitKind,
 };
 use crate::core::time::next_time_value;
 use crate::official::user_output::{write_user_fd, UserOutputError};
@@ -126,12 +126,6 @@ const MAP_FIXED: usize = 0x10;
 const MAP_ANONYMOUS: usize = 0x20;
 const MAP_DENYWRITE: usize = 0x800;
 const MAP_STACK: usize = 0x20000;
-const SIGCHLD: usize = 17;
-const CLONE_SIGNAL_MASK: usize = 0xff;
-const CLONE_CHILD_CLEARTID: usize = 0x0020_0000;
-const CLONE_CHILD_SETTID: usize = 0x0100_0000;
-const SUPPORTED_FORK_CLONE_FLAGS: usize =
-    CLONE_SIGNAL_MASK | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID;
 const RLIMIT_STACK: usize = 3;
 const LINUX_RLIMIT64_SIZE: usize = 16;
 const TRACE_STATUS_HANDLED: usize = 1;
@@ -336,46 +330,6 @@ pub enum SyscallOutcome {
     Exit(ExitState),
     Fork(ForkRequest),
     Exec(ExecRequest),
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ForkRequest {
-    child_stack: usize,
-    child_tid: usize,
-    set_child_tid: bool,
-    clear_child_tid: bool,
-}
-
-impl ForkRequest {
-    pub const fn new(
-        child_stack: usize,
-        child_tid: usize,
-        set_child_tid: bool,
-        clear_child_tid: bool,
-    ) -> Self {
-        Self {
-            child_stack,
-            child_tid,
-            set_child_tid,
-            clear_child_tid,
-        }
-    }
-
-    pub const fn child_stack(self) -> usize {
-        self.child_stack
-    }
-
-    pub const fn child_tid(self) -> usize {
-        self.child_tid
-    }
-
-    pub const fn set_child_tid(self) -> bool {
-        self.set_child_tid
-    }
-
-    pub const fn clear_child_tid(self) -> bool {
-        self.clear_child_tid
-    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1709,24 +1663,15 @@ fn copy_file_mapping_to_user<W: UserMemoryWriter, V: SyscallVfs>(
 }
 
 fn sys_clone(frame: SyscallFrame) -> SyscallOutcome {
-    let flags = frame.arg(0);
-    let signal = flags & CLONE_SIGNAL_MASK;
-    if flags & !SUPPORTED_FORK_CLONE_FLAGS != 0 || signal != SIGCHLD {
-        return SyscallOutcome::Return(SyscallError::NotSupported.errno());
+    match ForkRequest::from_linux_clone(frame.arg(0), frame.arg(1), frame.arg(4)) {
+        Ok(request) => SyscallOutcome::Fork(request),
+        Err(ForkRequestError::MissingChildTid) => {
+            SyscallOutcome::Return(SyscallError::Fault.errno())
+        }
+        Err(ForkRequestError::UnsupportedFlags) => {
+            SyscallOutcome::Return(SyscallError::NotSupported.errno())
+        }
     }
-    let set_child_tid = flags & CLONE_CHILD_SETTID != 0;
-    let clear_child_tid = flags & CLONE_CHILD_CLEARTID != 0;
-    let child_tid = frame.arg(4);
-    if (set_child_tid || clear_child_tid) && child_tid == 0 {
-        return SyscallOutcome::Return(SyscallError::Fault.errno());
-    }
-
-    SyscallOutcome::Fork(ForkRequest::new(
-        frame.arg(1),
-        child_tid,
-        set_child_tid,
-        clear_child_tid,
-    ))
 }
 
 fn sys_wait4<W: UserMemoryWriter>(frame: SyscallFrame, memory: &W) -> isize {

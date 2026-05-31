@@ -5,8 +5,8 @@ pub mod single;
 pub mod user_entry;
 
 pub use process::{
-    process_resource_limit, ExecCommitBlocker, ExitCode, ExitState, Pid, Process, ProcessState,
-    ResourceLimitKind,
+    process_resource_limit, ExecCommitBlocker, ExitCode, ExitState, ForkRequest, ForkRequestError,
+    Pid, Process, ProcessState, ResourceLimitKind,
 };
 pub use single::{
     single_begin_child, single_enter_child, single_enter_parent, single_enter_pid,

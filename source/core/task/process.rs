@@ -89,6 +89,83 @@ pub const fn process_resource_limit(kind: ResourceLimitKind) -> ResourceLimit {
     }
 }
 
+const SIGCHLD: usize = 17;
+const CLONE_SIGNAL_MASK: usize = 0xff;
+const CLONE_CHILD_CLEARTID: usize = 0x0020_0000;
+const CLONE_CHILD_SETTID: usize = 0x0100_0000;
+const SUPPORTED_FORK_CLONE_FLAGS: usize =
+    CLONE_SIGNAL_MASK | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ForkRequestError {
+    MissingChildTid,
+    UnsupportedFlags,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ForkRequest {
+    child_stack: usize,
+    child_tid: usize,
+    set_child_tid: bool,
+    clear_child_tid: bool,
+}
+
+impl ForkRequest {
+    pub const fn new(
+        child_stack: usize,
+        child_tid: usize,
+        set_child_tid: bool,
+        clear_child_tid: bool,
+    ) -> Self {
+        Self {
+            child_stack,
+            child_tid,
+            set_child_tid,
+            clear_child_tid,
+        }
+    }
+
+    pub fn from_linux_clone(
+        flags: usize,
+        child_stack: usize,
+        child_tid: usize,
+    ) -> Result<Self, ForkRequestError> {
+        let signal = flags & CLONE_SIGNAL_MASK;
+        if flags & !SUPPORTED_FORK_CLONE_FLAGS != 0 || signal != SIGCHLD {
+            return Err(ForkRequestError::UnsupportedFlags);
+        }
+
+        let set_child_tid = flags & CLONE_CHILD_SETTID != 0;
+        let clear_child_tid = flags & CLONE_CHILD_CLEARTID != 0;
+        if (set_child_tid || clear_child_tid) && child_tid == 0 {
+            return Err(ForkRequestError::MissingChildTid);
+        }
+
+        Ok(Self::new(
+            child_stack,
+            child_tid,
+            set_child_tid,
+            clear_child_tid,
+        ))
+    }
+
+    pub const fn child_stack(self) -> usize {
+        self.child_stack
+    }
+
+    pub const fn child_tid(self) -> usize {
+        self.child_tid
+    }
+
+    pub const fn set_child_tid(self) -> bool {
+        self.set_child_tid
+    }
+
+    pub const fn clear_child_tid(self) -> bool {
+        self.clear_child_tid
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Process {
     pid: Pid,

@@ -5,10 +5,10 @@ use crate::arch::contract::{
     TrapVector,
 };
 use crate::core::mm::{copy_to_user, PageTableRoot, PhysFrame};
-use crate::core::syscall::{ForkRequest, SyscallError, SyscallFrame, SyscallOutcome};
+use crate::core::syscall::{SyscallError, SyscallFrame, SyscallOutcome};
 use crate::core::task::{
     single_begin_child, single_enter_child, single_enter_pid, single_is_active_child, single_pid,
-    single_set_tid_address, ExitState, Process,
+    single_set_tid_address, ExitState, ForkRequest, Process,
 };
 use crate::kernel::syscall_runtime::{
     active_runtime_snapshot, dispatch_single_with_memory, dispatch_with_memory,

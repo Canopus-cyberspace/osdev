@@ -1,2 +1,23 @@
-   Compiling uestc-kernel-source v0.1.0 (/home/lenovo/projects/worktrees/uestc-kernel-official-clean/source)
-    Finished `dev` profile [optimized] target(s) in 1.42s
+warning: `/root/.cargo/config` is deprecated in favor of `config.toml`
+note: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Updating `aliyun` index
+ Downloading crates ...
+  Downloaded addr2line v0.24.2 (registry `aliyun`)
+  Downloaded adler2 v2.0.0 (registry `aliyun`)
+  Downloaded allocator-api2 v0.2.21 (registry `aliyun`)
+  Downloaded cfg-if v1.0.0 (registry `aliyun`)
+  Downloaded gimli v0.31.1 (registry `aliyun`)
+  Downloaded hashbrown v0.15.2 (registry `aliyun`)
+  Downloaded miniz_oxide v0.8.2 (registry `aliyun`)
+  Downloaded getopts v0.2.21 (registry `aliyun`)
+  Downloaded rustc-demangle v0.1.24 (registry `aliyun`)
+  Downloaded object v0.36.7 (registry `aliyun`)
+  Downloaded unicode-width v0.1.14 (registry `aliyun`)
+  Downloaded memchr v2.7.4 (registry `aliyun`)
+  Downloaded libc v0.2.169 (registry `aliyun`)
+  Downloaded compiler_builtins v0.1.143 (registry `aliyun`)
+   Compiling core v0.0.0 (/root/.rustup/toolchains/nightly-2025-01-18-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core)
+   Compiling rustc-std-workspace-core v1.99.0 (/root/.rustup/toolchains/nightly-2025-01-18-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/rustc-std-workspace-core)
+   Compiling compiler_builtins v0.1.143
+   Compiling uestc-kernel-source v0.1.0 (/coursegrader/submit/source)
+    Finished `dev` profile [optimized] target(s) in 16.52s
